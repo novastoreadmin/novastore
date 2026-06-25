@@ -1,0 +1,38 @@
+{
+  "name": "nova-store",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npx turbo run dev",
+    "build": "npx turbo run build",
+    "lint": "npx turbo run lint",
+    "dev:storefront": "npx turbo run dev --filter=storefront",
+    "dev:backend": "npx turbo run dev --filter=backend",
+    "build:storefront": "npx turbo run build --filter=storefront",
+    "build:backend": "npx turbo run build --filter=backend"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.0"
+  },
+  "packageManager": "npm@10.8.2",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "3.4.2",
+    "@medusajs/ui": "^4.1.17",
+    "glob": "^13.0.6",
+    "react-dom": "^19.2.7",
+    "react-hook-form": "7.55.0",
+    "ts-node": "^10.9.2"
+  },
+  "overrides": {
+    "@mikro-orm/core": "6.6.14",
+    "@mikro-orm/knex": "6.6.14",
+    "@mikro-orm/migrations": "6.6.14",
+    "@mikro-orm/postgresql": "6.6.14"
+  }
+}

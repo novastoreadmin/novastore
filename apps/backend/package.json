@@ -1,0 +1,49 @@
+{
+  "name": "backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NOVA Electronics Store - Medusa v2 Backend",
+  "scripts": {
+    "dev": "medusa develop",
+    "build": "medusa build",
+    "start": "medusa start",
+    "seed": "medusa exec ./seed.ts",
+    "db:generate": "medusa db:generate",
+    "db:migrate": "medusa db:migrate"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.4.2",
+    "@inquirer/checkbox": "^2.5.0",
+    "@inquirer/confirm": "^2.0.17",
+    "@inquirer/input": "^2.3.0",
+    "@inquirer/type": "^1.5.5",
+    "@medusajs/admin-sdk": "^2.17.0",
+    "@medusajs/cli": "^2.17.0",
+    "@medusajs/framework": "^2.17.0",
+    "@medusajs/medusa": "^2.17.0",
+    "@mikro-orm/core": "6.6.14",
+    "@mikro-orm/knex": "6.6.14",
+    "@mikro-orm/migrations": "6.6.14",
+    "@mikro-orm/postgresql": "6.6.14",
+    "@types/nodemailer": "^8.0.1",
+    "awilix": "^12.0.0",
+    "imapflow": "^1.4.2",
+    "ioredis": "^5.4.0",
+    "mailparser": "^3.9.11",
+    "multer": "^2.2.0",
+    "node-schedule": "^2.1.1",
+    "nodemailer": "^9.0.1",
+    "pg": "^8.13.0",
+    "react-hook-form": "^7.49.1",
+    "request-ip": "^3.3.0",
+    "slugify": "^1.6.9"
+  },
+  "devDependencies": {
+    "@medusajs/types": "^2.17.0",
+    "@types/node": "^22.14.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

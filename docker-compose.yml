@@ -1,0 +1,47 @@
+# Local development data services for the NOVA store.
+#
+# Only PostgreSQL is required: medusa-config.ts uses the in-memory cache / event-bus /
+# workflow-engine modules, so Redis is optional and intentionally left out here to avoid
+# clashing with anything already bound to host port 6379. Add a redis service only if you
+# switch the Medusa modules over to the Redis-backed variants.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nova_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nova_store
+    ports:
+      - "5432:5432"
+    volumes:
+      - nova_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nova_store"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Local corporate mail server (internal-only): SMTP + IMAP with predefined mailboxes.
+  # GreenMail is a lightweight test mail server - delivery works between these accounts,
+  # but it does NOT reach the public internet (fine for local/dev). Accounts are defined
+  # inline below; keep them in sync with apps/backend/src/lib/mail-accounts.ts.
+  #   SMTP -> localhost:3025   IMAP -> localhost:3143   API/UI -> localhost:8085
+  mail:
+    image: greenmail/standalone:2.1.0
+    container_name: nova_mail
+    restart: unless-stopped
+    environment:
+      GREENMAIL_OPTS: >-
+        -Dgreenmail.setup.test.all
+        -Dgreenmail.hostname=0.0.0.0
+        -Dgreenmail.users=admin:admin123@nova.local,sales:sales123@nova.local,support:support123@nova.local
+        -Dgreenmail.verbose
+    ports:
+      - "3025:3025"   # SMTP
+      - "3143:3143"   # IMAP
+      - "8085:8080"   # GreenMail REST API / status
+
+volumes:
+  nova_pgdata:
