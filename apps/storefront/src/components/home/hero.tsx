@@ -116,7 +116,7 @@ export function Hero() {
         >
           <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
           <span className="text-xs font-medium text-text-secondary tracking-wide">
-            New — NOVA Pro 16 Now Available
+            New — Floppy Disk SSD Enclosure
           </span>
         </motion.div>
 
@@ -137,13 +137,13 @@ export function Hero() {
         </p>
 
         <div ref={ctaRef} className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="/products/nova-pro-16">
+          <Link href="/products/floppy-disk-style-ssd-enclosure">
             <Button size="xl" className="group">
-              <span>Explore NOVA Pro</span>
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <span>Explore the SSD Enclosure</span>
+              {/* <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" /> */}
             </Button>
           </Link>
-          <Link href="/categories/laptops">
+          <Link href="/categories/accessories">
             <Button variant="outline" size="xl">
               View All Products
             </Button>

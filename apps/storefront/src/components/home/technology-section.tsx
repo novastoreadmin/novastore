@@ -7,11 +7,11 @@ import { Section } from "@/components/ui/section";
 import { fadeUp } from "@/animations/variants";
 
 const layers = [
-  { label: "Titanium Shell", color: "rgba(138,141,143,0.3)", offset: 0 },
-  { label: "Thermal Core", color: "rgba(255,255,255,0.06)", offset: 1 },
-  { label: "Neural Board", color: "rgba(74,74,74,0.4)", offset: 2 },
-  { label: "Power Cell", color: "rgba(45,45,45,0.5)", offset: 3 },
-  { label: "Display Panel", color: "rgba(255,255,255,0.08)", offset: 4 },
+  { label: "Aluminum Shell", color: "rgba(138,141,143,0.3)", offset: 0 },
+  { label: "Thermal Pad", color: "rgba(255,255,255,0.06)", offset: 1 },
+  { label: "Controller Chip", color: "rgba(74,74,74,0.4)", offset: 2 },
+  { label: "Logic Board", color: "rgba(45,45,45,0.5)", offset: 3 },
+  { label: "USB-C Interface", color: "rgba(255,255,255,0.08)", offset: 4 },
 ];
 
 export function TechnologySection() {

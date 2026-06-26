@@ -10,39 +10,39 @@ import { gsap, ScrollTrigger } from "@/animations/gsap-config";
 const features = [
   {
     icon: Cpu,
-    title: "18-Core Neural Engine",
+    title: "10Gbps Transfers",
     description:
-      "Custom silicon designed for the most demanding workloads. Professional-grade processing power in an impossibly thin form factor.",
+      "USB 3.2 Gen2 controllers move data at up to 10Gbps with 1000-1200MB/s real-world speeds. No more waiting on the progress bar.",
   },
   {
     icon: Monitor,
-    title: "Liquid Retina XDR",
+    title: "4K & 8K Video Out",
     description:
-      "Over 10 billion colors with ProMotion 120Hz adaptive refresh. The most advanced display ever in a personal device.",
-  },
-  {
-    icon: Battery,
-    title: "All-Day Battery",
-    description:
-      "Up to 24 hours of battery life with intelligent power management. Fast-charge to 50% in just 25 minutes.",
-  },
-  {
-    icon: Wifi,
-    title: "Wi-Fi 7 & 5G",
-    description:
-      "Ultra-fast connectivity with Wi-Fi 7 and optional 5G. Stay connected at speeds you've never experienced.",
-  },
-  {
-    icon: Shield,
-    title: "Titanium Shell",
-    description:
-      "Grade 5 titanium alloy, the same used in aerospace. Incredibly strong, remarkably light, impossibly premium.",
+      "Mirror or extend to a 4K@60Hz display through the hub, or push 8K@60Hz over a single USB-C cable.",
   },
   {
     icon: Zap,
-    title: "Thunderbolt 5",
+    title: "240W PD 3.1 Charging",
     description:
-      "120 Gbps bandwidth for the fastest data transfers ever. Connect anything — drives, displays, eGPUs — at incredible speed.",
+      "E-marked cables and hubs deliver up to 240W (48V/5A) to charge laptops, phones and consoles at full speed.",
+  },
+  {
+    icon: Wifi,
+    title: "Gigabit Ethernet",
+    description:
+      "The slim hub adds true Gigabit (1000Mbps) wired networking alongside 5Gbps USB data and HDMI.",
+  },
+  {
+    icon: Shield,
+    title: "Aluminum Build",
+    description:
+      "Aircraft-grade aluminum shells dissipate heat and protect your gear, in profiles as thin as 6mm.",
+  },
+  {
+    icon: Battery,
+    title: "Year-Long Tracking",
+    description:
+      "The Find My tracker runs about a year on a replaceable battery, with global coverage built into the Find app.",
   },
 ];
 
@@ -132,7 +132,7 @@ export function FeatureShowcase() {
       <SectionHeader
         label="Capabilities"
         title="Built Without Compromise"
-        description="Every component engineered to push the boundaries of what personal technology can achieve."
+        description="Every accessory engineered to move data, power and pixels faster — without the bulk."
       />
 
       <div

@@ -10,6 +10,19 @@ export const sdk = new Medusa({
   debug: process.env.NODE_ENV === "development",
 });
 
+// calculated_price requires a pricing context (region). Fetch the store's region once.
+let cachedRegionId: string | undefined;
+async function getRegionId(): Promise<string | undefined> {
+  if (cachedRegionId) return cachedRegionId;
+  try {
+    const { regions } = await sdk.store.region.list();
+    cachedRegionId = regions?.[0]?.id;
+  } catch {
+    cachedRegionId = undefined;
+  }
+  return cachedRegionId;
+}
+
 export async function getProducts(params?: {
   limit?: number;
   offset?: number;
@@ -24,8 +37,9 @@ export async function getProducts(params?: {
       category_id: params?.category_id,
       collection_id: params?.collection_id,
       id: params?.id,
+      region_id: await getRegionId(),
       fields:
-        "+variants.calculated_price,+variants.inventory_quantity",
+        "+thumbnail,+variants.calculated_price,+variants.inventory_quantity",
     },
     { next: { tags: ["products"] } }
   );
@@ -36,8 +50,9 @@ export async function getProduct(handle: string) {
   const { products } = await sdk.store.product.list(
     {
       handle,
+      region_id: await getRegionId(),
       fields:
-        "+variants.calculated_price,+variants.inventory_quantity",
+        "+thumbnail,+metadata,*images,*options.values,*variants.options,+variants.calculated_price,+variants.inventory_quantity",
     },
     { next: { tags: [`product-${handle}`] } }
   );

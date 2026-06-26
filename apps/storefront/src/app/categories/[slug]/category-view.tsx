@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import { fadeUp, staggerContainer } from "@/animations/variants";
 import { gsap, ScrollTrigger } from "@/animations/gsap-config";
@@ -121,9 +122,19 @@ export function CategoryView({
                   transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                   className="group rounded-2xl bg-bg-card border border-border overflow-hidden hover:border-white/10 transition-colors duration-500"
                 >
-                  {/* Image placeholder */}
+                  {/* Product image (falls back to a subtle placeholder) */}
                   <div className="relative aspect-[4/3] bg-gradient-to-br from-bg-elevated to-bg-card flex items-center justify-center overflow-hidden">
-                    <div className="w-32 h-20 rounded-xl bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-white/[0.05] group-hover:scale-105 transition-transform duration-700" />
+                    {"thumbnail" in product && product.thumbnail ? (
+                      <Image
+                        src={product.thumbnail}
+                        alt={product.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                    ) : (
+                      <div className="w-32 h-20 rounded-xl bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-white/[0.05] group-hover:scale-105 transition-transform duration-700" />
+                    )}
 
                     <div className="absolute top-4 right-4 w-9 h-9 rounded-full border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-bg/60 backdrop-blur-sm">
                       <ArrowUpRight className="w-4 h-4 text-text-secondary" />

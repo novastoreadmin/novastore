@@ -16,20 +16,20 @@ const stats = [
 const testimonials = [
   {
     name: "Alex Chen",
-    role: "Software Architect",
-    text: "The NOVA Pro 16 replaced my entire workstation. 18 cores of pure silence. I've never experienced this level of performance in a laptop.",
+    role: "Photographer",
+    text: "I offload an entire wedding shoot in minutes now. The dual-slot card reader and the SSD enclosure live in my bag permanently.",
     rating: 5,
   },
   {
     name: "Sarah Kim",
-    role: "Creative Director",
-    text: "The display is unlike anything I've worked with. Colors are accurate, brightness is absurd, and the 120Hz makes everything feel alive.",
+    role: "Content Creator",
+    text: "Recording ProRes straight to the floppy-disk SSD enclosure is a workflow upgrade and a desk flex. The build quality is unreal.",
     rating: 5,
   },
   {
     name: "Marcus Reed",
-    role: "Game Developer",
-    text: "I compile Unreal Engine projects 3x faster than my previous machine. The thermal system keeps it cool even during 8-hour sessions.",
+    role: "Remote Engineer",
+    text: "One slim USB-C hub turns my laptop into a full desk — 4K display, Gigabit ethernet, and charging over a single cable. I never travel without it.",
     rating: 5,
   },
 ];
@@ -63,7 +63,7 @@ export function SocialProof() {
       <SectionHeader
         label="Trust"
         title="Chosen by Millions"
-        description="Join a community of professionals who demand more from their technology."
+        description="Join a community of creators and pros who demand more from their everyday gear."
       />
 
       {/* Stats */}

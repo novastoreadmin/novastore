@@ -1,41 +1,42 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { gsap, ScrollTrigger } from "@/animations/gsap-config";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "@/animations/gsap-config";
 
 const features = [
   {
     label: "01",
-    title: "Neural Processing Engine",
+    title: "10Gbps Transfer Engine",
     description:
-      "18-core CPU with dedicated AI accelerators delivers up to 4.2 TFLOPS of machine learning performance. Tasks that once took hours now complete in minutes.",
-    stat: "4.2 TFLOPS",
-    statLabel: "ML Performance",
+      "USB 3.2 Gen2 interfaces move data at up to 10Gbps, with real-world read/write speeds of 1000-1200MB/s. Offload a full shoot or boot from an external drive in moments.",
+    stat: "10Gbps",
+    statLabel: "Transfer Speed",
   },
   {
     label: "02",
-    title: "Liquid Architecture Display",
+    title: "Aluminum Unibody",
     description:
-      "ProMotion XDR display with 3200×2000 resolution, 1600 nits peak brightness, and P3 wide color. Every pixel engineered for precision.",
-    stat: "3200×2000",
-    statLabel: "Resolution",
+      "Precision-machined aluminum-alloy shells dissipate heat and shrug off daily wear, in profiles as thin as 6mm. Built to live in your bag.",
+    stat: "6mm",
+    statLabel: "Slim Profile",
   },
   {
     label: "03",
-    title: "Titanium Unibody",
+    title: "240W Power Delivery",
     description:
-      "Grade 5 titanium alloy chassis, 40% stronger and 20% lighter than aluminum. Precision-machined from a single block of aerospace-grade material.",
-    stat: "1.29 kg",
-    statLabel: "Starting Weight",
+      "PD 3.1 cables and hubs deliver up to 240W (48V/5A) with E-marker safety, charging laptops, phones and consoles at full speed.",
+    stat: "240W",
+    statLabel: "Fast Charging",
   },
   {
     label: "04",
-    title: "All-Day Power System",
+    title: "8K Display Output",
     description:
-      "Intelligent power routing with 100Wh battery delivers up to 24 hours of use. Fast-charge to 50% in just 25 minutes.",
-    stat: "24 hrs",
-    statLabel: "Battery Life",
+      "Drive an 8K@60Hz display over a single cable, or 4K@60Hz from the slim hub. Your full desk setup, anywhere you go.",
+    stat: "8K@60Hz",
+    statLabel: "Video Output",
   },
 ];
 
@@ -44,8 +45,8 @@ export function ProductStorytelling() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [progress, setProgress] = useState(0);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
+  useGSAP(
+    () => {
       ScrollTrigger.create({
         trigger: sectionRef.current,
         start: "top top",
@@ -62,10 +63,9 @@ export function ProductStorytelling() {
           setActiveIndex(index);
         },
       });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+    },
+    { scope: sectionRef }
+  );
 
   const featureProgress =
     (progress * features.length) % 1;

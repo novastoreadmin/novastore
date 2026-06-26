@@ -53,6 +53,11 @@ interface Product {
   images: { url: string }[];
   variants: ProductVariant[];
   options: ProductOption[];
+  metadata?: {
+    model?: string;
+    specs?: { label: string; value: string }[];
+    features?: { title: string; description: string }[];
+  } | null;
 }
 
 interface RelatedProduct {
@@ -95,49 +100,7 @@ const COLOR_MAP: Record<string, { hex: string; label: string }> = {
 
 const FEATURE_ICONS = [Cpu, Battery, Wifi, Shield, Monitor, Zap];
 
-const SPECIFICATIONS = [
-  { label: "Processor", value: "M4 Ultra" },
-  { label: "Memory", value: "Up to 128GB Unified" },
-  { label: "Display", value: '16.2" Liquid Retina XDR' },
-  { label: "Battery Life", value: "Up to 24 hours" },
-  { label: "Storage", value: "Up to 8TB SSD" },
-  { label: "Weight", value: "2.14 kg (4.7 lbs)" },
-  { label: "Connectivity", value: "Wi-Fi 6E, Bluetooth 5.3" },
-  { label: "Ports", value: "3x Thunderbolt 5, HDMI, MagSafe" },
-];
-
-const KEY_FEATURES = [
-  {
-    title: "Neural Engine",
-    description:
-      "40-core Neural Engine delivers up to 31 trillion operations per second for advanced machine learning tasks.",
-  },
-  {
-    title: "All-Day Battery",
-    description:
-      "Industry-leading battery life powers through the most demanding workflows without slowing down.",
-  },
-  {
-    title: "Wi-Fi 6E",
-    description:
-      "Blazing-fast wireless connectivity with support for the latest Wi-Fi 6E standard across all bands.",
-  },
-  {
-    title: "ProShield Security",
-    description:
-      "Hardware-level encryption and biometric authentication keep your data secure at every layer.",
-  },
-  {
-    title: "ProMotion Display",
-    description:
-      "Adaptive 120Hz refresh rate with extreme dynamic range for stunningly accurate visuals.",
-  },
-  {
-    title: "Thunderbolt 5",
-    description:
-      "Up to 120Gbps bandwidth for connecting high-performance peripherals and external displays.",
-  },
-];
+// Specs and features come from each product's metadata (see catalog.ts / import-products.ts).
 
 /* -------------------------------------------------------------------------- */
 /*  Component                                                                  */
@@ -181,6 +144,12 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
 
   const price = selectedVariant?.calculated_price;
   const inStock = (selectedVariant?.inventory_quantity ?? 0) > 0;
+
+  /* ---- Derived: real specs/features from product metadata ---- */
+  const specs = product.metadata?.specs ?? [];
+  const features = product.metadata?.features ?? [];
+  // Only render option selectors that offer a real choice (hides single-value / "Default").
+  const visibleOptions = product.options.filter((o) => o.values.length > 1);
 
   /* ---- GSAP scroll animations ---- */
   useEffect(() => {
@@ -366,7 +335,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
 
               {/* ---- Option selectors ---- */}
               <motion.div variants={fadeUp} className="mt-8 md:mt-10 space-y-8">
-                {product.options.map((option) => (
+                {visibleOptions.map((option) => (
                   <div key={option.id}>
                     <div className="flex items-center justify-between mb-3">
                       <label className="text-sm font-medium text-text-secondary uppercase tracking-wider">
@@ -604,13 +573,13 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
           </motion.div>
 
           <div ref={specsRef} className="max-w-3xl">
-            {SPECIFICATIONS.map((spec, idx) => (
+            {specs.map((spec, idx) => (
               <div
                 key={spec.label}
                 data-spec-row
                 className={cn(
                   "flex items-center justify-between py-5 md:py-6",
-                  idx !== SPECIFICATIONS.length - 1 && "border-b border-border"
+                  idx !== specs.length - 1 && "border-b border-border"
                 )}
               >
                 <span className="text-sm md:text-base text-text-secondary font-medium">
@@ -655,7 +624,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
             ref={featuresRef}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            {KEY_FEATURES.map((feature, idx) => {
+            {features.map((feature, idx) => {
               const Icon = FEATURE_ICONS[idx % FEATURE_ICONS.length];
               return (
                 <div

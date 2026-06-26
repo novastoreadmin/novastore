@@ -8,15 +8,14 @@ import { fadeUp } from "@/animations/variants";
 import { gsap, ScrollTrigger } from "@/animations/gsap-config";
 
 const specs = [
-  { label: "Processor", nova: "18-Core Neural", competitor: "10-Core Standard" },
-  //{ label: "Display", nova: "3200×2000 XDR", competitor: "2560×1600 IPS" },
-  { label: "Battery", nova: "24 hours", competitor: "12 hours" },
-  { label: "Weight", nova: "1.29 kg", competitor: "1.83 kg" },
-  { label: "Storage", nova: "Up to 8TB", competitor: "Up to 2TB" },
-  { label: "Connectivity", nova: "USB3.2 Type C", competitor: "NVMe" },
-  { label: "Build", nova: "High-quality", competitor: "Premium materials" },
-  { label: "High-speed Transmission", nova: "10Gbps", competitor: "1000-1200MB/s" },
-  { label: "Thunderbolt 5", nova: true, competitor: false },
+  { label: "Build", nova: "Aluminum alloy", competitor: "Plastic" },
+  { label: "Transfer Speed", nova: "Up to 10Gbps", competitor: "Up to 5Gbps" },
+  { label: "Fast Charging", nova: "240W PD 3.1", competitor: "60W" },
+  { label: "Video Output", nova: "Up to 8K@60Hz", competitor: "4K@30Hz" },
+  { label: "Compatibility", nova: "Universal", competitor: "Limited" },
+  { label: "Heat Dissipation", nova: true, competitor: false },
+  { label: "E-marker Safety", nova: true, competitor: false },
+  { label: "2-Year Warranty", nova: true, competitor: false },
   { label: "24/7 Support", nova: true, competitor: false },
 ];
 
@@ -50,7 +49,7 @@ export function ComparisonSection() {
       <SectionHeader
         label="Comparison"
         title="Beyond the Competition"
-        description="See how NOVA redefines every benchmark that matters."
+        description="See how NOVA accessories outclass the generic alternatives."
       />
 
       <div ref={tableRef} className="max-w-4xl mx-auto">
@@ -62,7 +61,7 @@ export function ComparisonSection() {
           <div className="text-sm text-text-muted">Specification</div>
           <div className="text-center">
             <span className="text-sm font-semibold text-text-primary tracking-wide">
-              NOVA Pro
+              NOVA
             </span>
           </div>
           <div className="text-center">
