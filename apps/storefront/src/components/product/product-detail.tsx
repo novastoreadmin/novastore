@@ -35,7 +35,9 @@ interface ProductVariant {
     currency_code: string;
   } | null;
   options: { value: string; option: { title: string } }[];
-  inventory_quantity: number;
+  inventory_quantity: number | null;
+  manage_inventory?: boolean;
+  allow_backorder?: boolean;
 }
 
 interface ProductOption {
@@ -143,7 +145,14 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
   }, [product.variants, selectedOptions]);
 
   const price = selectedVariant?.calculated_price;
-  const inStock = (selectedVariant?.inventory_quantity ?? 0) > 0;
+  // In stock unless the variant is explicitly tracked-and-empty. A null quantity
+  // (store API didn't compute it) is treated as available — the cart validates on add.
+  const inStock =
+    !!selectedVariant &&
+    (selectedVariant.allow_backorder === true ||
+      selectedVariant.manage_inventory === false ||
+      selectedVariant.inventory_quantity == null ||
+      selectedVariant.inventory_quantity > 0);
 
   /* ---- Derived: real specs/features from product metadata ---- */
   const specs = product.metadata?.specs ?? [];

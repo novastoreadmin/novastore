@@ -52,7 +52,7 @@ export async function getProduct(handle: string) {
       handle,
       region_id: await getRegionId(),
       fields:
-        "+thumbnail,+metadata,*images,*options.values,*variants.options,+variants.calculated_price,+variants.inventory_quantity",
+        "+thumbnail,+metadata,*images,*options.values,*variants.options,+variants.calculated_price,+variants.inventory_quantity,+variants.manage_inventory,+variants.allow_backorder",
     },
     { next: { tags: [`product-${handle}`] } }
   );

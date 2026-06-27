@@ -62,7 +62,7 @@ export function CheckoutCTA() {
           <Link href="/categories/accessories">
             <Button size="xl" className="group">
               <span>Shop Now</span>
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              {/* <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" /> */}
             </Button>
           </Link>
           <Link href="/about">
