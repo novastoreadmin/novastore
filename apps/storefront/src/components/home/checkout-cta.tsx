@@ -59,7 +59,7 @@ export function CheckoutCTA() {
         </p>
 
         <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="/categories/accessories">
+          <Link href="/products">
             <Button size="xl" className="group">
               <span>Shop Now</span>
               {/* <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" /> */}
