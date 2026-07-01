@@ -30,11 +30,16 @@ export default defineConfig({
     {
       resolve: "@medusajs/medusa/workflow-engine-inmemory",
     },
-    // Payment module with Stripe provider
+    // Payment module: system provider (always available) + Stripe (when keys set)
     {
       resolve: "@medusajs/medusa/payment",
       options: {
         providers: [
+          {
+            resolve: "./src/modules/payment-system",
+            id: "system",
+            options: {},
+          },
           {
             resolve: "@medusajs/medusa/payment-stripe",
             id: "stripe",

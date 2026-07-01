@@ -16,7 +16,14 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/store";
-import { getCart, getShippingOptions, addShippingMethod } from "@/lib/medusa";
+import {
+  getCart,
+  getShippingOptions,
+  addShippingMethod,
+  getPaymentProviders,
+  initiatePaymentSession,
+  completeCart,
+} from "@/lib/medusa";
 import { formatPrice } from "@/lib/utils";
 
 type Step = "information" | "shipping" | "payment";
@@ -87,7 +94,7 @@ function InputField({
 }
 
 export default function CheckoutPage() {
-  const { cartId } = useCartStore();
+  const { cartId, setCartId, setItemCount } = useCartStore();
   const [currentStep, setCurrentStep] = useState<Step>("information");
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
 
@@ -96,6 +103,10 @@ export default function CheckoutPage() {
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [selectedShipping, setSelectedShipping] = useState<string | null>(null);
   const [updatingShipping, setUpdatingShipping] = useState(false);
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [orderError, setOrderError] = useState<string | null>(null);
 
   const currency = cart?.currency_code;
   const items = cart?.items ?? [];
@@ -153,10 +164,73 @@ export default function CheckoutPage() {
     }
   }
 
+  async function placeOrder() {
+    if (!cartId || !cart) return;
+    setPlacingOrder(true);
+    setOrderError(null);
+    try {
+      // Find a usable payment provider for this cart's region.
+      const regionId = (cart as Cart & { region_id?: string }).region_id;
+      const providers = regionId ? await getPaymentProviders(regionId) : [];
+      // Prefer the system provider (no Stripe keys needed); fall back to whatever else is available.
+      const providerId =
+        providers.find((p) => p.id === "pp_system_system")?.id ?? providers[0]?.id;
+      if (!providerId) throw new Error("No payment provider available. Check backend config.");
+
+      // Initialize the payment session (system provider authorizes immediately).
+      await initiatePaymentSession(cartId, providerId);
+
+      // Complete the cart — on success this returns { type: "order", order: {...} }.
+      const result = await completeCart(cartId);
+      if (result.type === "order") {
+        setOrderId(result.order.id);
+        setOrderPlaced(true);
+        setCartId(null);
+        setItemCount(0);
+      } else {
+        throw new Error("Order could not be completed. Please try again.");
+      }
+    } catch (err: unknown) {
+      setOrderError(err instanceof Error ? err.message : "Failed to place order.");
+    } finally {
+      setPlacingOrder(false);
+    }
+  }
+
   const subtotal = items.reduce((sum, item) => sum + lineTotal(item), 0);
   const shippingTotal =
     shippingOptions.find((o) => o.id === selectedShipping)?.amount ?? 0;
   const total = subtotal + shippingTotal;
+
+  /* ---- Order confirmed ---- */
+  if (orderPlaced) {
+    return (
+      <div className="min-h-screen bg-bg pt-24 pb-16 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col items-center text-center px-6 max-w-sm"
+        >
+          <div className="w-16 h-16 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-6">
+            <Check className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight mb-3">Order placed!</h1>
+          <p className="text-sm text-text-muted mb-2">
+            Thank you for your purchase. We will process your order shortly.
+          </p>
+          {orderId && (
+            <p className="text-xs text-text-muted font-mono mt-1">
+              Order ID: {orderId.slice(0, 18)}…
+            </p>
+          )}
+          <Link href="/" className="mt-8">
+            <Button size="lg">Continue Shopping</Button>
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
 
   /* ---- Empty / missing cart ---- */
   if (!loading && items.length === 0) {
@@ -413,10 +487,21 @@ export default function CheckoutPage() {
               )}
 
               {currentStep === "payment" ? (
-                <Button size="lg" className="group">
-                  <Lock className="mr-2 w-3.5 h-3.5" />
-                  <span>Place Order</span>
-                </Button>
+                <div className="flex flex-col items-end gap-2">
+                  {orderError && (
+                    <p className="text-xs text-red-400 max-w-xs text-right">{orderError}</p>
+                  )}
+                  <Button
+                    size="lg"
+                    onClick={placeOrder}
+                    isLoading={placingOrder}
+                    disabled={placingOrder}
+                    className="group"
+                  >
+                    <Lock className="mr-2 w-3.5 h-3.5" />
+                    <span>Place Order</span>
+                  </Button>
+                </div>
               ) : (
                 <Button
                   size="lg"

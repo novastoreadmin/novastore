@@ -114,7 +114,7 @@ export default async function seed({ container }: ExecArgs) {
           name: "Ukraine",
           currency_code: STORE_CURRENCY,
           countries: ["ua"],
-          payment_providers: ["pp_stripe_stripe"],
+          payment_providers: ["pp_system_system", "pp_stripe_stripe"],
         },
       ],
     },
@@ -125,8 +125,9 @@ export default async function seed({ container }: ExecArgs) {
   // ─────────────────────────────────────────────────
   // 5. Shipping Options
   // ─────────────────────────────────────────────────
+  const shippingProfileId = (await fulfillmentModule.listShippingProfiles())[0]?.id
+
   if (manualProvider) {
-    const shippingProfileId = (await fulfillmentModule.listShippingProfiles())[0]?.id
     await createShippingOptionsWorkflow(container).run({
       input: [
         {
@@ -136,7 +137,7 @@ export default async function seed({ container }: ExecArgs) {
           shipping_profile_id: shippingProfileId,
           provider_id: manualProvider.id,
           type: { label: "Standard", description: "3-5 business days", code: "standard" },
-          prices: [{ region_id: region.id, currency_code: STORE_CURRENCY, amount: 6000 }],
+          prices: [{ region_id: region.id, currency_code: STORE_CURRENCY, amount: 60 }],
         },
         {
           name: "NOVA Express Shipping",
@@ -145,7 +146,7 @@ export default async function seed({ container }: ExecArgs) {
           shipping_profile_id: shippingProfileId,
           provider_id: manualProvider.id,
           type: { label: "Express", description: "1-2 business days", code: "express" },
-          prices: [{ region_id: region.id, currency_code: STORE_CURRENCY, amount: 12000 }],
+          prices: [{ region_id: region.id, currency_code: STORE_CURRENCY, amount: 120 }],
         },
       ],
     })
@@ -205,11 +206,22 @@ export default async function seed({ container }: ExecArgs) {
   logger.info(`Created ${productResult.length} products`)
 
   // ─────────────────────────────────────────────────
-  // 8. Link products to sales channel
+  // 8. Link products to sales channel + shipping profile
   // ─────────────────────────────────────────────────
   await linkProductsToSalesChannelWorkflow(container).run({
     input: { id: salesChannel.id, add: productResult.map((p) => p.id) },
   })
+
+  // Every product must be linked to a shipping profile or cart completion fails
+  // with "shipping profiles not satisfied". Use the same default profile the
+  // shipping options are attached to.
+  await remoteLink.create(
+    productResult.map((p) => ({
+      [Modules.PRODUCT]: { product_id: p.id },
+      [Modules.FULFILLMENT]: { shipping_profile_id: shippingProfileId },
+    }))
+  )
+  logger.info(`Linked ${productResult.length} products to default shipping profile`)
 
   // ─────────────────────────────────────────────────
   // 8b. Publishable API key — the storefront authenticates with this and it

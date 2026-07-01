@@ -162,3 +162,26 @@ export async function addShippingMethod(cartId: string, optionId: string) {
   });
   return cart;
 }
+
+export async function getPaymentProviders(regionId: string) {
+  const { payment_providers } = await sdk.store.payment.listPaymentProviders({
+    region_id: regionId,
+  });
+  return payment_providers ?? [];
+}
+
+export async function initiatePaymentSession(cartId: string, providerId: string) {
+  // Retrieve cart with payment_collection so the SDK can find the collection id.
+  const { cart } = await sdk.store.cart.retrieve(cartId, {
+    fields: "+payment_collection",
+  });
+  const result = await sdk.store.payment.initiatePaymentSession(
+    cart as Parameters<typeof sdk.store.payment.initiatePaymentSession>[0],
+    { provider_id: providerId }
+  );
+  return result;
+}
+
+export async function completeCart(cartId: string) {
+  return sdk.store.cart.complete(cartId);
+}

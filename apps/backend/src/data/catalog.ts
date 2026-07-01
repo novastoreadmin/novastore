@@ -27,11 +27,11 @@ export const STORE_CURRENCY = "uah"
 export const UAH_PER_USD = 41
 
 /**
- * Convert a USD amount in cents to the store currency's minor units.
- * The storefront divides displayed amounts by 100, so prices are stored in
- * minor units (kopiykas for UAH), matching that convention.
+ * Convert a USD amount in cents to whole UAH.
+ * Medusa admin displays stored amounts as-is for UAH (no /100 division),
+ * so we store whole hryvnias to keep admin and storefront consistent.
  */
-export const toStoreMinor = (usdCents: number) => Math.round(usdCents * UAH_PER_USD)
+export const toStoreMinor = (usdCents: number) => Math.round((usdCents / 100) * UAH_PER_USD)
 
 export type Spec = { label: string; value: string }
 export type Feature = { title: string; description: string }

@@ -15,7 +15,7 @@ export function formatPrice(amount: number, currencyCode = DEFAULT_CURRENCY) {
     currency: currencyCode,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount / 100);
+  }).format(amount);
 }
 
 export function formatPriceCents(amount: number, currencyCode = DEFAULT_CURRENCY) {
@@ -23,7 +23,7 @@ export function formatPriceCents(amount: number, currencyCode = DEFAULT_CURRENCY
     style: "currency",
     currency: currencyCode,
     minimumFractionDigits: 2,
-  }).format(amount / 100);
+  }).format(amount);
 }
 
 export function slugify(text: string) {
