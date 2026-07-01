@@ -1,0 +1,61 @@
+/**
+ * Pure, dependency-injected helpers extracted from `medusa-config.ts`.
+ *
+ * These functions read `env`/`isProduction` from their arguments rather than
+ * from `process.env` directly so they can be unit tested without env-mocking
+ * gymnastics. Behavior must stay identical to what was previously inlined in
+ * `medusa-config.ts` — this is a pure refactor, not a logic change.
+ */
+
+// Fail closed in production: a missing secret must never silently fall back
+// to a well-known placeholder value. Dev keeps the convenience fallback.
+export function requiredSecret(
+  name: string,
+  devFallback: string,
+  env: NodeJS.ProcessEnv,
+  isProduction: boolean
+): string {
+  const value = env[name]
+  if (value) return value
+  if (isProduction) {
+    throw new Error(`${name} must be set via environment variable in production.`)
+  }
+  return devFallback
+}
+
+// The system/manual payment provider auto-authorizes without collecting real
+// payment. It must never be reachable in production unless explicitly opted
+// into (e.g. a staging environment), so orders can't silently ship unpaid.
+export function resolveAllowTestPayments(env: NodeJS.ProcessEnv, isProduction: boolean): boolean {
+  return env.ALLOW_TEST_PAYMENTS ? env.ALLOW_TEST_PAYMENTS === "true" : !isProduction
+}
+
+export function isStripeConfigured(env: NodeJS.ProcessEnv): boolean {
+  return !!env.STRIPE_API_KEY && !env.STRIPE_API_KEY.includes("placeholder")
+}
+
+export function resolvePaymentProviders(
+  env: NodeJS.ProcessEnv,
+  isProduction: boolean
+): Array<Record<string, unknown>> {
+  const allowTestPayments = resolveAllowTestPayments(env, isProduction)
+  const stripeConfigured = isStripeConfigured(env)
+
+  return [
+    ...(allowTestPayments
+      ? [{ resolve: "./src/modules/payment-system", id: "system", options: {} }]
+      : []),
+    ...(stripeConfigured
+      ? [
+          {
+            resolve: "@medusajs/medusa/payment-stripe",
+            id: "stripe",
+            options: {
+              apiKey: env.STRIPE_API_KEY,
+              webhookSecret: env.STRIPE_WEBHOOK_SECRET || "",
+            },
+          },
+        ]
+      : []),
+  ]
+}

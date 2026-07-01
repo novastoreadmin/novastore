@@ -12,7 +12,11 @@
     "dev:storefront": "npx turbo run dev --filter=storefront",
     "dev:backend": "npx turbo run dev --filter=backend",
     "build:storefront": "npx turbo run build --filter=storefront",
-    "build:backend": "npx turbo run build --filter=backend"
+    "build:backend": "npx turbo run build --filter=backend",
+    "test:unit": "npx turbo run test:unit",
+    "test:integration": "npx turbo run test:integration",
+    "test:e2e": "npx turbo run test:e2e",
+    "test": "npm run test:unit && npm run test:integration && npm run test:e2e"
   },
   "devDependencies": {
     "turbo": "^2.10.0"
