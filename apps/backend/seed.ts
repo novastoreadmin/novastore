@@ -13,12 +13,13 @@ import {
   createProductsWorkflow,
   createSalesChannelsWorkflow,
   createRegionsWorkflow,
+  linkSalesChannelsToApiKeyWorkflow,
   createShippingOptionsWorkflow,
   createStockLocationsWorkflow,
   linkSalesChannelsToStockLocationWorkflow,
   linkProductsToSalesChannelWorkflow,
 } from "@medusajs/medusa/core-flows"
-import { CATEGORIES, PRODUCTS, resolveImages } from "./src/data/catalog"
+import { CATEGORIES, PRODUCTS, resolveImages, STORE_CURRENCY, toStoreMinor } from "./src/data/catalog"
 
 export default async function seed({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
@@ -52,11 +53,10 @@ export default async function seed({ container }: ExecArgs) {
         {
           name: "NOVA Warehouse",
           address: {
-            address_1: "100 Innovation Drive",
-            city: "San Francisco",
-            country_code: "us",
-            postal_code: "94105",
-            province: "CA",
+            address_1: "12 Khreshchatyk St",
+            city: "Kyiv",
+            country_code: "ua",
+            postal_code: "01001",
           },
         },
       ],
@@ -82,8 +82,8 @@ export default async function seed({ container }: ExecArgs) {
     type: "shipping",
     service_zones: [
       {
-        name: "United States",
-        geo_zones: [{ type: "country", country_code: "us" }],
+        name: "Ukraine",
+        geo_zones: [{ type: "country", country_code: "ua" }],
       },
     ],
   })
@@ -111,9 +111,9 @@ export default async function seed({ container }: ExecArgs) {
     input: {
       regions: [
         {
-          name: "United States",
-          currency_code: "usd",
-          countries: ["us"],
+          name: "Ukraine",
+          currency_code: STORE_CURRENCY,
+          countries: ["ua"],
           payment_providers: ["pp_stripe_stripe"],
         },
       ],
@@ -135,8 +135,8 @@ export default async function seed({ container }: ExecArgs) {
           service_zone_id: serviceZone.id,
           shipping_profile_id: shippingProfileId,
           provider_id: manualProvider.id,
-          type: { label: "Standard", description: "5-7 business days", code: "standard" },
-          prices: [{ region_id: region.id, currency_code: "usd", amount: 999 }],
+          type: { label: "Standard", description: "3-5 business days", code: "standard" },
+          prices: [{ region_id: region.id, currency_code: STORE_CURRENCY, amount: 6000 }],
         },
         {
           name: "NOVA Express Shipping",
@@ -144,8 +144,8 @@ export default async function seed({ container }: ExecArgs) {
           service_zone_id: serviceZone.id,
           shipping_profile_id: shippingProfileId,
           provider_id: manualProvider.id,
-          type: { label: "Express", description: "2-3 business days", code: "express" },
-          prices: [{ region_id: region.id, currency_code: "usd", amount: 1999 }],
+          type: { label: "Express", description: "1-2 business days", code: "express" },
+          prices: [{ region_id: region.id, currency_code: STORE_CURRENCY, amount: 12000 }],
         },
       ],
     })
@@ -194,7 +194,7 @@ export default async function seed({ container }: ExecArgs) {
         sku: v.sku,
         manage_inventory: true,
         options: hasOptions ? v.options! : { Default: "Default" },
-        prices: [{ amount: p.priceCents, currency_code: "usd" }],
+        prices: [{ amount: toStoreMinor(p.priceCents), currency_code: STORE_CURRENCY }],
       })),
     }
   })
@@ -210,6 +210,35 @@ export default async function seed({ container }: ExecArgs) {
   await linkProductsToSalesChannelWorkflow(container).run({
     input: { id: salesChannel.id, add: productResult.map((p) => p.id) },
   })
+
+  // ─────────────────────────────────────────────────
+  // 8b. Publishable API key — the storefront authenticates with this and it
+  //     scopes requests to a sales channel. Medusa bootstraps a default key on
+  //     a fresh DB linked to the "Default Sales Channel"; re-point it to this
+  //     one (exactly one channel, or cart creation needs an explicit id) and
+  //     print the token to copy into apps/storefront/.env.local.
+  // ─────────────────────────────────────────────────
+  const apiKeyModule = container.resolve(Modules.API_KEY)
+  const [publishableKey] = await apiKeyModule.listApiKeys(
+    { type: "publishable" },
+    { take: 1 }
+  )
+  if (publishableKey) {
+    const allChannels = await container
+      .resolve(Modules.SALES_CHANNEL)
+      .listSalesChannels({}, {})
+    await linkSalesChannelsToApiKeyWorkflow(container).run({
+      input: {
+        id: publishableKey.id,
+        add: [salesChannel.id],
+        remove: allChannels
+          .filter((c) => c.id !== salesChannel.id)
+          .map((c) => c.id),
+      },
+    })
+    logger.info(`Publishable key linked to "${salesChannel.name}"`)
+    logger.info(`>>> Set NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=${publishableKey.token}`)
+  }
 
   // ─────────────────────────────────────────────────
   // 9. Inventory

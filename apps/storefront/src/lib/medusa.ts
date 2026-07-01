@@ -10,17 +10,35 @@ export const sdk = new Medusa({
   debug: process.env.NODE_ENV === "development",
 });
 
+// The store's default region. Prices/totals only resolve inside a region's
+// currency context, so products and carts must be scoped to one.
+const DEFAULT_COUNTRY = "ua";
+
 // calculated_price requires a pricing context (region). Fetch the store's region once.
-let cachedRegionId: string | undefined;
-async function getRegionId(): Promise<string | undefined> {
-  if (cachedRegionId) return cachedRegionId;
+let cachedRegion: { id: string; currency_code: string } | undefined;
+
+export async function getRegion() {
+  if (cachedRegion) return cachedRegion;
   try {
-    const { regions } = await sdk.store.region.list();
-    cachedRegionId = regions?.[0]?.id;
+    const { regions } = await sdk.store.region.list({
+      fields: "id,currency_code,countries.iso_2",
+    });
+    // Prefer the Ukrainian region; fall back to the first configured one.
+    const region =
+      regions?.find((r) =>
+        r.countries?.some((c) => c.iso_2 === DEFAULT_COUNTRY)
+      ) ?? regions?.[0];
+    cachedRegion = region
+      ? { id: region.id, currency_code: region.currency_code }
+      : undefined;
   } catch {
-    cachedRegionId = undefined;
+    cachedRegion = undefined;
   }
-  return cachedRegionId;
+  return cachedRegion;
+}
+
+async function getRegionId(): Promise<string | undefined> {
+  return (await getRegion())?.id;
 }
 
 export async function getProducts(params?: {
@@ -75,13 +93,32 @@ export async function getCollections() {
   return collections;
 }
 
+// NOTE: per-line computed totals (item.total/subtotal) are NOT returned by the
+// store cart endpoints by default, and requesting them via `fields` is rejected
+// on the POST (mutation) routes. So the UI never relies on item.total — it
+// computes line totals from unit_price * quantity, which are always present.
+
 export async function getCart(cartId: string) {
   const { cart } = await sdk.store.cart.retrieve(cartId);
+  // Self-heal carts created without a region (e.g. saved in the browser before
+  // the region fix): their line items have no resolved price. Assigning the
+  // region re-prices existing items.
+  if (cart && !cart.region_id) {
+    const region_id = await getRegionId();
+    if (region_id) {
+      const { cart: repriced } = await sdk.store.cart.update(cartId, {
+        region_id,
+      });
+      return repriced;
+    }
+  }
   return cart;
 }
 
 export async function createCart() {
-  const { cart } = await sdk.store.cart.create({});
+  // A cart needs a region so it has a currency context; without it Medusa
+  // can't resolve line-item prices and unit_price comes back null.
+  const { cart } = await sdk.store.cart.create({ region_id: await getRegionId() });
   return cart;
 }
 
@@ -109,5 +146,19 @@ export async function removeCartItem(cartId: string, lineItemId: string) {
     cartId,
     lineItemId
   );
+  return cart;
+}
+
+export async function getShippingOptions(cartId: string) {
+  const { shipping_options } = await sdk.store.fulfillment.listCartOptions({
+    cart_id: cartId,
+  });
+  return shipping_options ?? [];
+}
+
+export async function addShippingMethod(cartId: string, optionId: string) {
+  const { cart } = await sdk.store.cart.addShippingMethod(cartId, {
+    option_id: optionId,
+  });
   return cart;
 }

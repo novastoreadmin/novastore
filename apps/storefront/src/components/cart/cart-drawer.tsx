@@ -13,24 +13,21 @@ interface CartItem {
   id: string;
   title: string;
   quantity: number;
-  variant: {
-    title: string;
-    calculated_price?: {
-      calculated_amount: number;
-      currency_code: string;
-    };
-  };
-  product: {
-    title: string;
-    thumbnail: string | null;
-  };
+  // Flat fields the store cart endpoints always return.
+  product_title?: string;
+  variant_title?: string;
+  thumbnail?: string | null;
   unit_price: number;
-  total: number;
 }
 
+// item.total is not returned by default, so derive the line total from
+// unit_price * quantity (both always present).
+const lineTotal = (item: CartItem) => (item.unit_price ?? 0) * item.quantity;
+
 export function CartDrawer() {
-  const { isOpen, setIsOpen, cartId, setItemCount } = useCartStore();
+  const { isOpen, setIsOpen, cartId, setCartId, setItemCount } = useCartStore();
   const [items, setItems] = useState<CartItem[]>([]);
+  const [currency, setCurrency] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
 
@@ -55,8 +52,16 @@ export function CartDrawer() {
     try {
       const cart = await getCart(cartId);
       setItems((cart.items as CartItem[]) ?? []);
+      setCurrency(cart.currency_code);
       setItemCount(cart.items?.length ?? 0);
-    } catch {
+    } catch (err: unknown) {
+      // Stale cart id — clear it so the next add-to-cart starts fresh.
+      const status = (err as { status?: number; statusCode?: number })?.status
+        ?? (err as { status?: number; statusCode?: number })?.statusCode;
+      const msg = String((err as Error)?.message ?? "").toLowerCase();
+      if (status === 404 || msg.includes("not found") || msg.includes("404")) {
+        setCartId(null);
+      }
       setItems([]);
     } finally {
       setLoading(false);
@@ -69,6 +74,7 @@ export function CartDrawer() {
     try {
       const cart = await updateCartItem(cartId, lineItemId, quantity);
       setItems((cart.items as CartItem[]) ?? []);
+      setCurrency(cart.currency_code);
       setItemCount(cart.items?.length ?? 0);
     } catch {
       // silently fail
@@ -82,8 +88,10 @@ export function CartDrawer() {
     setUpdating(lineItemId);
     try {
       const cart = await removeCartItem(cartId, lineItemId);
-      setItems(((cart as { items?: CartItem[] }).items as CartItem[]) ?? []);
-      setItemCount(((cart as { items?: CartItem[] }).items)?.length ?? 0);
+      const typed = cart as { items?: CartItem[]; currency_code?: string };
+      setItems((typed.items as CartItem[]) ?? []);
+      setCurrency(typed.currency_code);
+      setItemCount(typed.items?.length ?? 0);
     } catch {
       // silently fail
     } finally {
@@ -91,7 +99,7 @@ export function CartDrawer() {
     }
   }
 
-  const subtotal = items.reduce((sum, item) => sum + (item.total || 0), 0);
+  const subtotal = items.reduce((sum, item) => sum + lineTotal(item), 0);
 
   return (
     <AnimatePresence>
@@ -169,10 +177,10 @@ export function CartDrawer() {
 
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-text-primary truncate">
-                          {item.product?.title ?? item.title}
+                          {item.product_title ?? item.title}
                         </p>
                         <p className="text-xs text-text-muted mt-0.5">
-                          {item.variant?.title}
+                          {item.variant_title}
                         </p>
 
                         <div className="flex items-center justify-between mt-3">
@@ -204,7 +212,7 @@ export function CartDrawer() {
 
                           <div className="flex items-center gap-3">
                             <span className="text-sm font-medium">
-                              {formatPrice(item.total)}
+                              {formatPrice(lineTotal(item), currency)}
                             </span>
                             <button
                               onClick={() => handleRemove(item.id)}
@@ -228,7 +236,7 @@ export function CartDrawer() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-text-secondary">Subtotal</span>
                   <span className="text-lg font-semibold">
-                    {formatPrice(subtotal)}
+                    {formatPrice(subtotal, currency)}
                   </span>
                 </div>
                 <p className="text-xs text-text-muted">

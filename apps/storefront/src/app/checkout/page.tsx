@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -11,9 +11,13 @@ import {
   Truck,
   Check,
   Lock,
+  ShoppingBag,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useCartStore } from "@/lib/store";
+import { getCart, getShippingOptions, addShippingMethod } from "@/lib/medusa";
+import { formatPrice } from "@/lib/utils";
 
 type Step = "information" | "shipping" | "payment";
 
@@ -22,6 +26,36 @@ const steps: { id: Step; label: string; icon: LucideIcon }[] = [
   { id: "shipping", label: "Shipping", icon: Truck },
   { id: "payment", label: "Payment", icon: CreditCard },
 ];
+
+/* -------------------------------------------------------------------------- */
+/*  Types (subset of Medusa's store cart / shipping option shapes)            */
+/* -------------------------------------------------------------------------- */
+
+interface CartLineItem {
+  id: string;
+  title: string;
+  quantity: number;
+  unit_price: number;
+  product_title?: string;
+  variant_title?: string;
+  thumbnail?: string | null;
+}
+
+interface Cart {
+  id: string;
+  currency_code: string;
+  items?: CartLineItem[];
+}
+
+interface ShippingOption {
+  id: string;
+  name: string;
+  amount: number;
+  type?: { description?: string };
+}
+
+// Line totals aren't returned by default; derive from unit_price * quantity.
+const lineTotal = (item: CartLineItem) => (item.unit_price ?? 0) * item.quantity;
 
 function InputField({
   label,
@@ -53,8 +87,59 @@ function InputField({
 }
 
 export default function CheckoutPage() {
+  const { cartId } = useCartStore();
   const [currentStep, setCurrentStep] = useState<Step>("information");
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
+
+  const [cart, setCart] = useState<Cart | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
+  const [selectedShipping, setSelectedShipping] = useState<string | null>(null);
+  const [updatingShipping, setUpdatingShipping] = useState(false);
+
+  const currency = cart?.currency_code;
+  const items = cart?.items ?? [];
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      if (!cartId) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const [fetchedCart, options] = await Promise.all([
+          getCart(cartId),
+          getShippingOptions(cartId),
+        ]);
+        if (!active) return;
+        setCart(fetchedCart as Cart);
+        setShippingOptions(options as ShippingOption[]);
+      } catch {
+        if (active) setCart(null);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      active = false;
+    };
+  }, [cartId]);
+
+  async function selectShipping(optionId: string) {
+    if (!cartId || updatingShipping) return;
+    setSelectedShipping(optionId);
+    setUpdatingShipping(true);
+    try {
+      const updated = await addShippingMethod(cartId, optionId);
+      setCart(updated as Cart);
+    } catch {
+      // keep the optimistic selection; totals stay on the previous cart
+    } finally {
+      setUpdatingShipping(false);
+    }
+  }
 
   function goNext() {
     if (currentIndex < steps.length - 1) {
@@ -66,6 +151,29 @@ export default function CheckoutPage() {
     if (currentIndex > 0) {
       setCurrentStep(steps[currentIndex - 1].id);
     }
+  }
+
+  const subtotal = items.reduce((sum, item) => sum + lineTotal(item), 0);
+  const shippingTotal =
+    shippingOptions.find((o) => o.id === selectedShipping)?.amount ?? 0;
+  const total = subtotal + shippingTotal;
+
+  /* ---- Empty / missing cart ---- */
+  if (!loading && items.length === 0) {
+    return (
+      <div className="min-h-screen bg-bg pt-24 pb-16 flex items-center justify-center">
+        <div className="flex flex-col items-center text-center px-6">
+          <ShoppingBag className="w-12 h-12 text-text-muted mb-4" />
+          <h1 className="text-2xl font-bold tracking-tight">Your cart is empty</h1>
+          <p className="text-sm text-text-muted mt-2 max-w-sm">
+            Add a few products before heading to checkout.
+          </p>
+          <Link href="/" className="mt-6">
+            <Button size="lg">Continue Shopping</Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -143,35 +251,35 @@ export default function CheckoutPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <InputField
                       label="First Name"
-                      placeholder="John"
+                      placeholder="Taras"
                       required
                     />
                     <InputField
                       label="Last Name"
-                      placeholder="Doe"
+                      placeholder="Shevchenko"
                       required
                     />
                   </div>
 
                   <InputField
                     label="Address"
-                    placeholder="123 Main St"
+                    placeholder="vul. Khreshchatyk, 1"
                     required
                   />
                   <InputField
                     label="Apartment, suite, etc."
-                    placeholder="Apt 4B"
+                    placeholder="kv. 12"
                   />
 
                   <div className="grid grid-cols-2 gap-4">
                     <InputField
                       label="City"
-                      placeholder="New York"
+                      placeholder="Kyiv"
                       required
                     />
                     <InputField
                       label="ZIP Code"
-                      placeholder="10001"
+                      placeholder="01001"
                       required
                     />
                   </div>
@@ -179,7 +287,7 @@ export default function CheckoutPage() {
                   <InputField
                     label="Phone"
                     type="tel"
-                    placeholder="+1 (555) 123-4567"
+                    placeholder="+380 (44) 123-45-67"
                   />
                 </div>
               </div>
@@ -190,55 +298,55 @@ export default function CheckoutPage() {
                 <h2 className="text-2xl font-bold tracking-tight mb-8">
                   Shipping Method
                 </h2>
-                <div className="space-y-3">
-                  {[
-                    {
-                      name: "Standard Shipping",
-                      time: "5-7 business days",
-                      price: "$9.99",
-                    },
-                    {
-                      name: "Express Shipping",
-                      time: "2-3 business days",
-                      price: "$19.99",
-                    },
-                    {
-                      name: "Next Day Delivery",
-                      time: "1 business day",
-                      price: "$29.99",
-                    },
-                  ].map((option, i) => (
-                    <label
-                      key={option.name}
-                      className={`flex items-center justify-between p-5 rounded-xl border cursor-pointer transition-all duration-300 ${
-                        i === 0
-                          ? "border-white/20 bg-accent-subtle"
-                          : "border-border hover:border-white/10"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                            i === 0
-                              ? "border-white"
-                              : "border-border"
+                {shippingOptions.length === 0 ? (
+                  <p className="text-sm text-text-muted">
+                    No shipping options are available for this cart.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {shippingOptions.map((option) => {
+                      const isSelected = selectedShipping === option.id;
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => selectShipping(option.id)}
+                          disabled={updatingShipping}
+                          className={`w-full flex items-center justify-between p-5 rounded-xl border text-left cursor-pointer transition-all duration-300 disabled:opacity-60 ${
+                            isSelected
+                              ? "border-white/20 bg-accent-subtle"
+                              : "border-border hover:border-white/10"
                           }`}
                         >
-                          {i === 0 && (
-                            <div className="w-2 h-2 rounded-full bg-white" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{option.name}</p>
-                          <p className="text-xs text-text-muted mt-0.5">
-                            {option.time}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="text-sm font-medium">{option.price}</span>
-                    </label>
-                  ))}
-                </div>
+                          <div className="flex items-center gap-4">
+                            <div
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                isSelected ? "border-white" : "border-border"
+                              }`}
+                            >
+                              {isSelected && (
+                                <div className="w-2 h-2 rounded-full bg-white" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">
+                                {option.name}
+                              </p>
+                              {option.type?.description && (
+                                <p className="text-xs text-text-muted mt-0.5">
+                                  {option.type.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-sm font-medium">
+                            {formatPrice(option.amount, currency)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -272,7 +380,7 @@ export default function CheckoutPage() {
                     </div>
                     <InputField
                       label="Name on Card"
-                      placeholder="John Doe"
+                      placeholder="Taras Shevchenko"
                       required
                     />
                   </div>
@@ -310,7 +418,16 @@ export default function CheckoutPage() {
                   <span>Place Order</span>
                 </Button>
               ) : (
-                <Button size="lg" onClick={goNext} className="group">
+                <Button
+                  size="lg"
+                  onClick={goNext}
+                  disabled={
+                    currentStep === "shipping" &&
+                    shippingOptions.length > 0 &&
+                    !selectedShipping
+                  }
+                  className="group"
+                >
                   <span>Continue</span>
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
@@ -326,34 +443,54 @@ export default function CheckoutPage() {
               </h3>
 
               <div className="space-y-4 mb-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-xl bg-bg-elevated border border-border flex items-center justify-center flex-shrink-0">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-graphite to-charcoal" />
+                {loading ? (
+                  <div className="flex items-center justify-center h-20">
+                    <div className="w-5 h-5 border-2 border-border border-t-white rounded-full animate-spin" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">NOVA Pro 16</p>
-                    <p className="text-xs text-text-muted">Titanium · 1TB</p>
-                  </div>
-                  <span className="text-sm font-medium">$2,499</span>
-                </div>
+                ) : (
+                  items.map((item) => (
+                    <div key={item.id} className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-xl bg-bg-elevated border border-border flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-graphite to-charcoal" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {item.product_title ?? item.title}
+                        </p>
+                        <p className="text-xs text-text-muted">
+                          {[item.variant_title, `Qty ${item.quantity}`]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      </div>
+                      <span className="text-sm font-medium">
+                        {formatPrice(lineTotal(item), currency)}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
 
               <div className="space-y-3 border-t border-border pt-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-text-secondary">Subtotal</span>
-                  <span>$2,499</span>
+                  <span>{formatPrice(subtotal, currency)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-text-secondary">Shipping</span>
-                  <span className="text-text-muted">Calculated next</span>
+                  <span className={selectedShipping ? "" : "text-text-muted"}>
+                    {selectedShipping
+                      ? formatPrice(shippingTotal, currency)
+                      : "Calculated next"}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-text-secondary">Tax</span>
-                  <span className="text-text-muted">Calculated next</span>
+                  <span className="text-text-muted">Included</span>
                 </div>
                 <div className="flex justify-between text-base font-semibold pt-3 border-t border-border">
                   <span>Total</span>
-                  <span>$2,499</span>
+                  <span>{formatPrice(total, currency)}</span>
                 </div>
               </div>
             </div>

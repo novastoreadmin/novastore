@@ -5,7 +5,7 @@ interface CartState {
   cartId: string | null;
   isOpen: boolean;
   itemCount: number;
-  setCartId: (id: string) => void;
+  setCartId: (id: string | null) => void;
   setIsOpen: (open: boolean) => void;
   toggle: () => void;
   setItemCount: (count: number) => void;

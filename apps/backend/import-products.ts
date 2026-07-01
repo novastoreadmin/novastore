@@ -17,7 +17,7 @@ import {
   deleteProductsWorkflow,
   linkProductsToSalesChannelWorkflow,
 } from "@medusajs/medusa/core-flows"
-import { CATEGORIES, PRODUCTS, resolveImages } from "./src/data/catalog"
+import { CATEGORIES, PRODUCTS, resolveImages, STORE_CURRENCY, toStoreMinor } from "./src/data/catalog"
 
 export default async function importProducts({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
@@ -90,7 +90,7 @@ export default async function importProducts({ container }: ExecArgs) {
         sku: v.sku,
         manage_inventory: true,
         options: hasOptions ? v.options! : { Default: "Default" },
-        prices: [{ amount: p.priceCents, currency_code: "usd" }],
+        prices: [{ amount: toStoreMinor(p.priceCents), currency_code: STORE_CURRENCY }],
       })),
     }
   })

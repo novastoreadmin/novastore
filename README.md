@@ -149,15 +149,3 @@ npm run dev
 | Charcoal | `#2d2d2d` |
 | Section Spacing | `12rem` desktop / `6rem` mobile |
 
-## Products (Seed Data)
-
-| Product | Base Price | Variants |
-|---------|-----------|----------|
-| NOVA Pro 16 | $2,499 | 4 (storage + color) |
-| NOVA Air 14 | $1,499 | 3 |
-| NOVA Gaming Elite | $3,299 | 3 |
-| NOVA Phone Ultra | $1,199 | 3 |
-| NOVA Tab Pro | $899 | 3 |
-| NOVA Display 32 | $1,599 | 3 |
-| NOVA Pods Pro | $349 | 3 |
-| NOVA Charge Station | $149 | 3 |

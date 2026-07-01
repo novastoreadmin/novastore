@@ -241,7 +241,24 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
         setCartId(currentCartId);
       }
 
-      const cart = await addToCart(currentCartId, selectedVariant.id, quantity);
+      let cart;
+      try {
+        cart = await addToCart(currentCartId, selectedVariant.id, quantity);
+      } catch (cartErr: unknown) {
+        // Stale cart id (e.g. after a DB reset) — cart no longer exists in DB.
+        // Create a fresh one and retry once.
+        const status = (cartErr as { status?: number; statusCode?: number })?.status
+          ?? (cartErr as { status?: number; statusCode?: number })?.statusCode;
+        const msg = String((cartErr as Error)?.message ?? "").toLowerCase();
+        if (status === 404 || msg.includes("not found") || msg.includes("404")) {
+          const newCart = await createCart();
+          currentCartId = newCart.id;
+          setCartId(currentCartId);
+          cart = await addToCart(currentCartId, selectedVariant.id, quantity);
+        } else {
+          throw cartErr;
+        }
+      }
       const totalItems = cart.items?.reduce(
         (sum: number, item: { quantity: number }) => sum + item.quantity,
         0

@@ -5,7 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatPrice(amount: number, currencyCode = "usd") {
+// The store sells in UAH by default; callers should pass the currency_code from
+// the cart/product data whenever it is available.
+export const DEFAULT_CURRENCY = "uah";
+
+export function formatPrice(amount: number, currencyCode = DEFAULT_CURRENCY) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currencyCode,
@@ -14,7 +18,7 @@ export function formatPrice(amount: number, currencyCode = "usd") {
   }).format(amount / 100);
 }
 
-export function formatPriceCents(amount: number, currencyCode = "usd") {
+export function formatPriceCents(amount: number, currencyCode = DEFAULT_CURRENCY) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currencyCode,

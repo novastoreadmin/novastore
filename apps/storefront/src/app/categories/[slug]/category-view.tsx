@@ -23,14 +23,7 @@ interface Product {
   }[];
 }
 
-const fallbackProducts = [
-  { id: "1", title: "NOVA Pro 16", handle: "nova-pro-16", price: 249900 },
-  { id: "2", title: "NOVA Air 14", handle: "nova-air-14", price: 179900 },
-  { id: "3", title: "NOVA Gaming Elite", handle: "nova-gaming-elite", price: 329900 },
-  { id: "4", title: "NOVA Phone Ultra", handle: "nova-phone-ultra", price: 119900 },
-  { id: "5", title: "NOVA Tab Pro", handle: "nova-tab-pro", price: 89900 },
-  { id: "6", title: "NOVA Display 32", handle: "nova-display-32", price: 159900 },
-];
+
 
 export function CategoryView({
   title,
@@ -65,7 +58,7 @@ export function CategoryView({
     return () => ctx.revert();
   }, []);
 
-  const displayProducts = products.length > 0 ? products : fallbackProducts;
+  const displayProducts = products.length > 0 ? products : [];
 
   return (
     <div className="min-h-screen pt-32 pb-24">
@@ -104,12 +97,16 @@ export function CategoryView({
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
         >
           {displayProducts.map((product) => {
-            const price =
-              "variants" in product && product.variants?.[0]?.calculated_price
-                ? product.variants[0].calculated_price.calculated_amount
-                : "price" in product
-                  ? (product as { price: number }).price
-                  : 0;
+            const calculatedPrice =
+              "variants" in product
+                ? product.variants?.[0]?.calculated_price
+                : undefined;
+            const price = calculatedPrice
+              ? calculatedPrice.calculated_amount
+              : "price" in product
+                ? (product as { price: number }).price
+                : 0;
+            const currency = calculatedPrice?.currency_code;
 
             return (
               <Link
@@ -149,7 +146,7 @@ export function CategoryView({
                     <p className="mt-2 text-sm text-text-muted">
                       Starting at{" "}
                       <span className="text-text-secondary font-medium">
-                        {formatPrice(price)}
+                        {formatPrice(price, currency)}
                       </span>
                     </p>
                   </div>

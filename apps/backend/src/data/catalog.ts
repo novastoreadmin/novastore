@@ -6,13 +6,32 @@
  * `scripts/download-product-images.sh` into `static/products/<handle>/` and are
  * served by the backend at `${MEDUSA_BACKEND_URL}/static/products/<handle>/<file>`.
  *
- * NOTE: Hagibis does not expose prices publicly, so the USD prices below are
- * reasonable estimates per product type — adjust as needed.
+ * NOTE: Hagibis does not expose prices publicly, so the `priceCents` values below
+ * are reasonable USD estimates per product type. The store sells in the Ukrainian
+ * region (UAH), so they are converted to hryvnia at seed/import time via
+ * `toStoreMinor()` — adjust the estimates or `UAH_PER_USD` as needed.
  */
 import fs from "fs"
 import path from "path"
 
 const BACKEND_URL = process.env.MEDUSA_BACKEND_URL || "http://localhost:9000"
+
+/** The store's default selling currency (ISO 4217, lowercase as Medusa expects). */
+export const STORE_CURRENCY = "uah"
+
+/**
+ * Hryvnia per US dollar. Used only to derive UAH list prices from the USD
+ * estimates in this catalog — set this to your real pricing or replace the
+ * per-product amounts outright.
+ */
+export const UAH_PER_USD = 41
+
+/**
+ * Convert a USD amount in cents to the store currency's minor units.
+ * The storefront divides displayed amounts by 100, so prices are stored in
+ * minor units (kopiykas for UAH), matching that convention.
+ */
+export const toStoreMinor = (usdCents: number) => Math.round(usdCents * UAH_PER_USD)
 
 export type Spec = { label: string; value: string }
 export type Feature = { title: string; description: string }
