@@ -92,9 +92,10 @@ export async function GET(
       offset,
     })
   } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch featured products",
-      error: error instanceof Error ? error.message : "Unknown error",
-    })
+    const logger = req.scope.resolve(ContainerRegistrationKeys.LOGGER)
+    logger.error(
+      `[NOVA] /store/custom failed: ${error instanceof Error ? error.message : error}`
+    )
+    res.status(500).json({ message: "Failed to fetch featured products" })
   }
 }

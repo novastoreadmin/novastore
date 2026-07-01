@@ -18,11 +18,25 @@ interface CartItem {
   variant_title?: string;
   thumbnail?: string | null;
   unit_price: number;
+  variant?: {
+    inventory_quantity?: number | null;
+    manage_inventory?: boolean;
+    allow_backorder?: boolean;
+  };
 }
 
 // item.total is not returned by default, so derive the line total from
 // unit_price * quantity (both always present).
 const lineTotal = (item: CartItem) => (item.unit_price ?? 0) * item.quantity;
+
+// Backordered / unmanaged / untracked variants have no meaningful cap.
+const maxQuantity = (item: CartItem) => {
+  const v = item.variant;
+  if (!v || v.allow_backorder || v.manage_inventory === false || v.inventory_quantity == null) {
+    return Infinity;
+  }
+  return v.inventory_quantity;
+};
 
 export function CartDrawer() {
   const { isOpen, setIsOpen, cartId, setCartId, setItemCount } = useCartStore();
@@ -30,6 +44,7 @@ export function CartDrawer() {
   const [currency, setCurrency] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && cartId) {
@@ -49,6 +64,7 @@ export function CartDrawer() {
   async function fetchCart() {
     if (!cartId) return;
     setLoading(true);
+    setError(null);
     try {
       const cart = await getCart(cartId);
       setItems((cart.items as CartItem[]) ?? []);
@@ -61,6 +77,8 @@ export function CartDrawer() {
       const msg = String((err as Error)?.message ?? "").toLowerCase();
       if (status === 404 || msg.includes("not found") || msg.includes("404")) {
         setCartId(null);
+      } else {
+        setError("Couldn't load your cart. Please try again.");
       }
       setItems([]);
     } finally {
@@ -71,13 +89,16 @@ export function CartDrawer() {
   async function handleUpdateQuantity(lineItemId: string, quantity: number) {
     if (!cartId || quantity < 1) return;
     setUpdating(lineItemId);
+    setError(null);
     try {
       const cart = await updateCartItem(cartId, lineItemId, quantity);
       setItems((cart.items as CartItem[]) ?? []);
       setCurrency(cart.currency_code);
       setItemCount(cart.items?.length ?? 0);
-    } catch {
-      // silently fail
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Couldn't update quantity. Please try again."
+      );
     } finally {
       setUpdating(null);
     }
@@ -86,14 +107,17 @@ export function CartDrawer() {
   async function handleRemove(lineItemId: string) {
     if (!cartId) return;
     setUpdating(lineItemId);
+    setError(null);
     try {
       const cart = await removeCartItem(cartId, lineItemId);
       const typed = cart as { items?: CartItem[]; currency_code?: string };
       setItems((typed.items as CartItem[]) ?? []);
       setCurrency(typed.currency_code);
       setItemCount(typed.items?.length ?? 0);
-    } catch {
-      // silently fail
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Couldn't remove item. Please try again."
+      );
     } finally {
       setUpdating(null);
     }
@@ -138,6 +162,11 @@ export function CartDrawer() {
 
             {/* Items */}
             <div className="flex-1 overflow-y-auto px-6 py-6">
+              {error && (
+                <div className="mb-4 px-4 py-3 rounded-xl bg-error/10 border border-error/20 text-xs text-error">
+                  {error}
+                </div>
+              )}
               {loading ? (
                 <div className="flex items-center justify-center h-40">
                   <div className="w-6 h-6 border-2 border-border border-t-white rounded-full animate-spin" />
@@ -203,7 +232,9 @@ export function CartDrawer() {
                               onClick={() =>
                                 handleUpdateQuantity(item.id, item.quantity + 1)
                               }
-                              disabled={updating === item.id}
+                              disabled={
+                                updating === item.id || item.quantity >= maxQuantity(item)
+                              }
                               className="w-7 h-7 rounded-lg border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:border-white/20 transition-all disabled:opacity-30"
                             >
                               <Plus className="w-3 h-3" />

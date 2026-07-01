@@ -12,7 +12,7 @@ export const sdk = new Medusa({
 
 // The store's default region. Prices/totals only resolve inside a region's
 // currency context, so products and carts must be scoped to one.
-const DEFAULT_COUNTRY = "ua";
+export const DEFAULT_COUNTRY = "ua";
 
 // calculated_price requires a pricing context (region). Fetch the store's region once.
 let cachedRegion: { id: string; currency_code: string } | undefined;
@@ -99,7 +99,10 @@ export async function getCollections() {
 // computes line totals from unit_price * quantity, which are always present.
 
 export async function getCart(cartId: string) {
-  const { cart } = await sdk.store.cart.retrieve(cartId);
+  const { cart } = await sdk.store.cart.retrieve(cartId, {
+    fields:
+      "*items,+items.variant.inventory_quantity,+items.variant.manage_inventory,+items.variant.allow_backorder",
+  });
   // Self-heal carts created without a region (e.g. saved in the browser before
   // the region fix): their line items have no resolved price. Assigning the
   // region re-prices existing items.
@@ -184,4 +187,32 @@ export async function initiatePaymentSession(cartId: string, providerId: string)
 
 export async function completeCart(cartId: string) {
   return sdk.store.cart.complete(cartId);
+}
+
+export interface ShippingAddressInput {
+  first_name: string;
+  last_name: string;
+  address_1: string;
+  address_2?: string;
+  city: string;
+  postal_code: string;
+  phone?: string;
+  country_code?: string;
+}
+
+// Persists the checkout Information step (email + shipping address) to the
+// cart. Must run before completeCart, otherwise orders are created with no
+// customer email or shipping address attached.
+export async function updateCartDetails(
+  cartId: string,
+  data: { email: string; shipping_address: ShippingAddressInput }
+) {
+  const { cart } = await sdk.store.cart.update(cartId, {
+    email: data.email,
+    shipping_address: {
+      ...data.shipping_address,
+      country_code: data.shipping_address.country_code ?? DEFAULT_COUNTRY,
+    },
+  });
+  return cart;
 }

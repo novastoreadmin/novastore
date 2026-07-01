@@ -23,6 +23,7 @@ import {
   getPaymentProviders,
   initiatePaymentSession,
   completeCart,
+  updateCartDetails,
 } from "@/lib/medusa";
 import { formatPrice } from "@/lib/utils";
 
@@ -51,6 +52,7 @@ interface CartLineItem {
 interface Cart {
   id: string;
   currency_code: string;
+  region_id?: string;
   items?: CartLineItem[];
 }
 
@@ -70,28 +72,69 @@ function InputField({
   placeholder,
   required,
   className,
+  name,
+  value,
+  onChange,
 }: {
   label: string;
   type?: string;
   placeholder?: string;
   required?: boolean;
   className?: string;
+  name: string;
+  value: string;
+  onChange: (value: string) => void;
 }) {
   return (
     <div className={className}>
-      <label className="block text-xs font-medium text-text-secondary mb-2">
+      <label htmlFor={name} className="block text-xs font-medium text-text-secondary mb-2">
         {label}
         {required && <span className="text-error ml-0.5">*</span>}
       </label>
       <input
+        id={name}
+        name={name}
         type={type}
         placeholder={placeholder}
         required={required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         className="w-full h-12 px-4 rounded-xl bg-bg-card border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/10 transition-all"
       />
     </div>
   );
 }
+
+interface ContactInfo {
+  email: string;
+  firstName: string;
+  lastName: string;
+  address1: string;
+  address2: string;
+  city: string;
+  postalCode: string;
+  phone: string;
+}
+
+const EMPTY_CONTACT: ContactInfo = {
+  email: "",
+  firstName: "",
+  lastName: "",
+  address1: "",
+  address2: "",
+  city: "",
+  postalCode: "",
+  phone: "",
+};
+
+interface CardInfo {
+  cardNumber: string;
+  expiry: string;
+  cvc: string;
+  nameOnCard: string;
+}
+
+const EMPTY_CARD: CardInfo = { cardNumber: "", expiry: "", cvc: "", nameOnCard: "" };
 
 export default function CheckoutPage() {
   const { cartId, setCartId, setItemCount } = useCartStore();
@@ -107,6 +150,16 @@ export default function CheckoutPage() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
+
+  const [contactInfo, setContactInfo] = useState<ContactInfo>(EMPTY_CONTACT);
+  const [savingInfo, setSavingInfo] = useState(false);
+  const [infoError, setInfoError] = useState<string | null>(null);
+
+  // Card fields are intentionally never sent to our own API: sending raw card
+  // numbers to a non-PCI-compliant backend would itself be a security issue.
+  // They only gate the Place Order button here; real card capture requires
+  // Stripe.js/Elements tokenization, which is a separate follow-up feature.
+  const [cardInfo, setCardInfo] = useState<CardInfo>(EMPTY_CARD);
 
   const currency = cart?.currency_code;
   const items = cart?.items ?? [];
@@ -138,6 +191,26 @@ export default function CheckoutPage() {
     };
   }, [cartId]);
 
+  const updateContact = (field: keyof ContactInfo) => (value: string) =>
+    setContactInfo((prev) => ({ ...prev, [field]: value }));
+
+  const updateCard = (field: keyof CardInfo) => (value: string) =>
+    setCardInfo((prev) => ({ ...prev, [field]: value }));
+
+  const isInformationValid =
+    contactInfo.email.trim() !== "" &&
+    contactInfo.firstName.trim() !== "" &&
+    contactInfo.lastName.trim() !== "" &&
+    contactInfo.address1.trim() !== "" &&
+    contactInfo.city.trim() !== "" &&
+    contactInfo.postalCode.trim() !== "";
+
+  const isPaymentValid =
+    cardInfo.cardNumber.trim() !== "" &&
+    cardInfo.expiry.trim() !== "" &&
+    cardInfo.cvc.trim() !== "" &&
+    cardInfo.nameOnCard.trim() !== "";
+
   async function selectShipping(optionId: string) {
     if (!cartId || updatingShipping) return;
     setSelectedShipping(optionId);
@@ -152,7 +225,34 @@ export default function CheckoutPage() {
     }
   }
 
-  function goNext() {
+  async function goNext() {
+    if (currentStep === "information") {
+      if (!cartId || !isInformationValid) return;
+      setSavingInfo(true);
+      setInfoError(null);
+      try {
+        const updated = await updateCartDetails(cartId, {
+          email: contactInfo.email,
+          shipping_address: {
+            first_name: contactInfo.firstName,
+            last_name: contactInfo.lastName,
+            address_1: contactInfo.address1,
+            address_2: contactInfo.address2 || undefined,
+            city: contactInfo.city,
+            postal_code: contactInfo.postalCode,
+            phone: contactInfo.phone || undefined,
+          },
+        });
+        setCart(updated as Cart);
+      } catch (err: unknown) {
+        setInfoError(
+          err instanceof Error ? err.message : "Couldn't save your information. Please try again."
+        );
+        setSavingInfo(false);
+        return;
+      }
+      setSavingInfo(false);
+    }
     if (currentIndex < steps.length - 1) {
       setCurrentStep(steps[currentIndex + 1].id);
     }
@@ -170,7 +270,7 @@ export default function CheckoutPage() {
     setOrderError(null);
     try {
       // Find a usable payment provider for this cart's region.
-      const regionId = (cart as Cart & { region_id?: string }).region_id;
+      const regionId = cart.region_id;
       const providers = regionId ? await getPaymentProviders(regionId) : [];
       // Prefer the system provider (no Stripe keys needed); fall back to whatever else is available.
       const providerId =
@@ -316,6 +416,9 @@ export default function CheckoutPage() {
                     type="email"
                     placeholder="your@email.com"
                     required
+                    name="email"
+                    value={contactInfo.email}
+                    onChange={updateContact("email")}
                   />
 
                   <h3 className="text-lg font-semibold tracking-tight pt-4">
@@ -327,11 +430,17 @@ export default function CheckoutPage() {
                       label="First Name"
                       placeholder="Taras"
                       required
+                      name="firstName"
+                      value={contactInfo.firstName}
+                      onChange={updateContact("firstName")}
                     />
                     <InputField
                       label="Last Name"
                       placeholder="Shevchenko"
                       required
+                      name="lastName"
+                      value={contactInfo.lastName}
+                      onChange={updateContact("lastName")}
                     />
                   </div>
 
@@ -339,10 +448,16 @@ export default function CheckoutPage() {
                     label="Address"
                     placeholder="vul. Khreshchatyk, 1"
                     required
+                    name="address1"
+                    value={contactInfo.address1}
+                    onChange={updateContact("address1")}
                   />
                   <InputField
                     label="Apartment, suite, etc."
                     placeholder="kv. 12"
+                    name="address2"
+                    value={contactInfo.address2}
+                    onChange={updateContact("address2")}
                   />
 
                   <div className="grid grid-cols-2 gap-4">
@@ -350,11 +465,17 @@ export default function CheckoutPage() {
                       label="City"
                       placeholder="Kyiv"
                       required
+                      name="city"
+                      value={contactInfo.city}
+                      onChange={updateContact("city")}
                     />
                     <InputField
                       label="ZIP Code"
                       placeholder="01001"
                       required
+                      name="postalCode"
+                      value={contactInfo.postalCode}
+                      onChange={updateContact("postalCode")}
                     />
                   </div>
 
@@ -362,6 +483,9 @@ export default function CheckoutPage() {
                     label="Phone"
                     type="tel"
                     placeholder="+380 (44) 123-45-67"
+                    name="phone"
+                    value={contactInfo.phone}
+                    onChange={updateContact("phone")}
                   />
                 </div>
               </div>
@@ -439,23 +563,35 @@ export default function CheckoutPage() {
                       label="Card Number"
                       placeholder="1234 5678 9012 3456"
                       required
+                      name="cardNumber"
+                      value={cardInfo.cardNumber}
+                      onChange={updateCard("cardNumber")}
                     />
                     <div className="grid grid-cols-2 gap-4">
                       <InputField
                         label="Expiry"
                         placeholder="MM / YY"
                         required
+                        name="expiry"
+                        value={cardInfo.expiry}
+                        onChange={updateCard("expiry")}
                       />
                       <InputField
                         label="CVC"
                         placeholder="123"
                         required
+                        name="cvc"
+                        value={cardInfo.cvc}
+                        onChange={updateCard("cvc")}
                       />
                     </div>
                     <InputField
                       label="Name on Card"
                       placeholder="Taras Shevchenko"
                       required
+                      name="nameOnCard"
+                      value={cardInfo.nameOnCard}
+                      onChange={updateCard("nameOnCard")}
                     />
                   </div>
                 </div>
@@ -495,7 +631,7 @@ export default function CheckoutPage() {
                     size="lg"
                     onClick={placeOrder}
                     isLoading={placingOrder}
-                    disabled={placingOrder}
+                    disabled={placingOrder || !isPaymentValid}
                     className="group"
                   >
                     <Lock className="mr-2 w-3.5 h-3.5" />
@@ -503,19 +639,27 @@ export default function CheckoutPage() {
                   </Button>
                 </div>
               ) : (
-                <Button
-                  size="lg"
-                  onClick={goNext}
-                  disabled={
-                    currentStep === "shipping" &&
-                    shippingOptions.length > 0 &&
-                    !selectedShipping
-                  }
-                  className="group"
-                >
-                  <span>Continue</span>
-                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
+                <div className="flex flex-col items-end gap-2">
+                  {currentStep === "information" && infoError && (
+                    <p className="text-xs text-red-400 max-w-xs text-right">{infoError}</p>
+                  )}
+                  <Button
+                    size="lg"
+                    onClick={goNext}
+                    isLoading={currentStep === "information" && savingInfo}
+                    disabled={
+                      savingInfo ||
+                      (currentStep === "information" && !isInformationValid) ||
+                      (currentStep === "shipping" &&
+                        shippingOptions.length > 0 &&
+                        !selectedShipping)
+                    }
+                    className="group"
+                  >
+                    <span>Continue</span>
+                    <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </div>
               )}
             </div>
           </motion.div>

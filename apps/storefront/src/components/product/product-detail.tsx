@@ -122,6 +122,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [addedFeedback, setAddedFeedback] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
   /* ---- Refs for GSAP ---- */
@@ -153,6 +154,23 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
       selectedVariant.manage_inventory === false ||
       selectedVariant.inventory_quantity == null ||
       selectedVariant.inventory_quantity > 0);
+
+  // Caps the quantity selector so customers can't request more than is in stock.
+  const maxQuantity = useMemo(() => {
+    if (!selectedVariant) return 1;
+    if (
+      selectedVariant.allow_backorder === true ||
+      selectedVariant.manage_inventory === false ||
+      selectedVariant.inventory_quantity == null
+    ) {
+      return Infinity;
+    }
+    return Math.max(1, selectedVariant.inventory_quantity);
+  }, [selectedVariant]);
+
+  useEffect(() => {
+    setQuantity((q) => Math.min(q, maxQuantity));
+  }, [maxQuantity]);
 
   /* ---- Derived: real specs/features from product metadata ---- */
   const specs = product.metadata?.specs ?? [];
@@ -232,6 +250,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
   const handleAddToCart = useCallback(async () => {
     if (!selectedVariant || isAdding) return;
     setIsAdding(true);
+    setAddError(null);
 
     try {
       let currentCartId = cartId;
@@ -270,6 +289,9 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
       setTimeout(() => setIsOpen(true), 400);
     } catch (error) {
       console.error("Failed to add to cart:", error);
+      setAddError(
+        error instanceof Error ? error.message : "Couldn't add this item to your cart."
+      );
     } finally {
       setIsAdding(false);
     }
@@ -463,8 +485,9 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                     {quantity}
                   </span>
                   <button
-                    onClick={() => setQuantity((q) => q + 1)}
-                    className="flex items-center justify-center w-13 h-full text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                    onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
+                    disabled={quantity >= maxQuantity}
+                    className="flex items-center justify-center w-13 h-full text-text-secondary hover:text-text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                     aria-label="Increase quantity"
                   >
                     <Plus size={16} />
@@ -505,6 +528,10 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                   </AnimatePresence>
                 </Button>
               </motion.div>
+
+              {addError && (
+                <p className="text-xs text-error mt-2">{addError}</p>
+              )}
             </motion.div>
           </div>
         </div>
