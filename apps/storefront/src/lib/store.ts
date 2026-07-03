@@ -29,6 +29,31 @@ export const useCartStore = create<CartState>()(
   )
 );
 
+// Logged-in customer state. The JWT itself lives in localStorage (managed by
+// the Medusa SDK); this store only mirrors "who is logged in" for the UI.
+// `status` starts as "loading" so guarded pages don't flash a redirect while
+// the initial /store/customers/me check is in flight.
+export interface AuthCustomer {
+  id: string;
+  email: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  phone?: string | null;
+}
+
+interface AuthState {
+  customer: AuthCustomer | null;
+  status: "loading" | "authenticated" | "guest";
+  setCustomer: (customer: AuthCustomer | null) => void;
+}
+
+export const useAuthStore = create<AuthState>()((set) => ({
+  customer: null,
+  status: "loading",
+  setCustomer: (customer) =>
+    set({ customer, status: customer ? "authenticated" : "guest" }),
+}));
+
 interface UIState {
   isNavVisible: boolean;
   isNavSolid: boolean;

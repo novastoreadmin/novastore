@@ -283,6 +283,41 @@ Server component that renders 8 client component sections in order:
 - **Animations**: Step content animates in with opacity + x translation
 - **Note**: Currently a UI shell — not wired to Medusa checkout API yet
 
+### Account / Personal Cabinet (`src/app/account/**`)
+
+- **`/account/register`** — email/password registration (client component). Creates the
+  auth identity + customer profile via the Medusa SDK, logs in, redirects to `/account`.
+- **`/account/login`** — email/password login. Generic "Invalid email or password" on
+  401 (doesn't reveal which field was wrong).
+- **`/account`** — the cabinet: profile header (name/email), Sign Out, and the order
+  list. Each order row shows the total plus **Payment** and **Delivery** status badges
+  (`components/account/status-badge.tsx` humanizes Medusa's status enums and colors
+  them green/amber/red). Guarded: guests are redirected to `/account/login`.
+- **`/account/orders/[id]`** — order detail: items, totals, payment status/amount,
+  delivery status/method, shipping address.
+- **Header** shows a User icon → `/account` (green dot when logged in).
+- **Checkout integration**: for logged-in customers the checkout prefills
+  email/name/phone and calls `transferCartToCustomer` so the completed order is owned
+  by the customer; the confirmation screen links "Track Order in My Account".
+- **Auth plumbing**: `src/lib/auth.ts` (SDK calls), `useAuthStore` in `src/lib/store.ts`
+  (who is logged in), `src/hooks/use-customer.ts` (bootstraps the session from the JWT
+  the SDK keeps in localStorage under `medusa_auth_token`).
+- **Backend hardening**: `apps/backend/src/api/middlewares.ts` restricts
+  `GET /store/orders/:id` to the authenticated owner (Medusa's default treats the
+  order id as a bearer capability - anyone with the id could read the order).
+
+### Order Confirmation Email (backend)
+
+- `apps/backend/src/subscribers/order-placed.ts` sends a confirmation email on
+  `order.placed` through the store's mail server (local GreenMail in dev, real
+  SMTP via the `MAIL_*` env in prod - see MAIL.md). Sender defaults to
+  `admin@nova.local`, overridable with `ORDER_EMAIL_FROM`.
+- The message itself (subject/text/html, item list, totals in whole hryvnias,
+  shipping address, HTML-escaped user content) is built by the pure function in
+  `apps/backend/src/lib/order-email.ts` - unit-tested in isolation.
+- Email failure is non-fatal by design: the order exists at that point, so a down
+  mail server logs a warning instead of breaking checkout.
+
 ### Cart Drawer (`components/cart/cart-drawer.tsx`)
 
 - **Slide-out panel** from right (Framer Motion x animation)
@@ -305,6 +340,14 @@ cartId: string | null       — persisted to localStorage as "nova-cart"
 isOpen: boolean             — cart drawer visibility
 itemCount: number           — badge count
 setCartId, setIsOpen, toggle, setItemCount
+```
+
+#### `useAuthStore`
+```
+customer: AuthCustomer | null   — logged-in customer mirror (JWT itself lives in
+                                  localStorage, managed by the Medusa SDK)
+status: "loading" | "authenticated" | "guest"
+setCustomer(customer | null)
 ```
 
 #### `useUIStore`
@@ -361,13 +404,16 @@ All functions include `next: { tags: [...] }` for ISR revalidation.
 - [x] Static fallback data (storefront works without Medusa)
 - [x] TypeScript — zero type errors
 - [x] Production build — clean
+- [x] Customer accounts: registration, login, personal cabinet with order list +
+      payment/delivery status, order detail page (`/account/**`)
+- [x] Order confirmation email on `order.placed` (GreenMail dev / real SMTP prod)
+- [x] Owner-only access to `GET /store/orders/:id` (custom middleware)
 
 ### PENDING (Next Session)
 - [ ] **Eight Sleep UX Analysis**: User requested a section-by-section analysis of eightsleep.com to match every UX pattern, animation type, spacing rule, typography scale, scroll interaction, visual hierarchy, and conversion strategy — interrupted before starting
 - [ ] **Real product images**: Currently using gradient placeholders
 - [ ] **3D scene integration**: `floating-device.tsx` exists but isn't mounted in any page
 - [ ] **Checkout → Medusa API wiring**: Checkout is a UI shell, needs to call Medusa cart/payment/order APIs
-- [ ] **Customer accounts**: Login, registration, order history pages
 - [ ] **Search functionality**: Search icon exists in header, no search page/modal
 - [ ] **Image sequence animations**: Scroll-driven image frame playback (Eight Sleep style)
 - [ ] **Horizontal scroll sections**: Not yet implemented

@@ -20,6 +20,10 @@ function backendImagePattern() {
 const dynamicBackendPattern = backendImagePattern();
 
 const nextConfig: NextConfig = {
+  // The isolated test storefront (:3002) sets NEXT_DIST_DIR=.next-test so its
+  // build artifacts never contend with the dev server's .next (on Windows the
+  // shared trace file causes an EPERM crash when both run).
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   images: {
     remotePatterns: [
       {

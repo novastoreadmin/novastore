@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Search, Menu, X, ChevronRight } from "lucide-react";
+import { ShoppingBag, Search, Menu, X, ChevronRight, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartStore, useUIStore } from "@/lib/store";
+import { useCustomer } from "@/hooks/use-customer";
 
 const navLinks = [
   { label: "Card Readers", href: "/categories/card-readers" },
@@ -22,6 +23,7 @@ export function Header() {
   const lastScrollY = useRef(0);
   const { itemCount, toggle: toggleCart } = useCartStore();
   const { isMenuOpen, setMenuOpen } = useUIStore();
+  const { status: authStatus } = useCustomer();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -80,6 +82,17 @@ export function Header() {
             >
               <Search className="w-[18px] h-[18px]" />
             </button>
+
+            <Link
+              href={authStatus === "authenticated" ? "/account" : "/account/login"}
+              className="relative p-2.5 rounded-xl text-text-secondary hover:text-text-primary hover:bg-accent-subtle transition-all duration-300"
+              aria-label="Account"
+            >
+              <User className="w-[18px] h-[18px]" />
+              {authStatus === "authenticated" && (
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+              )}
+            </Link>
 
             <button
               onClick={toggleCart}

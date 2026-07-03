@@ -130,6 +130,66 @@ export async function getProductByHandle(
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Customer auth helpers (personal cabinet specs)                            */
+/* -------------------------------------------------------------------------- */
+
+export const CUSTOMER_PASSWORD = "E2eCustomer12345!";
+
+export function uniqueCustomerEmail(prefix = "e2e-customer") {
+  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.com`;
+}
+
+/**
+ * Registers a fresh customer straight against the backend API and returns a
+ * logged-in JWT - for specs that need an authenticated session without
+ * driving the /account/register UI.
+ */
+export async function registerCustomerViaApi(
+  request: APIRequestContext,
+  email: string,
+  { firstName = "Lesya", lastName = "Ukrainka" } = {}
+): Promise<string> {
+  const registerRes = await request.post(
+    `${BACKEND_URL}/auth/customer/emailpass/register`,
+    { data: { email, password: CUSTOMER_PASSWORD } }
+  );
+  if (!registerRes.ok()) {
+    throw new Error(`Customer register failed: ${await registerRes.text()}`);
+  }
+  const { token: registrationToken } = await registerRes.json();
+
+  const createRes = await request.post(`${BACKEND_URL}/store/customers`, {
+    headers: {
+      "x-publishable-api-key": PUBLISHABLE_KEY,
+      Authorization: `Bearer ${registrationToken}`,
+    },
+    data: { email, first_name: firstName, last_name: lastName },
+  });
+  if (!createRes.ok()) {
+    throw new Error(`Customer create failed: ${await createRes.text()}`);
+  }
+
+  const loginRes = await request.post(`${BACKEND_URL}/auth/customer/emailpass`, {
+    data: { email, password: CUSTOMER_PASSWORD },
+  });
+  if (!loginRes.ok()) {
+    throw new Error(`Customer login failed: ${await loginRes.text()}`);
+  }
+  const { token } = await loginRes.json();
+  return token as string;
+}
+
+/**
+ * Seeds the Medusa SDK's JWT into localStorage before any page script runs,
+ * so the storefront boots already logged in (same key the js-sdk uses).
+ */
+export async function seedAuthToken(page: Page, token: string) {
+  await page.addInitScript((jwt) => {
+    window.localStorage.setItem("medusa_auth_token", jwt);
+  }, token);
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Browser-side helpers                                                      */
 /* -------------------------------------------------------------------------- */
 

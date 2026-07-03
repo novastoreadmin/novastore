@@ -1,12 +1,17 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { MAIL_ACCOUNTS, getAccount } from "../lib/mail-accounts"
+import { sendMail } from "../lib/mail-client"
+import { buildOrderConfirmationEmail, formatOrderAmount } from "../lib/order-email"
 
 /**
  * Subscriber that handles the order.placed event.
  *
- * This fires after checkout is completed and an order is created.
- * In production, you would integrate email notifications, analytics,
- * inventory sync, or any post-order workflows here.
+ * Fires after checkout is completed and an order is created. Sends the
+ * customer an order-confirmation email through the configured mail server
+ * (local GreenMail in dev, real SMTP in prod - see src/lib/mail-accounts.ts).
+ * Email failure is deliberately non-fatal: the order already exists, so a
+ * down mail server must never look like a failed checkout.
  */
 export default async function orderPlacedHandler({
   event: { data },
@@ -49,7 +54,8 @@ export default async function orderPlacedHandler({
 
     const order = orders[0]
 
-    // Log order summary
+    // Log order summary. Amounts are stored in whole hryvnias (see
+    // toStoreMinor in src/data/catalog.ts) - no /100 division.
     const itemCount = order.items?.length ?? 0
     const itemNames = order.items
       ?.map((item: any) => `${item.variant?.product?.title} (x${item.quantity})`)
@@ -58,17 +64,46 @@ export default async function orderPlacedHandler({
     logger.info(
       `[NOVA] Order #${order.display_id} summary: ` +
       `${itemCount} item(s) - ${itemNames} | ` +
-      `Total: ${order.currency_code?.toUpperCase()} ${(order.total / 100).toFixed(2)} | ` +
+      `Total: ${formatOrderAmount(order.total, order.currency_code)} | ` +
       `Customer: ${order.email}`
     )
 
-    // In production you would:
-    // 1. Send order confirmation email
-    // 2. Notify warehouse / fulfillment service
-    // 3. Track analytics event
-    // 4. Update CRM
-    // 5. Trigger loyalty points calculation
+    if (!order.email) {
+      logger.warn(
+        `[NOVA] Order #${order.display_id} has no customer email - skipping confirmation email`
+      )
+      return
+    }
 
+    // Send the confirmation from the store's admin mailbox (override with
+    // ORDER_EMAIL_FROM if a dedicated sender account is configured).
+    const fromAddress = process.env.ORDER_EMAIL_FROM || "admin@nova.local"
+    const account = getAccount(fromAddress) ?? MAIL_ACCOUNTS[0]
+    if (!account) {
+      logger.warn(
+        `[NOVA] No mail account available to send order confirmation for #${order.display_id}`
+      )
+      return
+    }
+
+    try {
+      const email = buildOrderConfirmationEmail(order as any)
+      const { messageId } = await sendMail(account, {
+        to: order.email,
+        subject: email.subject,
+        text: email.text,
+        html: email.html,
+      })
+      logger.info(
+        `[NOVA] Order confirmation email sent to ${order.email} for order #${order.display_id} (${messageId})`
+      )
+    } catch (mailError) {
+      logger.warn(
+        `[NOVA] Failed to send order confirmation email for #${order.display_id}: ${
+          mailError instanceof Error ? mailError.message : "Unknown error"
+        }`
+      )
+    }
   } catch (error) {
     logger.error(
       `[NOVA] Error processing order.placed for ${orderId}: ${

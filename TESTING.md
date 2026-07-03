@@ -5,11 +5,11 @@ storefront (`apps/storefront`). Three tiers, run bottom-up in CI or locally:
 
 | Tier | Tool | Needs | Files | Count |
 |---|---|---|---|---|
-| Unit | Vitest | nothing (pure functions) | `apps/backend/tests/unit/*.test.ts` | 25 |
-| Integration | Vitest + `fetch` | isolated test backend (`:9002`) + Postgres | `apps/backend/tests/integration/*.test.ts` | 9 |
-| E2E | Playwright | isolated test backend (`:9002`) + storefront (`:3002`) + Postgres | `apps/storefront/tests/e2e/*.spec.ts` | 12 |
+| Unit | Vitest | nothing (pure functions) | `apps/backend/tests/unit/*.test.ts` | 37 |
+| Integration | Vitest + `fetch` | isolated test backend (`:9002`) + Postgres (+ GreenMail for the email test) | `apps/backend/tests/integration/*.test.ts` | 15 |
+| E2E | Playwright | isolated test backend (`:9002`) + storefront (`:3002`) + Postgres | `apps/storefront/tests/e2e/*.spec.ts` | 15 |
 
-**Total: 46 tests, all passing as of this writing.**
+**Total: 67 tests, all passing as of this writing.**
 
 ## The isolated test stack — read this first
 
@@ -63,6 +63,9 @@ docker exec nova_postgres psql -U postgres -c "CREATE DATABASE nova_store_test;"
 ## Prerequisites
 
 1. Postgres container up (`nova_postgres`) and the test stack set up once (above).
+   The mail container (`nova_mail`, `docker compose up -d mail`) should be up too:
+   the order-email delivery test reads a GreenMail inbox over IMAP and is
+   **skipped with a warning** (not failed) when GreenMail is unreachable.
 2. Test backend + test storefront running:
    ```bash
    cd apps/backend && npm run test:server      # :9002
@@ -119,6 +122,37 @@ generic boilerplate coverage.
   cart create/add/update/remove, category + price filtering (AND semantics), shipping
   selection, and the full 3-step checkout wizard.
 
+### Customer accounts + order emails (added with the personal-cabinet feature)
+
+- **Registration / login / cabinet** → `customer-account.test.ts` (integration) covers
+  register→login→`/store/customers/me`, wrong-password and duplicate-email rejection,
+  the auth boundary on `/store/orders`, and a full authenticated checkout whose order
+  then appears in the customer's order list with `payment_status`/`fulfillment_status`
+  (the exact contract the `/account` pages render). `account.spec.ts` (E2E) drives the
+  same journeys through the real UI: register via the form → empty cabinet → sign
+  out/in, wrong-password error, and a logged-in checkout (prefilled email/name) whose
+  order shows Payment/Delivery badges on both the detail page and the cabinet list.
+- **Order detail is owner-only** (found by these tests): Medusa's stock
+  `GET /store/orders/:id` treats the order id as a bearer capability - any logged-in
+  customer (or guest) with the id could read someone else's order. Locked down in
+  `apps/backend/src/api/middlewares.ts`; `customer-account.test.ts` asserts a stranger
+  gets 404 and an anonymous request gets 401.
+- **Order confirmation email** → `order-email.test.ts` (unit) pins the message builder:
+  whole-hryvnia totals (a `/100` regression would surface as `20.50 UAH` instead of
+  `2050.00 UAH`), item lines, address block, and HTML-escaping of customer-controlled
+  strings. `order-email-delivery.test.ts` (integration) completes a real checkout
+  addressed to `support@nova.local` and polls that GreenMail inbox over IMAP until the
+  message with the order's number arrives (skips with a warning if the mail container
+  is down).
+- **Mail isolation warning (do not undo):** `apps/backend/.env.test` explicitly pins
+  `MAIL_*` to the local GreenMail. Medusa's `loadEnv` reads `.env` in addition to
+  `.env.test`, and `.env` now carries the real novastore.com.ua SMTP credentials -
+  without the pin, test runs would send real emails through the production mailbox
+  (this actually happened during development; the pin is the fix).
+- The test storefront also builds into its own `NEXT_DIST_DIR=.next-test` so `:3002`
+  no longer crashes with an EPERM trace-file conflict when the `:3000` dev server is
+  running (Windows file locking on the shared `.next/trace`).
+
 ## Scope decisions (read before assuming something's covered)
 
 - **Integration tests hit a real running server (the isolated test stack on `:9002`), not
@@ -156,24 +190,33 @@ apps/backend/
                                        (behavior-preserving refactor, done to make the
                                        payment-provider/secret logic unit-testable)
   vitest.config.ts
+  src/lib/order-email.ts              pure order-confirmation email builder (unit-testable)
+  src/api/middlewares.ts              owner-only guard on GET /store/orders/:id
   tests/unit/
     catalog.test.ts                   toStoreMinor pricing math
     runtime-config.test.ts            payment-provider gating + secret fallback logic
+    order-email.test.ts               email builder: totals (no /100), items, escaping
   tests/integration/
     helpers.ts                        BASE_URL (:9002) + admin login + publishable-key fetch
     products.test.ts                  store product listing/detail
     cart.test.ts                      cart lifecycle + subtotal math + 404 contract
     checkout.test.ts                  full checkout flow, customer-data regression guard
     security.test.ts                  admin auth boundary, no-password-leak, publishable key
+    customer-account.test.ts          register/login/me, orders auth boundary, authed
+                                       checkout -> cabinet order list/detail, owner-only order access
+    order-email-delivery.test.ts      real checkout -> GreenMail inbox poll (skips if mail down)
 
 apps/storefront/
   .env.test                           isolated test-stack config (:3002 -> backend :9002)
   playwright.config.ts                baseURL :3002
   tests/e2e/
-    helpers.ts                        shared fixtures/utilities (admin login, cart helpers)
+    helpers.ts                        shared fixtures/utilities (admin login, cart helpers,
+                                       customer register/login + JWT seeding)
     browse-and-filter.spec.ts         listing, category/price filters, homepage CTA regression
     cart.spec.ts                      add to cart, drawer quantity controls
     checkout.spec.ts                  full 3-step flow, customer-data regression guard
+    account.spec.ts                   register/login/logout UI, logged-in checkout ->
+                                       cabinet order with payment/delivery status
     price-consistency.spec.ts         storefront price vs. raw admin price, no drift
     admin-sync.spec.ts                admin edit -> revalidation -> storefront, with cleanup
 ```

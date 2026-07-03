@@ -25,6 +25,8 @@ import {
   completeCart,
   updateCartDetails,
 } from "@/lib/medusa";
+import { transferCartToCustomer } from "@/lib/auth";
+import { useCustomer } from "@/hooks/use-customer";
 import { formatPrice } from "@/lib/utils";
 
 type Step = "information" | "shipping" | "payment";
@@ -138,6 +140,7 @@ const EMPTY_CARD: CardInfo = { cardNumber: "", expiry: "", cvc: "", nameOnCard: 
 
 export default function CheckoutPage() {
   const { cartId, setCartId, setItemCount } = useCartStore();
+  const { customer, status: authStatus } = useCustomer();
   const [currentStep, setCurrentStep] = useState<Step>("information");
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
 
@@ -190,6 +193,23 @@ export default function CheckoutPage() {
       active = false;
     };
   }, [cartId]);
+
+  // Logged-in customers: attach the (anonymous) cart to their account so the
+  // completed order shows up in the personal cabinet, and prefill contact
+  // fields they haven't typed into yet.
+  useEffect(() => {
+    if (authStatus !== "authenticated" || !customer || !cartId) return;
+    transferCartToCustomer(cartId).catch(() => {
+      // Non-fatal: checkout still works as a guest cart.
+    });
+    setContactInfo((prev) => ({
+      ...prev,
+      email: prev.email || customer.email || "",
+      firstName: prev.firstName || customer.first_name || "",
+      lastName: prev.lastName || customer.last_name || "",
+      phone: prev.phone || customer.phone || "",
+    }));
+  }, [authStatus, customer, cartId]);
 
   const updateContact = (field: keyof ContactInfo) => (value: string) =>
     setContactInfo((prev) => ({ ...prev, [field]: value }));
@@ -317,15 +337,23 @@ export default function CheckoutPage() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight mb-3">Order placed!</h1>
           <p className="text-sm text-text-muted mb-2">
-            Thank you for your purchase. We will process your order shortly.
+            Thank you for your purchase. A confirmation email with your order
+            details is on its way.
           </p>
           {orderId && (
             <p className="text-xs text-text-muted font-mono mt-1">
               Order ID: {orderId.slice(0, 18)}…
             </p>
           )}
-          <Link href="/" className="mt-8">
-            <Button size="lg">Continue Shopping</Button>
+          {authStatus === "authenticated" && orderId && (
+            <Link href={`/account/orders/${orderId}`} className="mt-8">
+              <Button size="lg">Track Order in My Account</Button>
+            </Link>
+          )}
+          <Link href="/" className={authStatus === "authenticated" && orderId ? "mt-3" : "mt-8"}>
+            <Button size="lg" variant={authStatus === "authenticated" && orderId ? "outline" : "primary"}>
+              Continue Shopping
+            </Button>
           </Link>
         </motion.div>
       </div>
