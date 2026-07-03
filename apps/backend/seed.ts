@@ -107,6 +107,17 @@ export default async function seed({ container }: ExecArgs) {
   // ─────────────────────────────────────────────────
   // 4. Region
   // ─────────────────────────────────────────────────
+  // Only wire up providers that are actually registered (Stripe is omitted
+  // when STRIPE_API_KEY is a placeholder - see resolvePaymentProviders in
+  // src/config/runtime-config.ts) so seeding doesn't fail in envs without a
+  // real Stripe key, e.g. the isolated test stack.
+  const paymentModule = container.resolve(Modules.PAYMENT)
+  const availablePaymentProviders = await paymentModule.listPaymentProviders()
+  const desiredPaymentProviderIds = ["pp_system_system", "pp_stripe_stripe"]
+  const regionPaymentProviders = desiredPaymentProviderIds.filter((id) =>
+    availablePaymentProviders.some((p) => p.id === id)
+  )
+
   const { result: regionResult } = await createRegionsWorkflow(container).run({
     input: {
       regions: [
@@ -114,7 +125,7 @@ export default async function seed({ container }: ExecArgs) {
           name: "Ukraine",
           currency_code: STORE_CURRENCY,
           countries: ["ua"],
-          payment_providers: ["pp_system_system", "pp_stripe_stripe"],
+          payment_providers: regionPaymentProviders,
         },
       ],
     },

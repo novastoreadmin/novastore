@@ -48,7 +48,12 @@ export function resolvePaymentProviders(
     ...(stripeConfigured
       ? [
           {
-            resolve: "@medusajs/medusa/payment-stripe",
+            // Resolved eagerly (not left as the bare "@medusajs/medusa/payment-stripe"
+            // specifier) because Medusa's own lazy provider loader resolves relative
+            // to a context that doesn't reliably see hoisted sibling packages in this
+            // npm workspace - resolving it here, anchored to this file's own location,
+            // sidesteps that entirely. See the same fix applied in medusa-config.ts.
+            resolve: require.resolve("@medusajs/medusa/payment-stripe"),
             id: "stripe",
             options: {
               apiKey: env.STRIPE_API_KEY,

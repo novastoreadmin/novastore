@@ -1,9 +1,11 @@
-// Requires `npm run dev` running in apps/backend and the nova_postgres container up.
+// Requires `npm run test:server` running in apps/backend (the isolated test
+// stack on :9002, backed by its own nova_store_test database) - see
+// tests/integration/helpers.ts and TESTING.md.
 //
-// These are "live integration tests" against the real running dev server + DB —
+// These are "live integration tests" against a real running server + DB —
 // NOT Medusa's isolated `medusaIntegrationTestRunner` harness. That harness spins
 // up its own ephemeral DB/app instance per run, which is heavier and out of scope
-// here; instead we exercise the already-running dev server the way a real client
+// here; instead we exercise the already-running server the way a real client
 // would, using plain fetch. This is an explicit scope decision.
 //
 // NOTE: this file completes exactly one real order (via the dev-only
@@ -12,49 +14,33 @@
 // the "checkout captured no customer data" bug that was fixed this session
 // (customer email / shipping address were not making it onto the order).
 import { beforeAll, describe, expect, it } from "vitest"
-
-const BASE_URL = "http://localhost:9000"
+import { BASE_URL, adminLogin, getPublishableKey, storeHeaders } from "./helpers"
 
 let publishableKey: string
 let regionId: string
 let variantId: string
 
 beforeAll(async () => {
-  const fs = await import("fs")
-  const path = await import("path")
-  const envPath = path.resolve(__dirname, "../../../storefront/.env.local")
-  const content = fs.readFileSync(envPath, "utf-8")
-  const match = content.match(/NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=(\S+)/)
-  if (!match) {
-    throw new Error("Could not find NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY in storefront/.env.local")
-  }
-  publishableKey = match[1]
+  const adminToken = await adminLogin()
+  publishableKey = await getPublishableKey(adminToken)
 
   const regionsRes = await fetch(`${BASE_URL}/store/regions`, {
-    headers: { "x-publishable-api-key": publishableKey },
+    headers: storeHeaders(publishableKey),
   })
   const regionsBody = await regionsRes.json()
   regionId = regionsBody.regions[0].id
 
   const productsRes = await fetch(`${BASE_URL}/store/products?limit=1`, {
-    headers: { "x-publishable-api-key": publishableKey },
+    headers: storeHeaders(publishableKey),
   })
   const productsBody = await productsRes.json()
   const productRes = await fetch(
     `${BASE_URL}/store/products/${productsBody.products[0].id}?fields=*variants`,
-    { headers: { "x-publishable-api-key": publishableKey } }
+    { headers: storeHeaders(publishableKey) }
   )
   const productBody = await productRes.json()
   variantId = productBody.product.variants[0].id
 })
-
-function storeHeaders(extra: Record<string, string> = {}) {
-  return {
-    "x-publishable-api-key": publishableKey,
-    "Content-Type": "application/json",
-    ...extra,
-  }
-}
 
 describe("full checkout flow", () => {
   it("captures customer email, shipping address, and total onto the completed order", async () => {
@@ -63,7 +49,7 @@ describe("full checkout flow", () => {
     // 1. Create cart
     const createRes = await fetch(`${BASE_URL}/store/carts`, {
       method: "POST",
-      headers: storeHeaders(),
+      headers: storeHeaders(publishableKey),
       body: JSON.stringify({ region_id: regionId }),
     })
     expect(createRes.status).toBe(200)
@@ -73,7 +59,7 @@ describe("full checkout flow", () => {
     // 2. Add line item
     const addRes = await fetch(`${BASE_URL}/store/carts/${cartId}/line-items`, {
       method: "POST",
-      headers: storeHeaders(),
+      headers: storeHeaders(publishableKey),
       body: JSON.stringify({ variant_id: variantId, quantity: 1 }),
     })
     expect(addRes.status).toBe(200)
@@ -89,7 +75,7 @@ describe("full checkout flow", () => {
     }
     const updateRes = await fetch(`${BASE_URL}/store/carts/${cartId}`, {
       method: "POST",
-      headers: storeHeaders(),
+      headers: storeHeaders(publishableKey),
       body: JSON.stringify({
         email: testEmail,
         shipping_address: shippingAddress,
@@ -110,7 +96,7 @@ describe("full checkout flow", () => {
     // 4. Shipping options + add a shipping method
     const shippingOptionsRes = await fetch(
       `${BASE_URL}/store/shipping-options?cart_id=${cartId}`,
-      { headers: storeHeaders() }
+      { headers: storeHeaders(publishableKey) }
     )
     expect(shippingOptionsRes.status).toBe(200)
     const shippingOptionsBody = await shippingOptionsRes.json()
@@ -119,7 +105,7 @@ describe("full checkout flow", () => {
 
     const addShippingRes = await fetch(`${BASE_URL}/store/carts/${cartId}/shipping-methods`, {
       method: "POST",
-      headers: storeHeaders(),
+      headers: storeHeaders(publishableKey),
       body: JSON.stringify({ option_id: shippingOptionId }),
     })
     expect(addShippingRes.status).toBe(200)
@@ -127,7 +113,7 @@ describe("full checkout flow", () => {
     // 5. Payment providers - assert pp_system_system is present (dev env)
     const paymentProvidersRes = await fetch(
       `${BASE_URL}/store/payment-providers?region_id=${regionId}`,
-      { headers: storeHeaders() }
+      { headers: storeHeaders(publishableKey) }
     )
     expect(paymentProvidersRes.status).toBe(200)
     const paymentProvidersBody = await paymentProvidersRes.json()
@@ -137,7 +123,7 @@ describe("full checkout flow", () => {
     // 6. Create payment collection + payment session
     const paymentCollectionRes = await fetch(`${BASE_URL}/store/payment-collections`, {
       method: "POST",
-      headers: storeHeaders(),
+      headers: storeHeaders(publishableKey),
       body: JSON.stringify({ cart_id: cartId }),
     })
     expect(paymentCollectionRes.status).toBe(200)
@@ -148,7 +134,7 @@ describe("full checkout flow", () => {
       `${BASE_URL}/store/payment-collections/${paymentCollectionId}/payment-sessions`,
       {
         method: "POST",
-        headers: storeHeaders(),
+        headers: storeHeaders(publishableKey),
         body: JSON.stringify({ provider_id: "pp_system_system" }),
       }
     )
@@ -157,7 +143,7 @@ describe("full checkout flow", () => {
     // 7. Complete the cart
     const completeRes = await fetch(`${BASE_URL}/store/carts/${cartId}/complete`, {
       method: "POST",
-      headers: storeHeaders(),
+      headers: storeHeaders(publishableKey),
     })
     expect(completeRes.status).toBe(200)
     const completeBody = await completeRes.json()

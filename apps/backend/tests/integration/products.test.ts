@@ -1,50 +1,34 @@
-// Requires `npm run dev` running in apps/backend and the nova_postgres container up.
+// Requires `npm run test:server` running in apps/backend (the isolated test
+// stack on :9002, backed by its own nova_store_test database) - see
+// tests/integration/helpers.ts and TESTING.md.
 //
-// These are "live integration tests" against the real running dev server + DB —
+// These are "live integration tests" against a real running server + DB —
 // NOT Medusa's isolated `medusaIntegrationTestRunner` harness. That harness spins
 // up its own ephemeral DB/app instance per run, which is heavier and out of scope
-// here; instead we exercise the already-running dev server the way a real client
+// here; instead we exercise the already-running server the way a real client
 // would, using plain fetch. This is an explicit scope decision.
 import { beforeAll, describe, expect, it } from "vitest"
-
-const BASE_URL = "http://localhost:9000"
+import { BASE_URL, adminLogin, getPublishableKey, storeHeaders } from "./helpers"
 
 let publishableKey: string
 let regionId: string
 
 beforeAll(async () => {
-  // Read fresh from the storefront env file rather than hardcoding, since the
-  // key can be regenerated.
-  const fs = await import("fs")
-  const path = await import("path")
-  const envPath = path.resolve(__dirname, "../../../storefront/.env.local")
-  const content = fs.readFileSync(envPath, "utf-8")
-  const match = content.match(/NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=(\S+)/)
-  if (!match) {
-    throw new Error("Could not find NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY in storefront/.env.local")
-  }
-  publishableKey = match[1]
+  const adminToken = await adminLogin()
+  publishableKey = await getPublishableKey(adminToken)
 
   const regionsRes = await fetch(`${BASE_URL}/store/regions`, {
-    headers: { "x-publishable-api-key": publishableKey },
+    headers: storeHeaders(publishableKey),
   })
   const regionsBody = await regionsRes.json()
   regionId = regionsBody.regions[0].id
 })
 
-function storeHeaders(extra: Record<string, string> = {}) {
-  return {
-    "x-publishable-api-key": publishableKey,
-    "Content-Type": "application/json",
-    ...extra,
-  }
-}
-
 describe("GET /store/products", () => {
   it("returns the 11 seeded products with thumbnail and variant pricing populated", async () => {
     const res = await fetch(
       `${BASE_URL}/store/products?fields=%2Bthumbnail,%2Bvariants.calculated_price&limit=100&region_id=${regionId}`,
-      { headers: storeHeaders() }
+      { headers: storeHeaders(publishableKey) }
     )
     expect(res.status).toBe(200)
     const body = await res.json()
@@ -63,7 +47,7 @@ describe("GET /store/products", () => {
 
   it("returns exactly one product for handle=dkq04 with its variants", async () => {
     const res = await fetch(`${BASE_URL}/store/products?handle=dkq04`, {
-      headers: storeHeaders(),
+      headers: storeHeaders(publishableKey),
     })
     expect(res.status).toBe(200)
     const body = await res.json()

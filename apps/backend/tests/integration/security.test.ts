@@ -1,38 +1,21 @@
-// Requires `npm run dev` running in apps/backend and the nova_postgres container up.
+// Requires `npm run test:server` running in apps/backend (the isolated test
+// stack on :9002, backed by its own nova_store_test database) - see
+// tests/integration/helpers.ts and TESTING.md.
 //
-// These are "live integration tests" against the real running dev server + DB —
+// These are "live integration tests" against a real running server + DB —
 // NOT Medusa's isolated `medusaIntegrationTestRunner` harness. That harness spins
 // up its own ephemeral DB/app instance per run, which is heavier and out of scope
-// here; instead we exercise the already-running dev server the way a real client
+// here; instead we exercise the already-running server the way a real client
 // would, using plain fetch. This is an explicit scope decision.
 import { beforeAll, describe, expect, it } from "vitest"
-
-const BASE_URL = "http://localhost:9000"
+import { BASE_URL, adminLogin, getPublishableKey } from "./helpers"
 
 let publishableKey: string
 let adminToken: string
 
 beforeAll(async () => {
-  const fs = await import("fs")
-  const path = await import("path")
-  const envPath = path.resolve(__dirname, "../../../storefront/.env.local")
-  const content = fs.readFileSync(envPath, "utf-8")
-  const match = content.match(/NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=(\S+)/)
-  if (!match) {
-    throw new Error("Could not find NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY in storefront/.env.local")
-  }
-  publishableKey = match[1]
-
-  const loginRes = await fetch(`${BASE_URL}/auth/user/emailpass`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: "admin@nova.local", password: "Admin12345!" }),
-  })
-  if (loginRes.status !== 200) {
-    throw new Error(`Admin login failed with status ${loginRes.status}`)
-  }
-  const loginBody = await loginRes.json()
-  adminToken = loginBody.token
+  adminToken = await adminLogin()
+  publishableKey = await getPublishableKey(adminToken)
 })
 
 /** Recursively asserts no key named "password" (case-insensitive) exists anywhere in a value. */

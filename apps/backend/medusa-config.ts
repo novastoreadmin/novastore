@@ -54,7 +54,9 @@ export default defineConfig({
       options: {
         providers: [
           {
-            resolve: "@medusajs/medusa/fulfillment-manual",
+            // require.resolve (not the bare specifier) - see the comment on the
+            // Stripe provider in src/config/runtime-config.ts for why.
+            resolve: require.resolve("@medusajs/medusa/fulfillment-manual"),
             id: "manual",
           },
         ],
@@ -66,7 +68,7 @@ export default defineConfig({
       options: {
         providers: [
           {
-            resolve: "@medusajs/medusa/file-local",
+            resolve: require.resolve("@medusajs/medusa/file-local"),
             id: "local",
             options: {
               upload_dir: "static",
@@ -81,6 +83,19 @@ export default defineConfig({
       resolve: "@medusajs/medusa/notification",
       options: {
         providers: [],
+      },
+    },
+    // Auth module - overrides defineConfig's own default (which uses the same
+    // unresolved bare specifier this workspace can't reliably resolve lazily).
+    {
+      resolve: "@medusajs/medusa/auth",
+      options: {
+        providers: [
+          {
+            resolve: require.resolve("@medusajs/medusa/auth-emailpass"),
+            id: "emailpass",
+          },
+        ],
       },
     },
   ],

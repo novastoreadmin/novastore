@@ -1,64 +1,50 @@
-// Requires `npm run dev` running in apps/backend and the nova_postgres container up.
+// Requires `npm run test:server` running in apps/backend (the isolated test
+// stack on :9002, backed by its own nova_store_test database) - see
+// tests/integration/helpers.ts and TESTING.md.
 //
-// These are "live integration tests" against the real running dev server + DB —
+// These are "live integration tests" against a real running server + DB —
 // NOT Medusa's isolated `medusaIntegrationTestRunner` harness. That harness spins
 // up its own ephemeral DB/app instance per run, which is heavier and out of scope
-// here; instead we exercise the already-running dev server the way a real client
+// here; instead we exercise the already-running server the way a real client
 // would, using plain fetch. This is an explicit scope decision.
 //
 // Carts created here are disposable scratch data (never completed into orders)
 // and do not mutate the seeded product/category catalog.
 import { beforeAll, describe, expect, it } from "vitest"
-
-const BASE_URL = "http://localhost:9000"
+import { BASE_URL, adminLogin, getPublishableKey, storeHeaders } from "./helpers"
 
 let publishableKey: string
 let regionId: string
 let variantId: string
 
 beforeAll(async () => {
-  const fs = await import("fs")
-  const path = await import("path")
-  const envPath = path.resolve(__dirname, "../../../storefront/.env.local")
-  const content = fs.readFileSync(envPath, "utf-8")
-  const match = content.match(/NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=(\S+)/)
-  if (!match) {
-    throw new Error("Could not find NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY in storefront/.env.local")
-  }
-  publishableKey = match[1]
+  const adminToken = await adminLogin()
+  publishableKey = await getPublishableKey(adminToken)
 
   const regionsRes = await fetch(`${BASE_URL}/store/regions`, {
-    headers: { "x-publishable-api-key": publishableKey },
+    headers: storeHeaders(publishableKey),
   })
   const regionsBody = await regionsRes.json()
   regionId = regionsBody.regions[0].id
 
   const productsRes = await fetch(`${BASE_URL}/store/products?limit=1`, {
-    headers: { "x-publishable-api-key": publishableKey },
+    headers: storeHeaders(publishableKey),
   })
   const productsBody = await productsRes.json()
   const productRes = await fetch(
     `${BASE_URL}/store/products/${productsBody.products[0].id}?fields=*variants`,
-    { headers: { "x-publishable-api-key": publishableKey } }
+    { headers: storeHeaders(publishableKey) }
   )
   const productBody = await productRes.json()
   variantId = productBody.product.variants[0].id
 })
-
-function storeHeaders(extra: Record<string, string> = {}) {
-  return {
-    "x-publishable-api-key": publishableKey,
-    "Content-Type": "application/json",
-    ...extra,
-  }
-}
 
 describe("cart lifecycle", () => {
   it("creates a cart, adds/updates/removes a line item, and keeps subtotal math consistent", async () => {
     // Create cart
     const createRes = await fetch(`${BASE_URL}/store/carts`, {
       method: "POST",
-      headers: storeHeaders(),
+      headers: storeHeaders(publishableKey),
       body: JSON.stringify({ region_id: regionId }),
     })
     expect(createRes.status).toBe(200)
@@ -69,7 +55,7 @@ describe("cart lifecycle", () => {
     // Add line item
     const addRes = await fetch(`${BASE_URL}/store/carts/${cartId}/line-items`, {
       method: "POST",
-      headers: storeHeaders(),
+      headers: storeHeaders(publishableKey),
       body: JSON.stringify({ variant_id: variantId, quantity: 2 }),
     })
     expect(addRes.status).toBe(200)
@@ -85,7 +71,7 @@ describe("cart lifecycle", () => {
       `${BASE_URL}/store/carts/${cartId}/line-items/${lineItem.id}`,
       {
         method: "POST",
-        headers: storeHeaders(),
+        headers: storeHeaders(publishableKey),
         body: JSON.stringify({ quantity: 3 }),
       }
     )
@@ -103,7 +89,7 @@ describe("cart lifecycle", () => {
       `${BASE_URL}/store/carts/${cartId}/line-items/${lineItem.id}`,
       {
         method: "DELETE",
-        headers: storeHeaders(),
+        headers: storeHeaders(publishableKey),
       }
     )
     expect(removeRes.status).toBe(200)
@@ -113,7 +99,7 @@ describe("cart lifecycle", () => {
 
   it("returns a 404-shaped error for a bogus cart id", async () => {
     const res = await fetch(`${BASE_URL}/store/carts/cart_bogus_does_not_exist`, {
-      headers: storeHeaders(),
+      headers: storeHeaders(publishableKey),
     })
     expect(res.status).toBe(404)
     const body = await res.json().catch(() => ({}))

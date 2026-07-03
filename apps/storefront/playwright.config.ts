@@ -1,9 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// The storefront (http://localhost:3000) and backend (http://localhost:9000)
-// dev servers are externally managed for this environment — this config does
-// NOT start/stop them (no `webServer` block). Run `npm run test:e2e` only
-// once both are up.
+// Points at the ISOLATED test stack (storefront :3002, backend :9002, its
+// own nova_store_test database) - never the dev stack on :3000/:9000, which
+// is the real/"production" DB the admin panel points at. Bring the test
+// stack up first (see TESTING.md), then `npm run test:e2e`. This config does
+// NOT start/stop the test stack itself (no `webServer` block).
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 45_000,
@@ -18,7 +19,7 @@ export default defineConfig({
   retries: 1,
   reporter: "list",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: "http://localhost:3002",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     actionTimeout: 15_000,

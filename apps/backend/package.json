@@ -13,7 +13,10 @@
     "test": "vitest run tests/unit",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
-    "test:all": "vitest run tests"
+    "test:all": "vitest run tests",
+    "test:db:setup": "dotenv -e .env.test -- npx medusa db:setup",
+    "test:seed": "dotenv -e .env.test -- npx medusa exec ./seed.ts",
+    "test:server": "dotenv -e .env.test -- npx medusa develop"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.4.2",
@@ -22,9 +25,13 @@
     "@inquirer/input": "^2.3.0",
     "@inquirer/type": "^1.5.5",
     "@medusajs/admin-sdk": "^2.17.0",
+    "@medusajs/auth-emailpass": "2.17.0",
     "@medusajs/cli": "^2.17.0",
+    "@medusajs/file-local": "2.17.0",
     "@medusajs/framework": "^2.17.0",
+    "@medusajs/fulfillment-manual": "2.17.0",
     "@medusajs/medusa": "^2.17.0",
+    "@medusajs/payment-stripe": "2.17.0",
     "@mikro-orm/core": "6.6.14",
     "@mikro-orm/knex": "6.6.14",
     "@mikro-orm/migrations": "6.6.14",
@@ -45,6 +52,7 @@
   "devDependencies": {
     "@medusajs/types": "^2.17.0",
     "@types/node": "^22.14.0",
+    "dotenv-cli": "^7.4.4",
     "typescript": "^5.8.0",
     "vitest": "^4.1.9"
   },

@@ -12,6 +12,18 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "apps/backend"],
       "port": 9000
+    },
+    {
+      "name": "backend-test",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "test:server", "--prefix", "apps/backend"],
+      "port": 9002
+    },
+    {
+      "name": "storefront-test",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "test:server", "--prefix", "apps/storefront"],
+      "port": 3002
     }
   ]
 }

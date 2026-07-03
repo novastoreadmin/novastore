@@ -6,42 +6,90 @@ storefront (`apps/storefront`). Three tiers, run bottom-up in CI or locally:
 | Tier | Tool | Needs | Files | Count |
 |---|---|---|---|---|
 | Unit | Vitest | nothing (pure functions) | `apps/backend/tests/unit/*.test.ts` | 25 |
-| Integration | Vitest + `fetch` | live backend (`:9000`) + Postgres | `apps/backend/tests/integration/*.test.ts` | 9 |
-| E2E | Playwright | live backend (`:9000`) + storefront (`:3000`) + Postgres | `apps/storefront/tests/e2e/*.spec.ts` | 12 |
+| Integration | Vitest + `fetch` | isolated test backend (`:9002`) + Postgres | `apps/backend/tests/integration/*.test.ts` | 9 |
+| E2E | Playwright | isolated test backend (`:9002`) + storefront (`:3002`) + Postgres | `apps/storefront/tests/e2e/*.spec.ts` | 12 |
 
 **Total: 46 tests, all passing as of this writing.**
 
-## Prerequisites
+## The isolated test stack — read this first
 
-1. Postgres + mail containers up: `docker compose up -d` (or confirm `nova_postgres` is already running).
-2. Backend and storefront dev servers running: `npm run dev` from the repo root (or start them individually — `npm run dev:backend`, `npm run dev:storefront`).
-3. Playwright's Chromium browser installed once: `cd apps/storefront && npx playwright install chromium`.
+Integration and E2E tests run against a **completely separate stack** from the one you use
+for real browsing/admin work:
 
-Unit tests don't need steps 2–3. Integration and E2E tests do — they run against the real dev stack rather than a mocked/isolated harness (see **Scope decisions** below for why).
+| | Dev stack (what you use day to day) | Test stack (what the tests use) |
+|---|---|---|
+| Backend | `:9000` | `:9002` |
+| Storefront | `:3000` | `:3002` |
+| Database | `nova_store` | `nova_store_test` |
+| Config | `apps/backend/.env`, `apps/storefront/.env.local` | `apps/backend/.env.test`, `apps/storefront/.env.test` |
 
-## Running
+**Why this exists:** earlier versions of this suite ran integration/E2E tests directly
+against the dev stack, which meant every test run wrote real-looking test orders and
+customers (`e2e-test@example.com`, `checkout-test-*@example.com`, etc.) straight into
+`nova_store` — the same database the admin panel shows you. That's fixed now: tests only
+ever touch `nova_store_test`. If you're auditing the admin panel and see test-looking data
+in there, it predates this fix (see the cleanup note at the bottom of this file) — new test
+runs won't add more.
 
-From the repo root:
-
-```bash
-npm run test:unit          # fast, no servers needed — 25 tests, ~1s
-npm run test:integration   # needs backend + DB up — 9 tests, ~3s
-npm run test:e2e           # needs full stack up — 12 tests, ~45s
-npm run test               # all three, in order
-```
-
-Or per-app:
+### One-time setup of the test stack
 
 ```bash
 cd apps/backend
-npm run test:unit
-npm run test:integration
-npm run test:all           # both backend tiers together
+# 1. Create the test database (once)
+docker exec nova_postgres psql -U postgres -c "CREATE DATABASE nova_store_test;"
+
+# 2. Run migrations against it
+npx dotenv -e .env.test -- npx medusa db:migrate
+
+# 3. Create the test-stack admin user
+npx dotenv -e .env.test -- npx medusa user -e admin@nova.local -p "Admin12345!"
+
+# 4. Seed it with the catalog - copy the printed publishable key into
+#    apps/storefront/.env.test's NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY afterward
+npm run test:seed
+```
+
+### Resetting the test stack
+
+It's disposable — if it gets into a weird state (e.g. a partially-failed seed), just wipe
+and redo the one-time setup:
+
+```bash
+docker exec nova_postgres psql -U postgres -c "DROP DATABASE IF EXISTS nova_store_test;"
+docker exec nova_postgres psql -U postgres -c "CREATE DATABASE nova_store_test;"
+# then repeat steps 2-4 above
+```
+
+## Prerequisites
+
+1. Postgres container up (`nova_postgres`) and the test stack set up once (above).
+2. Test backend + test storefront running:
+   ```bash
+   cd apps/backend && npm run test:server      # :9002
+   cd apps/storefront && npm run test:server   # :3002
+   ```
+   (Your normal dev servers on :9000/:3000 can keep running alongside these — different ports, different DB, no conflict.)
+3. Playwright's Chromium browser installed once: `cd apps/storefront && npx playwright install chromium`.
+
+Unit tests don't need any of this — they're pure functions, no server, no DB.
+
+## Running
+
+```bash
+cd apps/backend
+npm run test:unit                                          # no servers needed — 25 tests, ~1s
+npm run test:integration                                   # needs test backend :9002 up — 9 tests, ~3s
+# or override the target explicitly:
+TEST_BACKEND_URL=http://localhost:9002 npm run test:integration
 
 cd apps/storefront
-npm run test:e2e
-npm run test:e2e:ui        # Playwright's interactive UI mode, for debugging
+npm run test:e2e                                            # needs test backend :9002 + test storefront :3002 up — 12 tests, ~45s
+npm run test:e2e:ui                                         # Playwright's interactive UI mode, for debugging
 ```
+
+Root-level convenience scripts (`npm run test:unit` / `test:integration` / `test:e2e` / `test`
+from the repo root) exist too, via turbo — but they assume the test stack from the
+Prerequisites section above is already running; they don't start it for you.
 
 ## What's covered (mapped to real bugs fixed this session)
 
@@ -73,12 +121,13 @@ generic boilerplate coverage.
 
 ## Scope decisions (read before assuming something's covered)
 
-- **Integration tests hit the live dev server, not an isolated `medusaIntegrationTestRunner`
-  harness.** Medusa v2 ships an official isolated-DB test harness; this project uses live
-  server tests instead as a deliberate, documented tradeoff for a project this size —
-  faster to set up reliably, and it's exactly what was manually verified by hand throughout
-  this session. If the project grows a CI pipeline with a disposable test database, revisit
-  this and consider migrating to the isolated harness for true test isolation.
+- **Integration tests hit a real running server (the isolated test stack on `:9002`), not
+  Medusa's official `medusaIntegrationTestRunner` harness.** That harness spins up its own
+  fully ephemeral in-process DB/app instance per test file, which is heavier to set up
+  reliably than a long-lived test server + dedicated test database. The test stack here still
+  gives full DB isolation from the real `nova_store` — it just persists between runs rather
+  than being torn down after each one. If the project grows a CI pipeline, revisit this and
+  consider migrating to the isolated harness for per-test ephemeral DBs.
 - **Admin panel UI itself is not browser-automated.** Medusa's admin dashboard is
   Medusa-shipped code we don't own; testing its internal rendering would be testing
   upstream's product, not ours. Instead, admin coverage goes through the **Admin REST API**
@@ -102,6 +151,7 @@ generic boilerplate coverage.
 
 ```
 apps/backend/
+  .env.test                           isolated test-stack config (:9002, nova_store_test)
   src/config/runtime-config.ts        pure functions extracted from medusa-config.ts
                                        (behavior-preserving refactor, done to make the
                                        payment-provider/secret logic unit-testable)
@@ -110,13 +160,15 @@ apps/backend/
     catalog.test.ts                   toStoreMinor pricing math
     runtime-config.test.ts            payment-provider gating + secret fallback logic
   tests/integration/
+    helpers.ts                        BASE_URL (:9002) + admin login + publishable-key fetch
     products.test.ts                  store product listing/detail
     cart.test.ts                      cart lifecycle + subtotal math + 404 contract
     checkout.test.ts                  full checkout flow, customer-data regression guard
     security.test.ts                  admin auth boundary, no-password-leak, publishable key
 
 apps/storefront/
-  playwright.config.ts
+  .env.test                           isolated test-stack config (:3002 -> backend :9002)
+  playwright.config.ts                baseURL :3002
   tests/e2e/
     helpers.ts                        shared fixtures/utilities (admin login, cart helpers)
     browse-and-filter.spec.ts         listing, category/price filters, homepage CTA regression
@@ -137,8 +189,22 @@ What this suite gives you:
   issues on custom routes) now has a test that fails if it comes back.
 - A fast unit tier (~1s) safe to run on every save, and full-stack tiers that take under a
   minute combined — cheap enough to run before every push.
+- Full isolation from the real `nova_store` database — running the suite can never again
+  leave test orders/customers in the data the admin panel shows you.
 - 46/46 passing on a clean run of the actual current codebase, verified independently (not
   just trusted from the agents' own reports).
+
+**A note on `npm install` in this monorepo:** getting the isolated test stack running
+surfaced a real, separate bug — `@medusajs/medusa` wasn't hoisted to the root
+`node_modules`, which broke several of Medusa's own lazy `@medusajs/medusa/<provider>`
+module resolutions (`file-local`, `auth-emailpass`, `fulfillment-manual`) on a clean
+install. Fixed by pinning `@medusajs/medusa` as an explicit root-level dependency (forces
+correct hoisting) and by resolving the provider paths eagerly via `require.resolve(...)` in
+`medusa-config.ts`/`runtime-config.ts` instead of leaving them as bare specifiers for
+Medusa to resolve lazily. If a future `npm install` ever reintroduces boot errors like
+`Unable to find module @medusajs/medusa/file-local`, this is almost certainly the same
+class of issue — check that `@medusajs/medusa` is still a direct root `package.json`
+dependency before debugging further.
 
 What it doesn't give you:
 - Coverage of code paths nobody has broken yet — this is a regression suite built from real

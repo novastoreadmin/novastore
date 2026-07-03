@@ -3,11 +3,12 @@ import path from "node:path";
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 
 /* -------------------------------------------------------------------------- */
-/*  Env (read fresh from apps/storefront/.env.local, per task instructions)   */
+/*  Env (read fresh from apps/storefront/.env.test - the isolated test stack, */
+/*  never the dev/.env.local stack that points at the real nova_store DB)     */
 /* -------------------------------------------------------------------------- */
 
-function readEnvLocal(): Record<string, string> {
-  const envPath = path.resolve(__dirname, "../../.env.local");
+function readEnvFile(filename: string): Record<string, string> {
+  const envPath = path.resolve(__dirname, "../..", filename);
   const out: Record<string, string> = {};
   if (!fs.existsSync(envPath)) return out;
   const raw = fs.readFileSync(envPath, "utf-8");
@@ -23,10 +24,10 @@ function readEnvLocal(): Record<string, string> {
   return out;
 }
 
-const env = readEnvLocal();
+const env = readEnvFile(".env.test");
 
 export const BACKEND_URL =
-  env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000";
+  env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9002";
 export const PUBLISHABLE_KEY = env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "";
 
 export const ADMIN_EMAIL = "admin@nova.local";
