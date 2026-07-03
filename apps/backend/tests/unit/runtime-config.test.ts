@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
-  isStripeConfigured,
+  isMonobankConfigured,
   requiredSecret,
   resolveAllowTestPayments,
   resolvePaymentProviders,
@@ -50,45 +50,64 @@ describe("resolveAllowTestPayments", () => {
   })
 })
 
-describe("isStripeConfigured", () => {
-  it("is false when STRIPE_API_KEY is unset", () => {
-    expect(isStripeConfigured({})).toBe(false)
+describe("isMonobankConfigured", () => {
+  it("is false when MONO_TOKEN is unset", () => {
+    expect(isMonobankConfigured({})).toBe(false)
   })
 
-  it("is false when STRIPE_API_KEY contains 'placeholder'", () => {
-    expect(isStripeConfigured({ STRIPE_API_KEY: "sk_test_placeholder_123" })).toBe(false)
+  it("is false when MONO_TOKEN contains 'placeholder'", () => {
+    expect(isMonobankConfigured({ MONO_TOKEN: "mono_placeholder_123" })).toBe(false)
   })
 
-  it("is true when STRIPE_API_KEY is a real-looking value", () => {
-    expect(isStripeConfigured({ STRIPE_API_KEY: "sk_live_abc123" })).toBe(true)
+  it("is true when MONO_TOKEN is a real-looking value", () => {
+    expect(isMonobankConfigured({ MONO_TOKEN: "uXyzRealToken123" })).toBe(true)
   })
 })
 
 describe("resolvePaymentProviders", () => {
-  it("includes only the system provider in dev with no Stripe key", () => {
+  it("includes only the system provider in dev with no Monobank token", () => {
     const providers = resolvePaymentProviders({}, false)
     expect(providers).toHaveLength(1)
     expect(providers[0]).toMatchObject({ id: "system" })
   })
 
-  it("includes only Stripe in production with a real key and test payments not explicitly allowed", () => {
-    const providers = resolvePaymentProviders({ STRIPE_API_KEY: "sk_live_abc123" }, true)
+  it("includes only Monobank in production with a real token and test payments not explicitly allowed", () => {
+    const providers = resolvePaymentProviders({ MONO_TOKEN: "uXyzRealToken123" }, true)
     expect(providers).toHaveLength(1)
-    expect(providers[0]).toMatchObject({ id: "stripe" })
+    expect(providers[0]).toMatchObject({ id: "monobank" })
   })
 
-  it("includes both providers when Stripe is configured and test payments are explicitly allowed", () => {
+  it("passes the token and URLs through to the Monobank provider options", () => {
     const providers = resolvePaymentProviders(
-      { STRIPE_API_KEY: "sk_live_abc123", ALLOW_TEST_PAYMENTS: "true" },
+      {
+        MONO_TOKEN: "uXyzRealToken123",
+        STOREFRONT_URL: "https://novastore.com.ua",
+        MEDUSA_BACKEND_URL: "https://novastore.com.ua",
+      },
+      true
+    )
+    expect(providers[0]).toMatchObject({
+      id: "monobank",
+      options: {
+        token: "uXyzRealToken123",
+        storefrontUrl: "https://novastore.com.ua",
+        backendUrl: "https://novastore.com.ua",
+      },
+    })
+  })
+
+  it("includes both providers when Monobank is configured and test payments are explicitly allowed", () => {
+    const providers = resolvePaymentProviders(
+      { MONO_TOKEN: "uXyzRealToken123", ALLOW_TEST_PAYMENTS: "true" },
       true
     )
     expect(providers).toHaveLength(2)
     const ids = providers.map((p) => p.id)
     expect(ids).toContain("system")
-    expect(ids).toContain("stripe")
+    expect(ids).toContain("monobank")
   })
 
-  it("returns an empty array in production with no Stripe key and test payments disabled", () => {
+  it("returns an empty array in production with no Monobank token and test payments disabled", () => {
     // This is the case medusa-config.ts guards against by throwing at boot.
     // We only assert the array is empty here; the throw itself lives in
     // medusa-config.ts's top-level code and is out of scope for this unit test.
@@ -96,7 +115,7 @@ describe("resolvePaymentProviders", () => {
     expect(providers).toEqual([])
   })
 
-  it("returns an empty array when ALLOW_TEST_PAYMENTS=false and no Stripe key, even in dev", () => {
+  it("returns an empty array when ALLOW_TEST_PAYMENTS=false and no Monobank token, even in dev", () => {
     const providers = resolvePaymentProviders({ ALLOW_TEST_PAYMENTS: "false" }, false)
     expect(providers).toEqual([])
   })

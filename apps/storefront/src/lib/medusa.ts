@@ -176,11 +176,19 @@ export async function getPaymentProviders(regionId: string) {
 export async function initiatePaymentSession(cartId: string, providerId: string) {
   // Retrieve cart with payment_collection so the SDK can find the collection id.
   const { cart } = await sdk.store.cart.retrieve(cartId, {
-    fields: "+payment_collection",
+    fields: "+payment_collection,+email",
   });
   const result = await sdk.store.payment.initiatePaymentSession(
     cart as Parameters<typeof sdk.store.payment.initiatePaymentSession>[0],
-    { provider_id: providerId }
+    {
+      provider_id: providerId,
+      // Passed through to the provider's initiatePayment — Monobank uses these
+      // to build the return URL and attach the customer email to the invoice.
+      data: {
+        cart_id: cartId,
+        email: (cart as { email?: string | null }).email ?? undefined,
+      },
+    }
   );
   return result;
 }

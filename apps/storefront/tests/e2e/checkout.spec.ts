@@ -89,19 +89,11 @@ test.describe("Checkout", () => {
     await shippingContinueBtn.click();
 
     /* ---------------- Payment step ---------------- */
+    // Card details are no longer collected on-site: payment goes through the
+    // configured provider (Monobank in production, system provider on the
+    // test stack, which completes inline without a redirect).
     await expect(page.getByRole("heading", { name: "Payment" })).toBeVisible();
-    const placeOrderBtn = page.getByRole("button", { name: "Place Order" });
-    await expect(placeOrderBtn).toBeDisabled();
-
-    await fillField(page, "#cardNumber", "4242 4242 4242 4242");
-    await fillField(page, "#expiry", "12/30");
-    await fillField(page, "#cvc", "123");
-    await fillField(
-      page,
-      "#nameOnCard",
-      `${UKRAINIAN_ADDRESS.firstName} ${UKRAINIAN_ADDRESS.lastName}`
-    );
-
+    const placeOrderBtn = page.getByRole("button", { name: "Proceed to Payment" });
     await expect(placeOrderBtn).toBeEnabled();
 
     const [completeResponse] = await Promise.all([

@@ -129,14 +129,8 @@ const EMPTY_CONTACT: ContactInfo = {
   phone: "",
 };
 
-interface CardInfo {
-  cardNumber: string;
-  expiry: string;
-  cvc: string;
-  nameOnCard: string;
-}
-
-const EMPTY_CARD: CardInfo = { cardNumber: "", expiry: "", cvc: "", nameOnCard: "" };
+// Monobank provider ID — must match the id registered in medusa-config providers + "pp_" prefix
+const MONO_PROVIDER_ID = "pp_monobank_monobank";
 
 export default function CheckoutPage() {
   const { cartId, setCartId, setItemCount } = useCartStore();
@@ -157,12 +151,6 @@ export default function CheckoutPage() {
   const [contactInfo, setContactInfo] = useState<ContactInfo>(EMPTY_CONTACT);
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoError, setInfoError] = useState<string | null>(null);
-
-  // Card fields are intentionally never sent to our own API: sending raw card
-  // numbers to a non-PCI-compliant backend would itself be a security issue.
-  // They only gate the Place Order button here; real card capture requires
-  // Stripe.js/Elements tokenization, which is a separate follow-up feature.
-  const [cardInfo, setCardInfo] = useState<CardInfo>(EMPTY_CARD);
 
   const currency = cart?.currency_code;
   const items = cart?.items ?? [];
@@ -214,9 +202,6 @@ export default function CheckoutPage() {
   const updateContact = (field: keyof ContactInfo) => (value: string) =>
     setContactInfo((prev) => ({ ...prev, [field]: value }));
 
-  const updateCard = (field: keyof CardInfo) => (value: string) =>
-    setCardInfo((prev) => ({ ...prev, [field]: value }));
-
   const isInformationValid =
     contactInfo.email.trim() !== "" &&
     contactInfo.firstName.trim() !== "" &&
@@ -224,12 +209,6 @@ export default function CheckoutPage() {
     contactInfo.address1.trim() !== "" &&
     contactInfo.city.trim() !== "" &&
     contactInfo.postalCode.trim() !== "";
-
-  const isPaymentValid =
-    cardInfo.cardNumber.trim() !== "" &&
-    cardInfo.expiry.trim() !== "" &&
-    cardInfo.cvc.trim() !== "" &&
-    cardInfo.nameOnCard.trim() !== "";
 
   async function selectShipping(optionId: string) {
     if (!cartId || updatingShipping) return;
@@ -292,15 +271,39 @@ export default function CheckoutPage() {
       // Find a usable payment provider for this cart's region.
       const regionId = cart.region_id;
       const providers = regionId ? await getPaymentProviders(regionId) : [];
-      // Prefer the system provider (no Stripe keys needed); fall back to whatever else is available.
+      // Prefer Monobank (real payments); fall back to the system/test provider (dev only).
       const providerId =
-        providers.find((p) => p.id === "pp_system_system")?.id ?? providers[0]?.id;
+        providers.find((p) => p.id === MONO_PROVIDER_ID)?.id ??
+        providers.find((p) => p.id === "pp_system_system")?.id ??
+        providers[0]?.id;
       if (!providerId) throw new Error("No payment provider available. Check backend config.");
 
-      // Initialize the payment session (system provider authorizes immediately).
-      await initiatePaymentSession(cartId, providerId);
+      const session = await initiatePaymentSession(cartId, providerId);
 
-      // Complete the cart — on success this returns { type: "order", order: {...} }.
+      if (providerId === MONO_PROVIDER_ID) {
+        // Monobank returns a hosted payment page URL in the session data. Send
+        // the customer there; the cart is completed on /checkout/payment-return
+        // once they come back.
+        const sessions =
+          (
+            session as {
+              payment_collection?: {
+                payment_sessions?: {
+                  provider_id: string;
+                  data?: { pageUrl?: string };
+                }[];
+              };
+            }
+          ).payment_collection?.payment_sessions ?? [];
+        const pageUrl = sessions.find((s) => s.provider_id === MONO_PROVIDER_ID)?.data?.pageUrl;
+        if (!pageUrl) {
+          throw new Error("Monobank did not return a payment page. Please try again.");
+        }
+        window.location.assign(pageUrl);
+        return; // keep the button spinner while the browser navigates away
+      }
+
+      // System/test provider authorizes immediately — complete the cart inline.
       const result = await completeCart(cartId);
       if (result.type === "order") {
         setOrderId(result.order.id);
@@ -310,9 +313,9 @@ export default function CheckoutPage() {
       } else {
         throw new Error("Order could not be completed. Please try again.");
       }
+      setPlacingOrder(false);
     } catch (err: unknown) {
       setOrderError(err instanceof Error ? err.message : "Failed to place order.");
-    } finally {
       setPlacingOrder(false);
     }
   }
@@ -582,50 +585,27 @@ export default function CheckoutPage() {
                   Payment
                 </h2>
                 <div className="p-6 rounded-xl border border-border bg-bg-card">
-                  <div className="flex items-center gap-2 mb-6">
+                  <div className="flex items-center gap-2 mb-4">
                     <CreditCard className="w-4 h-4 text-text-secondary" />
-                    <span className="text-sm font-medium">Credit Card</span>
+                    <span className="text-sm font-medium">Pay with Monobank</span>
                   </div>
-                  <div className="space-y-5">
-                    <InputField
-                      label="Card Number"
-                      placeholder="1234 5678 9012 3456"
-                      required
-                      name="cardNumber"
-                      value={cardInfo.cardNumber}
-                      onChange={updateCard("cardNumber")}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                      <InputField
-                        label="Expiry"
-                        placeholder="MM / YY"
-                        required
-                        name="expiry"
-                        value={cardInfo.expiry}
-                        onChange={updateCard("expiry")}
-                      />
-                      <InputField
-                        label="CVC"
-                        placeholder="123"
-                        required
-                        name="cvc"
-                        value={cardInfo.cvc}
-                        onChange={updateCard("cvc")}
-                      />
-                    </div>
-                    <InputField
-                      label="Name on Card"
-                      placeholder="Taras Shevchenko"
-                      required
-                      name="nameOnCard"
-                      value={cardInfo.nameOnCard}
-                      onChange={updateCard("nameOnCard")}
-                    />
-                  </div>
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    After clicking{" "}
+                    <span className="text-text-primary font-medium">
+                      Proceed to Payment
+                    </span>{" "}
+                    you&apos;ll be redirected to Monobank&apos;s secure payment
+                    page. Bank card, Apple Pay and Google Pay are supported.
+                    Once the payment is confirmed you&apos;ll return here
+                    automatically.
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 mt-4 text-xs text-text-muted">
                   <Lock className="w-3 h-3" />
-                  <span>Your payment information is encrypted and secure.</span>
+                  <span>
+                    Payments are processed by Monobank. We never see your card
+                    details.
+                  </span>
                 </div>
               </div>
             )}
@@ -659,11 +639,11 @@ export default function CheckoutPage() {
                     size="lg"
                     onClick={placeOrder}
                     isLoading={placingOrder}
-                    disabled={placingOrder || !isPaymentValid}
+                    disabled={placingOrder}
                     className="group"
                   >
                     <Lock className="mr-2 w-3.5 h-3.5" />
-                    <span>Place Order</span>
+                    <span>Proceed to Payment</span>
                   </Button>
                 </div>
               ) : (

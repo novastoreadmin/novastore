@@ -30,8 +30,10 @@ export function resolveAllowTestPayments(env: NodeJS.ProcessEnv, isProduction: b
   return env.ALLOW_TEST_PAYMENTS ? env.ALLOW_TEST_PAYMENTS === "true" : !isProduction
 }
 
-export function isStripeConfigured(env: NodeJS.ProcessEnv): boolean {
-  return !!env.STRIPE_API_KEY && !env.STRIPE_API_KEY.includes("placeholder")
+// Monobank is the store's real payment provider (Ukrainian market — Stripe
+// doesn't pay out to Ukrainian accounts, so it's intentionally not wired up).
+export function isMonobankConfigured(env: NodeJS.ProcessEnv): boolean {
+  return !!env.MONO_TOKEN && !env.MONO_TOKEN.includes("placeholder")
 }
 
 export function resolvePaymentProviders(
@@ -39,25 +41,21 @@ export function resolvePaymentProviders(
   isProduction: boolean
 ): Array<Record<string, unknown>> {
   const allowTestPayments = resolveAllowTestPayments(env, isProduction)
-  const stripeConfigured = isStripeConfigured(env)
+  const monobankConfigured = isMonobankConfigured(env)
 
   return [
     ...(allowTestPayments
       ? [{ resolve: "./src/modules/payment-system", id: "system", options: {} }]
       : []),
-    ...(stripeConfigured
+    ...(monobankConfigured
       ? [
           {
-            // Resolved eagerly (not left as the bare "@medusajs/medusa/payment-stripe"
-            // specifier) because Medusa's own lazy provider loader resolves relative
-            // to a context that doesn't reliably see hoisted sibling packages in this
-            // npm workspace - resolving it here, anchored to this file's own location,
-            // sidesteps that entirely. See the same fix applied in medusa-config.ts.
-            resolve: require.resolve("@medusajs/medusa/payment-stripe"),
-            id: "stripe",
+            resolve: "./src/modules/payment-monobank",
+            id: "monobank",
             options: {
-              apiKey: env.STRIPE_API_KEY,
-              webhookSecret: env.STRIPE_WEBHOOK_SECRET || "",
+              token: env.MONO_TOKEN,
+              storefrontUrl: env.STOREFRONT_URL || "http://localhost:3000",
+              backendUrl: env.MEDUSA_BACKEND_URL || "http://localhost:9000",
             },
           },
         ]

@@ -1,51 +1,112 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
-import { motion, useMotionValue, useTransform } from "framer-motion";
-import { gsap, ScrollTrigger } from "@/animations/gsap-config";
+import { useRef } from "react";
+import Image from "next/image";
+import {
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+  type MotionValue,
+} from "framer-motion";
 import { Section } from "@/components/ui/section";
 import { fadeUp } from "@/animations/variants";
 
 const layers = [
-  { label: "Aluminum Shell", color: "rgba(138,141,143,0.3)", offset: 0 },
-  { label: "Thermal Pad", color: "rgba(255,255,255,0.06)", offset: 1 },
-  { label: "Controller Chip", color: "rgba(74,74,74,0.4)", offset: 2 },
-  { label: "Logic Board", color: "rgba(45,45,45,0.5)", offset: 3 },
-  { label: "USB-C Interface", color: "rgba(255,255,255,0.08)", offset: 4 },
+  "Aluminum Shell",
+  "Thermal Pad",
+  "Controller Chip",
+  "Logic Board",
+  "USB-C Interface",
 ];
+
+function LayerItem({
+  label,
+  index,
+  progress,
+}: {
+  label: string;
+  index: number;
+  progress: MotionValue<number>;
+}) {
+  const start = index / layers.length;
+  const end = Math.min(start + 0.15, 1);
+  const dotColor = useTransform(
+    progress,
+    [start, end],
+    ["rgba(255,255,255,0.1)", "rgba(255,255,255,0.6)"]
+  );
+  const dotShadow = useTransform(
+    progress,
+    [start, end],
+    ["0 0 0px rgba(255,255,255,0)", "0 0 12px rgba(255,255,255,0.15)"]
+  );
+  const textColor = useTransform(progress, [start, end], ["#6b6b6b", "#fafafa"]);
+
+  return (
+    <div className="flex items-center gap-4 cursor-default">
+      <motion.div
+        className="w-3 h-3 rounded-full"
+        style={{ backgroundColor: dotColor, boxShadow: dotShadow }}
+      />
+      <motion.span className="text-sm font-medium" style={{ color: textColor }}>
+        {label}
+      </motion.span>
+    </div>
+  );
+}
 
 export function TechnologySection() {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const [explodeProgress, setExplodeProgress] = useState(0);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
+  const visualRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
 
-  const rotateX = useTransform(mouseY, [0, 1], [5, -5]);
-  const rotateY = useTransform(mouseX, [0, 1], [-5, 5]);
+  // Scroll-linked progress as motion values: no React re-renders while scrolling.
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start 0.8", "end 0.5"],
+  });
+  const progress = useSpring(scrollYProgress, {
+    stiffness: 90,
+    damping: 24,
+    restDelta: 0.001,
+  });
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      ScrollTrigger.create({
-        trigger: sectionRef.current,
-        start: "top 60%",
-        end: "bottom 40%",
-        scrub: 1,
-        onUpdate: (self) => setExplodeProgress(self.progress),
-      });
-    }, sectionRef);
+  const cardScale = useTransform(progress, [0, 1], [0.94, 1]);
+  const cardOpacity = useTransform(progress, [0, 1], [0.65, 1]);
+  const captionOpacity = useTransform(progress, [0.3, 0.45], [0, 1]);
+  const chipY = useTransform(progress, [0, 1], [24, -20]);
+  const chipOpacity = useTransform(progress, [0, 1], [0.4, 1]);
+  const chipCaptionOpacity = useTransform(progress, [0.5, 0.65], [0, 1]);
 
-    return () => ctx.revert();
-  }, []);
+  // Pointer tilt, tracked over the visual column only.
+  const pointerX = useMotionValue(0.5);
+  const pointerY = useMotionValue(0.5);
+  const rotateX = useSpring(useTransform(pointerY, [0, 1], [4, -4]), {
+    stiffness: 150,
+    damping: 20,
+  });
+  const rotateY = useSpring(useTransform(pointerX, [0, 1], [-4, 4]), {
+    stiffness: 150,
+    damping: 20,
+  });
 
   function handleMouseMove(e: React.MouseEvent) {
-    const rect = sectionRef.current?.getBoundingClientRect();
+    const rect = visualRef.current?.getBoundingClientRect();
     if (!rect) return;
-    mouseX.set((e.clientX - rect.left) / rect.width);
-    mouseY.set((e.clientY - rect.top) / rect.height);
+    pointerX.set((e.clientX - rect.left) / rect.width);
+    pointerY.set((e.clientY - rect.top) / rect.height);
+  }
+
+  function handleMouseLeave() {
+    pointerX.set(0.5);
+    pointerY.set(0.5);
   }
 
   return (
-    <section ref={sectionRef} onMouseMove={handleMouseMove}>
+    <section ref={sectionRef}>
       <Section stagger>
         <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
           <div>
@@ -72,73 +133,79 @@ export function TechnologySection() {
             </motion.p>
 
             <motion.div variants={fadeUp} className="mt-12 space-y-4">
-              {layers.map((layer, i) => (
-                <div
-                  key={layer.label}
-                  className="flex items-center gap-4 group cursor-default"
-                >
-                  <div
-                    className="w-3 h-3 rounded-full transition-all duration-500"
-                    style={{
-                      backgroundColor:
-                        explodeProgress > i / layers.length
-                          ? "rgba(255,255,255,0.6)"
-                          : "rgba(255,255,255,0.1)",
-                      boxShadow:
-                        explodeProgress > i / layers.length
-                          ? "0 0 12px rgba(255,255,255,0.15)"
-                          : "none",
-                    }}
-                  />
-                  <span
-                    className="text-sm font-medium transition-colors duration-500"
-                    style={{
-                      color:
-                        explodeProgress > i / layers.length
-                          ? "#fafafa"
-                          : "#6b6b6b",
-                    }}
-                  >
-                    {layer.label}
-                  </span>
-                </div>
+              {layers.map((label, i) => (
+                <LayerItem key={label} label={label} index={i} progress={progress} />
               ))}
             </motion.div>
           </div>
 
-          {/* 3D Exploded View */}
+          {/* Exploded view */}
           <motion.div
-            style={{ rotateX, rotateY, transformPerspective: 1200 }}
-            className="relative h-[500px] md:h-[600px] flex items-center justify-center"
+            ref={visualRef}
+            onMouseMove={prefersReducedMotion ? undefined : handleMouseMove}
+            onMouseLeave={prefersReducedMotion ? undefined : handleMouseLeave}
+            style={
+              prefersReducedMotion
+                ? undefined
+                : { rotateX, rotateY, transformPerspective: 1200 }
+            }
+            className="relative flex items-center justify-center pb-16 md:pb-20 lg:h-[600px] lg:pb-0"
           >
-            {layers.map((layer, i) => {
-              const spread = explodeProgress * 50;
-              const yOffset = (i - 2) * spread;
-
-              return (
+            <div className="relative w-full max-w-[340px] md:max-w-[440px]">
+              <motion.div
+                style={
+                  prefersReducedMotion
+                    ? undefined
+                    : { scale: cardScale, opacity: cardOpacity }
+                }
+                className="relative aspect-square rounded-2xl overflow-hidden bg-bg-card border border-white/[0.08] shadow-2xl"
+              >
+                <Image
+                  src="/images/home/engineering-exploded.jpg"
+                  alt="Exploded view of the aluminum enclosure, thermal pad and logic board"
+                  fill
+                  sizes="(max-width: 768px) 85vw, 440px"
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-bg/60 via-transparent to-bg/20" />
+                <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/[0.06]" />
                 <motion.div
-                  key={layer.label}
-                  animate={{
-                    y: yOffset,
-                    rotateX: explodeProgress * 5,
-                    opacity: 0.4 + explodeProgress * 0.6,
-                  }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                  className="absolute w-[280px] h-[180px] md:w-[380px] md:h-[220px] rounded-2xl border border-white/[0.06]"
-                  style={{
-                    backgroundColor: layer.color,
-                    backdropFilter: "blur(8px)",
-                    zIndex: layers.length - i,
-                  }}
+                  style={prefersReducedMotion ? undefined : { opacity: captionOpacity }}
+                  className="absolute bottom-4 left-4 text-[11px] font-medium uppercase tracking-[0.15em] text-white/70"
                 >
-                  <div className="absolute bottom-4 left-4 text-[11px] font-medium text-text-muted opacity-0 transition-opacity duration-300"
-                    style={{ opacity: explodeProgress > 0.3 ? 1 : 0 }}
-                  >
-                    {layer.label}
-                  </div>
+                  Layer by Layer
                 </motion.div>
-              );
-            })}
+              </motion.div>
+
+              {/* Controller chip detail, anchored to the card corner */}
+              <motion.div
+                style={
+                  prefersReducedMotion
+                    ? undefined
+                    : { y: chipY, opacity: chipOpacity }
+                }
+                className="absolute -bottom-10 -left-3 md:-bottom-12 md:-left-8 w-[38%] aspect-square rounded-2xl overflow-hidden bg-bg-card border border-white/[0.1] shadow-2xl"
+              >
+                <Image
+                  src="/images/home/engineering-chip.jpg"
+                  alt="9210CN controller chip detail"
+                  fill
+                  sizes="(max-width: 768px) 38vw, 170px"
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-bg/50 to-transparent" />
+                <motion.div
+                  style={
+                    prefersReducedMotion
+                      ? undefined
+                      : { opacity: chipCaptionOpacity }
+                  }
+                  className="absolute bottom-3 left-3 text-[10px] font-medium uppercase tracking-[0.15em] text-white/70"
+                >
+                  9210CN Controller
+                </motion.div>
+              </motion.div>
+            </div>
           </motion.div>
         </div>
       </Section>

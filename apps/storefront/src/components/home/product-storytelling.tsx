@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "@/animations/gsap-config";
@@ -13,6 +14,7 @@ const features = [
       "USB 3.2 Gen2 interfaces move data at up to 10Gbps, with real-world read/write speeds of 1000-1200MB/s. Offload a full shoot or boot from an external drive in moments.",
     stat: "10Gbps",
     statLabel: "Transfer Speed",
+    image: "/images/home/feature-transfer.jpg",
   },
   {
     label: "02",
@@ -21,6 +23,7 @@ const features = [
       "Precision-machined aluminum-alloy shells dissipate heat and shrug off daily wear, in profiles as thin as 6mm. Built to live in your bag.",
     stat: "6mm",
     statLabel: "Slim Profile",
+    image: "/images/home/feature-unibody.jpg",
   },
   {
     label: "03",
@@ -29,6 +32,7 @@ const features = [
       "PD 3.1 cables and hubs deliver up to 240W (48V/5A) with E-marker safety, charging laptops, phones and consoles at full speed.",
     stat: "240W",
     statLabel: "Fast Charging",
+    image: "/images/home/feature-power.jpg",
   },
   {
     label: "04",
@@ -37,6 +41,7 @@ const features = [
       "Drive an 8K@60Hz display over a single cable, or 4K@60Hz from the slim hub. Your full desk setup, anywhere you go.",
     stat: "8K@60Hz",
     statLabel: "Video Output",
+    image: "/images/home/feature-display.jpg",
   },
 ];
 
@@ -112,38 +117,67 @@ export function ProductStorytelling() {
       <div className="absolute right-[10%] top-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[500px] md:h-[500px]">
         <motion.div
           animate={{
-            rotateY: activeIndex * 90,
-            rotateX: activeIndex * 5,
-            scale: 0.9 + featureProgress * 0.1,
+            rotateY: -8 + activeIndex * 5,
+            rotateX: 3,
+            scale: 0.94 + featureProgress * 0.06,
           }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          style={{ transformPerspective: 1200 }}
           className="w-full h-full relative"
         >
-          <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-bg-elevated to-bg-card border border-border shadow-2xl">
-            <div className="absolute inset-4 rounded-[1.5rem] bg-gradient-to-br from-charcoal/30 to-transparent" />
-            <div className="absolute top-8 left-8 right-8 h-[60%] rounded-xl bg-gradient-to-b from-white/[0.03] to-transparent border border-white/[0.04]" />
-            {/* Feature-specific element */}
+          <div className="absolute inset-0 rounded-[2rem] overflow-hidden bg-bg-elevated border border-border shadow-2xl">
+            {/* Product image per feature, crossfaded */}
+            {features.map((feature, i) => (
+              <motion.div
+                key={feature.label}
+                initial={false}
+                animate={{
+                  opacity: i === activeIndex ? 1 : 0,
+                  scale: i === activeIndex ? 1 : 1.05,
+                }}
+                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute inset-0"
+              >
+                <Image
+                  src={feature.image}
+                  alt={feature.title}
+                  fill
+                  sizes="(max-width: 768px) 300px, 500px"
+                  className="object-cover"
+                  priority={i === 0}
+                />
+              </motion.div>
+            ))}
+
+            {/* Dark blend so the photo sits in the theme */}
+            <div className="absolute inset-0 bg-gradient-to-t from-bg/60 via-transparent to-bg/20" />
+            <div className="absolute inset-0 rounded-[2rem] ring-1 ring-inset ring-white/[0.06]" />
+
+            {/* Feature progress strip */}
             <motion.div
               key={activeIndex}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="absolute bottom-8 left-8 right-8 h-12 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center px-4"
+              className="absolute bottom-6 left-6 right-6 h-12 rounded-lg bg-black/30 backdrop-blur-md border border-white/[0.08] flex items-center justify-between px-4"
             >
               <div className="flex gap-2">
-                {[...Array(3)].map((_, i) => (
+                {features.map((_, i) => (
                   <div
                     key={i}
                     className="w-2 h-2 rounded-full"
                     style={{
                       backgroundColor:
                         i <= activeIndex
-                          ? "rgba(255,255,255,0.3)"
-                          : "rgba(255,255,255,0.06)",
+                          ? "rgba(255,255,255,0.6)"
+                          : "rgba(255,255,255,0.12)",
                     }}
                   />
                 ))}
               </div>
+              <span className="text-[11px] font-medium uppercase tracking-[0.15em] text-white/60">
+                {features[activeIndex].statLabel}
+              </span>
             </motion.div>
           </div>
         </motion.div>

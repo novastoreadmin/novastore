@@ -9,7 +9,7 @@ const paymentProviders = resolvePaymentProviders(process.env, isProduction)
 
 if (!paymentProviders.length) {
   throw new Error(
-    "No payment providers configured. Set STRIPE_API_KEY (production) or ALLOW_TEST_PAYMENTS=true (dev/staging only)."
+    "No payment providers configured. Set MONO_TOKEN (production) or ALLOW_TEST_PAYMENTS=true (dev/staging only)."
   )
 }
 

@@ -99,17 +99,15 @@ test.describe("Account", () => {
     await expect(shippingContinue).toBeEnabled({ timeout: 10_000 });
     await shippingContinue.click();
 
+    // No card form on-site anymore: the test stack's system provider
+    // completes the order inline (Monobank redirects in production).
     await expect(page.getByRole("heading", { name: "Payment" })).toBeVisible();
-    await fillField(page, "#cardNumber", "4242 4242 4242 4242");
-    await fillField(page, "#expiry", "12/30");
-    await fillField(page, "#cvc", "123");
-    await fillField(page, "#nameOnCard", "Lesya Ukrainka");
 
     const [completeResponse] = await Promise.all([
       page.waitForResponse((res) => res.url().includes("/complete"), {
         timeout: 20_000,
       }),
-      page.getByRole("button", { name: "Place Order" }).click(),
+      page.getByRole("button", { name: "Proceed to Payment" }).click(),
     ]);
     expect(completeResponse.ok()).toBeTruthy();
     const completeBody = await completeResponse.json();
