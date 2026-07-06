@@ -5,6 +5,14 @@ loadEnv(process.env.NODE_ENV || "development", process.cwd())
 
 const isProduction = process.env.NODE_ENV === "production"
 
+const redisUrl = process.env.REDIS_URL
+
+if (isProduction && !redisUrl) {
+  console.warn(
+    "REDIS_URL is not set: events, cache and workflows will live in process memory and be lost on restart."
+  )
+}
+
 const paymentProviders = resolvePaymentProviders(process.env, isProduction)
 
 if (!paymentProviders.length) {
@@ -32,15 +40,47 @@ export default defineConfig({
     disable: false,
   },
   modules: [
-    {
-      resolve: "@medusajs/medusa/cache-inmemory",
-    },
-    {
-      resolve: "@medusajs/medusa/event-bus-local",
-    },
-    {
-      resolve: "@medusajs/medusa/workflow-engine-inmemory",
-    },
+    // Redis-backed infrastructure when REDIS_URL is set (production),
+    // in-memory fallbacks otherwise (local dev without Redis).
+    ...(redisUrl
+      ? [
+          {
+            resolve: "@medusajs/medusa/cache-redis",
+            options: { redisUrl },
+          },
+          {
+            resolve: "@medusajs/medusa/event-bus-redis",
+            options: { redisUrl },
+          },
+          {
+            resolve: "@medusajs/medusa/workflow-engine-redis",
+            options: { redis: { url: redisUrl } },
+          },
+          {
+            resolve: "@medusajs/medusa/locking",
+            options: {
+              providers: [
+                {
+                  resolve: require.resolve("@medusajs/medusa/locking-redis"),
+                  id: "locking-redis",
+                  is_default: true,
+                  options: { redisUrl },
+                },
+              ],
+            },
+          },
+        ]
+      : [
+          {
+            resolve: "@medusajs/medusa/cache-inmemory",
+          },
+          {
+            resolve: "@medusajs/medusa/event-bus-local",
+          },
+          {
+            resolve: "@medusajs/medusa/workflow-engine-inmemory",
+          },
+        ]),
     // Payment module: system provider only in dev/staging + Stripe when real keys are set.
     {
       resolve: "@medusajs/medusa/payment",
