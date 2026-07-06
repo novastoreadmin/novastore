@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Check, AlertCircle, Loader2 } from "lucide-react";
@@ -12,7 +12,7 @@ import { useCustomer } from "@/hooks/use-customer";
 
 type Phase = "checking" | "success" | "pending" | "error";
 
-export default function PaymentReturnPage() {
+function PaymentReturnContent() {
   const params = useSearchParams();
   const router = useRouter();
   const { setCartId, setItemCount } = useCartStore();
@@ -169,5 +169,24 @@ export default function PaymentReturnPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+// useSearchParams() forces client-side rendering; the page must provide a
+// Suspense boundary so `next build` can prerender the static shell.
+export default function PaymentReturnPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-bg flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4 text-center px-6">
+            <Loader2 className="w-8 h-8 text-text-muted animate-spin" />
+            <p className="text-sm text-text-secondary">Verifying your payment…</p>
+          </div>
+        </div>
+      }
+    >
+      <PaymentReturnContent />
+    </Suspense>
   );
 }

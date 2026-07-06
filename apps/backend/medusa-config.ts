@@ -54,7 +54,7 @@ export default defineConfig({
           },
           {
             resolve: "@medusajs/medusa/workflow-engine-redis",
-            options: { redis: { url: redisUrl } },
+            options: { redis: { redisUrl } },
           },
           {
             resolve: "@medusajs/medusa/locking",
