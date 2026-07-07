@@ -180,7 +180,13 @@ export async function getPaymentProviders(regionId: string) {
   return payment_providers ?? [];
 }
 
-export async function initiatePaymentSession(cartId: string, providerId: string) {
+export async function initiatePaymentSession(
+  cartId: string,
+  providerId: string,
+  // Monobank extras: save_card tokenizes the card in the customer's wallet;
+  // card_token pays with a previously saved card (one-click).
+  extra?: { save_card?: boolean; card_token?: string }
+) {
   // Retrieve cart with payment_collection so the SDK can find the collection id.
   const { cart } = await sdk.store.cart.retrieve(cartId, {
     fields: "+payment_collection,+email",
@@ -194,6 +200,8 @@ export async function initiatePaymentSession(cartId: string, providerId: string)
       data: {
         cart_id: cartId,
         email: (cart as { email?: string | null }).email ?? undefined,
+        ...(extra?.save_card ? { save_card: true } : {}),
+        ...(extra?.card_token ? { card_token: extra.card_token } : {}),
       },
     }
   );
