@@ -124,6 +124,13 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [activeImage, setActiveImage] = useState(0);
+
+  // Full gallery; falls back to the thumbnail for products without images.
+  const galleryImages = useMemo(() => {
+    if (product.images?.length) return product.images;
+    return product.thumbnail ? [{ url: product.thumbnail }] : [];
+  }, [product.images, product.thumbnail]);
 
   /* ---- Refs for GSAP ---- */
   const heroRef = useRef<HTMLDivElement>(null);
@@ -329,15 +336,26 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
               className="relative order-1 lg:order-1"
             >
               <div className="relative aspect-square rounded-3xl overflow-hidden bg-bg-card border border-border">
-                {product.thumbnail || product.images[0]?.url ? (
-                  <Image
-                    src={product.images[0]?.url ?? product.thumbnail!}
-                    alt={product.title}
-                    fill
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                    className="object-cover"
-                  />
+                {galleryImages.length > 0 ? (
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={galleryImages[Math.min(activeImage, galleryImages.length - 1)].url}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="absolute inset-0"
+                    >
+                      <Image
+                        src={galleryImages[Math.min(activeImage, galleryImages.length - 1)].url}
+                        alt={product.title}
+                        fill
+                        priority
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                        className="object-cover"
+                      />
+                    </motion.div>
+                  </AnimatePresence>
                 ) : (
                   <div className="absolute inset-0">
                     <div className="absolute inset-0 bg-gradient-to-br from-charcoal/60 via-bg-elevated to-bg-card" />
@@ -350,6 +368,34 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                 {/* Subtle glow border */}
                 <div className="absolute inset-0 rounded-3xl border border-white/[0.06] pointer-events-none" />
               </div>
+
+              {/* ---- Gallery thumbnails ---- */}
+              {galleryImages.length > 1 && (
+                <div className="mt-4 grid grid-cols-5 sm:grid-cols-6 lg:grid-cols-8 gap-3">
+                  {galleryImages.map((img, i) => (
+                    <button
+                      key={img.url}
+                      type="button"
+                      onClick={() => setActiveImage(i)}
+                      aria-label={`Show image ${i + 1}`}
+                      className={cn(
+                        "relative aspect-square rounded-xl overflow-hidden border transition-all duration-300",
+                        i === activeImage
+                          ? "border-white/40"
+                          : "border-border opacity-60 hover:opacity-100 hover:border-white/20"
+                      )}
+                    >
+                      <Image
+                        src={img.url}
+                        alt=""
+                        fill
+                        sizes="96px"
+                        className="object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </motion.div>
 
             {/* ---- Product Info ---- */}

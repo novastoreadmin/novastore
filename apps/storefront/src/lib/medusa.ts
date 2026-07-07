@@ -159,9 +159,16 @@ export async function getShippingOptions(cartId: string) {
   return shipping_options ?? [];
 }
 
-export async function addShippingMethod(cartId: string, optionId: string) {
+export async function addShippingMethod(
+  cartId: string,
+  optionId: string,
+  // Provider-specific selection (e.g. Nova Poshta city/warehouse refs) —
+  // validated by the fulfillment provider and stored on the shipping method.
+  data?: Record<string, unknown>
+) {
   const { cart } = await sdk.store.cart.addShippingMethod(cartId, {
     option_id: optionId,
+    ...(data ? { data } : {}),
   });
   return cart;
 }

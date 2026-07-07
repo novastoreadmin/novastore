@@ -106,6 +106,28 @@ export default async function importProducts({ container }: ExecArgs) {
   })
   logger.info("Linked products to sales channel")
 
+  // ── Link products to a shipping profile ──
+  // Cart completion fails with "shipping profiles not satisfied" for products
+  // without a profile. Prefer the profile the live shipping options use
+  // ("Nova poshta"), fall back to the default one.
+  const fulfillmentModule = container.resolve(Modules.FULFILLMENT)
+  const profiles = await fulfillmentModule.listShippingProfiles({})
+  const shippingProfile =
+    profiles.find((p) => p.name === "Nova poshta") ??
+    profiles.find((p) => p.type === "default") ??
+    profiles[0]
+  if (shippingProfile) {
+    await remoteLink.create(
+      created.map((p) => ({
+        [Modules.PRODUCT]: { product_id: p.id },
+        [Modules.FULFILLMENT]: { shipping_profile_id: shippingProfile.id },
+      }))
+    )
+    logger.info(`Linked ${created.length} products to shipping profile "${shippingProfile.name}"`)
+  } else {
+    logger.warn("No shipping profile found — checkout will fail until products get one")
+  }
+
   // ── Inventory levels ──
   for (const product of created) {
     for (const variant of product.variants || []) {
