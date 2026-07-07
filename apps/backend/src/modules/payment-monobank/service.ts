@@ -226,6 +226,28 @@ export class MonobankPaymentProvider extends AbstractPaymentProvider<MonobankOpt
   }
 
   async updatePayment(input: UpdatePaymentInput): Promise<UpdatePaymentOutput> {
+    const data = (input.data ?? {}) as Record<string, unknown>
+
+    // monoPay widget flow: the widget created its own invoice; bind it to this
+    // session (see /store/monobank/widget-attach — reference/amount already
+    // verified there) instead of issuing a new one.
+    if (typeof data.attach_invoice_id === "string") {
+      const attachId = data.attach_invoice_id
+      const live = await this.client_.invoiceStatus(attachId)
+      if (live.reference !== data.session_id && live.reference !== data.cartId) {
+        throw new MedusaError(
+          MedusaError.Types.NOT_ALLOWED,
+          "Invoice does not reference this payment session"
+        )
+      }
+      this.logger_.info(`[Monobank] Session ${data.session_id} now tracks invoice ${attachId}`)
+      const { attach_invoice_id: _drop, pageUrl: _dropUrl, ...rest } = data
+      return {
+        status: "pending",
+        data: { ...rest, invoiceId: attachId, widget: true },
+      }
+    }
+
     // Amount changed (cart edited) — the old invoice can't be amended, so
     // issue a fresh one. The previous invoice simply expires unpaid.
     const res = await this.initiatePayment(input)

@@ -58,5 +58,14 @@ export default defineMiddlewares({
       methods: ["GET", "DELETE"],
       middlewares: [authenticate("customer", ["bearer", "session"])],
     },
+    {
+      // Widget params work for guests too; auth (when present) unlocks the
+      // "save card" tokenization with wallet id = customer id.
+      matcher: "/store/monobank/widget-params",
+      methods: ["GET"],
+      middlewares: [
+        authenticate("customer", ["bearer", "session"], { allowUnauthenticated: true }),
+      ],
+    },
   ],
 })

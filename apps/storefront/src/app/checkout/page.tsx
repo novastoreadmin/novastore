@@ -31,6 +31,7 @@ import { formatPrice } from "@/lib/utils";
 import { NovaPoshtaPicker } from "./novaposhta-picker";
 import type { NpCity, NpWarehouse } from "@/lib/novaposhta";
 import { deleteSavedCard, getSavedCards, type SavedCard } from "@/lib/monobank";
+import { MonoPayWidgetButton } from "./monopay-button";
 
 type Step = "information" | "shipping" | "payment";
 
@@ -179,6 +180,39 @@ export default function CheckoutPage() {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [saveCard, setSaveCard] = useState(false);
   const [deletingCard, setDeletingCard] = useState<string | null>(null);
+
+  // monoPay widget: the payment session must exist before the widget can get
+  // its signed params; when the widget isn't configured we fall back to the
+  // hosted payment page button.
+  const [monoSessionReady, setMonoSessionReady] = useState(false);
+  const [widgetUnavailable, setWidgetUnavailable] = useState(false);
+
+  useEffect(() => {
+    if (currentStep !== "payment") {
+      // Re-initiate on every entry: totals may have changed on previous steps.
+      setMonoSessionReady(false);
+      return;
+    }
+    if (!cartId || !cart || widgetUnavailable) return;
+    let active = true;
+    (async () => {
+      try {
+        const providers = cart.region_id ? await getPaymentProviders(cart.region_id) : [];
+        if (!providers.some((p) => p.id === MONO_PROVIDER_ID)) {
+          if (active) setWidgetUnavailable(true);
+          return;
+        }
+        await initiatePaymentSession(cartId, MONO_PROVIDER_ID);
+        if (active) setMonoSessionReady(true);
+      } catch {
+        if (active) setWidgetUnavailable(true);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, cartId, widgetUnavailable]);
 
   const currency = cart?.currency_code;
   const items = cart?.items ?? [];
@@ -854,25 +888,35 @@ export default function CheckoutPage() {
                   {orderError && (
                     <p className="text-xs text-red-400 max-w-xs text-right">{orderError}</p>
                   )}
-                  {/* monoPay black button (brand guideline: black bg, white
-                      lowercase wordmark with bold "mono", ≥44px tall) */}
-                  <button
-                    type="button"
-                    onClick={placeOrder}
-                    disabled={placingOrder}
-                    className="h-12 min-w-[220px] px-8 rounded-xl bg-black text-white border border-white/20 hover:border-white/40 hover:bg-[#111] transition-all duration-300 flex items-center justify-center gap-2.5 disabled:opacity-60 cursor-pointer"
-                  >
-                    {placingOrder ? (
-                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <Lock className="w-3.5 h-3.5" />
-                    )}
-                    <span className="text-sm font-medium">Оплатити</span>
-                    <span className="text-base leading-none tracking-tight">
-                      <span className="font-extrabold">mono</span>
-                      <span className="font-normal">pay</span>
-                    </span>
-                  </button>
+                  {/* Official monoPay widget button (QR / app deep-link). Falls
+                      back to the hosted-page button when the widget keys are
+                      not configured. Saved-card payments use the classic
+                      button — the widget only handles new-card payments. */}
+                  {selectedCard === null && !widgetUnavailable && cartId && monoSessionReady ? (
+                    <MonoPayWidgetButton
+                      cartId={cartId}
+                      saveCard={saveCard}
+                      onUnavailable={() => setWidgetUnavailable(true)}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={placeOrder}
+                      disabled={placingOrder || (selectedCard === null && !widgetUnavailable && !monoSessionReady)}
+                      className="h-12 min-w-[220px] px-8 rounded-xl bg-black text-white border border-white/20 hover:border-white/40 hover:bg-[#111] transition-all duration-300 flex items-center justify-center gap-2.5 disabled:opacity-60 cursor-pointer"
+                    >
+                      {placingOrder ? (
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Lock className="w-3.5 h-3.5" />
+                      )}
+                      <span className="text-sm font-medium">Оплатити</span>
+                      <span className="text-base leading-none tracking-tight">
+                        <span className="font-extrabold">mono</span>
+                        <span className="font-normal">pay</span>
+                      </span>
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col items-end gap-2">
