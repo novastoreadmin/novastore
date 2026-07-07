@@ -281,10 +281,13 @@ export class MonobankPaymentProvider extends AbstractPaymentProvider<MonobankOpt
     const live = await this.client_.invoiceStatus(invoiceId)
 
     if (live.status === "hold") {
-      // No amount → Monobank finalizes the full held sum. (Partial finalize is
-      // possible via the API, but Medusa's capture flow captures in full.)
-      await this.client_.finalizeInvoice(invoiceId)
-      this.logger_.info(`[Monobank] Hold ${invoiceId} finalized (full amount)`)
+      // Finalize with the EXPLICIT held amount (already in kopecks from the
+      // status API). Omitting the amount trips Monobank's validator with
+      // "1001 finalization amount exceeds hold amount".
+      await this.client_.finalizeInvoice(invoiceId, live.finalAmount ?? live.amount)
+      this.logger_.info(
+        `[Monobank] Hold ${invoiceId} finalized for ${live.finalAmount ?? live.amount} kop`
+      )
       return { data: { ...data, status: "success" } }
     }
 
