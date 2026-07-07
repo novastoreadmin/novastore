@@ -88,7 +88,7 @@ export default defineConfig({
         providers: paymentProviders,
       },
     },
-    // Fulfillment module with manual provider
+    // Fulfillment module: manual provider + Nova Poshta (ТТН via NP API)
     {
       resolve: "@medusajs/medusa/fulfillment",
       options: {
@@ -98,6 +98,21 @@ export default defineConfig({
             // Stripe provider in src/config/runtime-config.ts for why.
             resolve: require.resolve("@medusajs/medusa/fulfillment-manual"),
             id: "manual",
+          },
+          {
+            resolve: "./src/modules/fulfillment-novaposhta",
+            id: "novaposhta",
+            options: {
+              apiKey: process.env.NOVAPOSHTA_API_KEY,
+              senderCityName: process.env.NP_SENDER_CITY_NAME || "Київ",
+              senderWarehouseNumber: process.env.NP_SENDER_WAREHOUSE_NUMBER || "1",
+              senderPhone: process.env.NP_SENDER_PHONE,
+              payerType: (process.env.NP_PAYER_TYPE as "Sender" | "Recipient") || "Sender",
+              cargoDescription: process.env.NP_CARGO_DESCRIPTION,
+              defaultWeightKg: process.env.NP_DEFAULT_WEIGHT_KG
+                ? Number(process.env.NP_DEFAULT_WEIGHT_KG)
+                : undefined,
+            },
           },
         ],
       },

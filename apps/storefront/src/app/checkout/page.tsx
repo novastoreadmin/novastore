@@ -28,6 +28,8 @@ import {
 import { transferCartToCustomer } from "@/lib/auth";
 import { useCustomer } from "@/hooks/use-customer";
 import { formatPrice } from "@/lib/utils";
+import { NovaPoshtaPicker } from "./novaposhta-picker";
+import type { NpCity, NpWarehouse } from "@/lib/novaposhta";
 
 type Step = "information" | "shipping" | "payment";
 
@@ -63,6 +65,17 @@ interface ShippingOption {
   name: string;
   amount: number;
   type?: { description?: string };
+  // Fulfillment-option payload set by the provider (e.g. Nova Poshta option id).
+  data?: { id?: string } | null;
+  provider_id?: string;
+}
+
+// Which Nova Poshta flow a shipping option represents, if any.
+function npKindOf(option: ShippingOption): "warehouse" | "courier" | null {
+  const dataId = option.data?.id;
+  if (dataId === "novaposhta-warehouse") return "warehouse";
+  if (dataId === "novaposhta-courier") return "courier";
+  return null;
 }
 
 // Line totals aren't returned by default; derive from unit_price * quantity.
@@ -142,7 +155,15 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [selectedShipping, setSelectedShipping] = useState<string | null>(null);
-  const [updatingShipping, setUpdatingShipping] = useState(false);
+  const [savingShipping, setSavingShipping] = useState(false);
+  const [shippingError, setShippingError] = useState<string | null>(null);
+
+  // Nova Poshta delivery selection (branch or courier flows).
+  const [npCity, setNpCity] = useState<NpCity | null>(null);
+  const [npWarehouse, setNpWarehouse] = useState<NpWarehouse | null>(null);
+  const [npStreet, setNpStreet] = useState("");
+  const [npHouse, setNpHouse] = useState("");
+  const [npFlat, setNpFlat] = useState("");
   const [placingOrder, setPlacingOrder] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -210,17 +231,70 @@ export default function CheckoutPage() {
     contactInfo.city.trim() !== "" &&
     contactInfo.postalCode.trim() !== "";
 
-  async function selectShipping(optionId: string) {
-    if (!cartId || updatingShipping) return;
+  const selectedOption =
+    shippingOptions.find((o) => o.id === selectedShipping) ?? null;
+  const selectedNpKind = selectedOption ? npKindOf(selectedOption) : null;
+
+  const npSelectionReady =
+    selectedNpKind === null ||
+    (selectedNpKind === "warehouse"
+      ? !!npCity && !!npWarehouse
+      : !!npCity && npStreet.trim() !== "" && npHouse.trim() !== "");
+
+  function selectShipping(optionId: string) {
     setSelectedShipping(optionId);
-    setUpdatingShipping(true);
+    setShippingError(null);
+    // Courier flow: prefill the street from the Information step on first pick.
+    const option = shippingOptions.find((o) => o.id === optionId);
+    if (option && npKindOf(option) === "courier" && npStreet.trim() === "") {
+      setNpStreet(contactInfo.address1);
+    }
+  }
+
+  // The shipping method (with the NP selection payload) is attached to the
+  // cart when leaving the Shipping step — see goNext.
+  async function saveShippingMethod(): Promise<boolean> {
+    if (!cartId || !selectedShipping) return false;
+    if (!npSelectionReady) {
+      setShippingError(
+        selectedNpKind === "warehouse"
+          ? "Оберіть місто та відділення Нової Пошти."
+          : "Вкажіть місто, вулицю та будинок для доставки кур'єром."
+      );
+      return false;
+    }
+    setSavingShipping(true);
+    setShippingError(null);
     try {
-      const updated = await addShippingMethod(cartId, optionId);
+      const data =
+        selectedNpKind === "warehouse"
+          ? {
+              np_kind: "warehouse",
+              np_city_ref: npCity!.ref,
+              np_city_name: npCity!.name,
+              np_warehouse_ref: npWarehouse!.ref,
+              np_warehouse_description: npWarehouse!.description,
+            }
+          : selectedNpKind === "courier"
+            ? {
+                np_kind: "courier",
+                np_city_ref: npCity!.ref,
+                np_city_name: npCity!.name,
+                np_street: npStreet.trim(),
+                np_house: npHouse.trim(),
+                np_flat: npFlat.trim(),
+              }
+            : undefined;
+      const updated = await addShippingMethod(cartId, selectedShipping, data);
       setCart(updated as Cart);
-    } catch {
-      // keep the optimistic selection; totals stay on the previous cart
+      return true;
+    } catch (err) {
+      setShippingError(
+        err instanceof Error ? err.message : "Не вдалося зберегти спосіб доставки."
+      );
+      return false;
     } finally {
-      setUpdatingShipping(false);
+      setSavingShipping(false);
     }
   }
 
@@ -251,6 +325,10 @@ export default function CheckoutPage() {
         return;
       }
       setSavingInfo(false);
+    }
+    if (currentStep === "shipping") {
+      const saved = await saveShippingMethod();
+      if (!saved) return;
     }
     if (currentIndex < steps.length - 1) {
       setCurrentStep(steps[currentIndex + 1].id);
@@ -540,7 +618,7 @@ export default function CheckoutPage() {
                           key={option.id}
                           type="button"
                           onClick={() => selectShipping(option.id)}
-                          disabled={updatingShipping}
+                          disabled={savingShipping}
                           className={`w-full flex items-center justify-between p-5 rounded-xl border text-left cursor-pointer transition-all duration-300 disabled:opacity-60 ${
                             isSelected
                               ? "border-white/20 bg-accent-subtle"
@@ -575,6 +653,30 @@ export default function CheckoutPage() {
                       );
                     })}
                   </div>
+                )}
+
+                {selectedNpKind && (
+                  <NovaPoshtaPicker
+                    kind={selectedNpKind}
+                    city={npCity}
+                    onCityChange={(c) => {
+                      setNpCity(c);
+                      setNpWarehouse(null);
+                      setShippingError(null);
+                    }}
+                    warehouse={npWarehouse}
+                    onWarehouseChange={(w) => {
+                      setNpWarehouse(w);
+                      setShippingError(null);
+                    }}
+                    street={npStreet}
+                    onStreetChange={setNpStreet}
+                    house={npHouse}
+                    onHouseChange={setNpHouse}
+                    flat={npFlat}
+                    onFlatChange={setNpFlat}
+                    defaultCityQuery={contactInfo.city}
+                  />
                 )}
               </div>
             )}
@@ -651,16 +753,23 @@ export default function CheckoutPage() {
                   {currentStep === "information" && infoError && (
                     <p className="text-xs text-red-400 max-w-xs text-right">{infoError}</p>
                   )}
+                  {currentStep === "shipping" && shippingError && (
+                    <p className="text-xs text-red-400 max-w-xs text-right">{shippingError}</p>
+                  )}
                   <Button
                     size="lg"
                     onClick={goNext}
-                    isLoading={currentStep === "information" && savingInfo}
+                    isLoading={
+                      (currentStep === "information" && savingInfo) ||
+                      (currentStep === "shipping" && savingShipping)
+                    }
                     disabled={
                       savingInfo ||
+                      savingShipping ||
                       (currentStep === "information" && !isInformationValid) ||
                       (currentStep === "shipping" &&
                         shippingOptions.length > 0 &&
-                        !selectedShipping)
+                        (!selectedShipping || !npSelectionReady))
                     }
                     className="group"
                   >
