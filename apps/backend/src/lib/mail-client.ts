@@ -24,6 +24,11 @@ function imapClient(account: MailAccount) {
     auth: { user: account.login, pass: account.password },
     tls: { rejectUnauthorized: MAIL_SERVER.rejectUnauthorized },
     logger: false,
+    // Fail fast when the mail host is unreachable (dropped packets otherwise
+    // hang ~90s and the admin request dies as an opaque nginx 504).
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 60_000,
   })
 }
 
@@ -119,6 +124,9 @@ export async function sendMail(
     secure: MAIL_SERVER.secure,
     auth: MAIL_SERVER.smtpAuth ? { user: account.login, pass: account.password } : undefined,
     tls: { rejectUnauthorized: MAIL_SERVER.rejectUnauthorized },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 60_000,
   })
   const info = await transport.sendMail({
     from: account.email,
