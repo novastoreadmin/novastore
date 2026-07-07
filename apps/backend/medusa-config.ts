@@ -108,6 +108,7 @@ export default defineConfig({
               senderWarehouseNumber: process.env.NP_SENDER_WAREHOUSE_NUMBER || "1",
               senderPhone: process.env.NP_SENDER_PHONE,
               payerType: (process.env.NP_PAYER_TYPE as "Sender" | "Recipient") || "Sender",
+              paymentMethod: (process.env.NP_PAYMENT_METHOD as "Cash" | "NonCash") || undefined,
               cargoDescription: process.env.NP_CARGO_DESCRIPTION,
               defaultWeightKg: process.env.NP_DEFAULT_WEIGHT_KG
                 ? Number(process.env.NP_DEFAULT_WEIGHT_KG)

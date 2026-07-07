@@ -26,6 +26,7 @@ export type NovaPoshtaProviderOptions = {
   senderWarehouseNumber: string
   senderPhone: string
   payerType?: "Sender" | "Recipient"
+  paymentMethod?: "Cash" | "NonCash"
   cargoDescription?: string
   defaultWeightKg?: number
 }
@@ -66,6 +67,7 @@ export class NovaPoshtaFulfillmentProvider extends AbstractFulfillmentProviderSe
       senderWarehouseNumber: options?.senderWarehouseNumber ?? "1",
       senderPhone: options?.senderPhone ?? "",
       payerType: options?.payerType,
+      paymentMethod: options?.paymentMethod,
       cargoDescription: options?.cargoDescription,
       defaultWeightKg: options?.defaultWeightKg,
     })

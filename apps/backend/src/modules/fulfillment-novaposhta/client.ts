@@ -135,13 +135,19 @@ export class NovaPoshtaClient {
   }
 
   constructor(options: NpClientOptions) {
+    // Drop undefined/empty values so unset env vars don't wipe the defaults.
+    const provided = Object.fromEntries(
+      Object.entries(options).filter(([, v]) => v !== undefined && v !== "")
+    )
     this.options = {
+      // "Cash" works on any NP account; "NonCash" needs a contract with NP —
+      // opt in via NP_PAYMENT_METHOD once the account supports it.
       payerType: "Sender",
-      paymentMethod: "NonCash",
+      paymentMethod: "Cash",
       cargoDescription: "Аксесуари для електроніки",
       defaultWeightKg: 1,
-      ...options,
-    }
+      ...provided,
+    } as Required<NpClientOptions>
   }
 
   private async request<T = Record<string, unknown>>(
@@ -305,12 +311,13 @@ export class NovaPoshtaClient {
     const sender = await this.ensureSenderContext()
     const recipientPhone = normalizeUaPhone(input.recipient.phone)
 
+    const weight = Number(input.weightKg ?? this.options.defaultWeightKg)
     const common = {
       PayerType: this.options.payerType,
       PaymentMethod: this.options.paymentMethod,
       DateTime: todayNpFormat(),
       CargoType: "Parcel",
-      Weight: String(input.weightKg ?? this.options.defaultWeightKg),
+      Weight: String(Number.isFinite(weight) && weight > 0 ? weight : 1),
       SeatsAmount: "1",
       Description: input.description ?? this.options.cargoDescription,
       Cost: String(Math.max(1, Math.round(input.declaredValue))),
@@ -366,12 +373,30 @@ export class NovaPoshtaClient {
       }
     }
 
-    const [doc] = await this.request<{
+    let doc: {
       Ref: string
       IntDocNumber: string
       CostOnSite?: string
       EstimatedDeliveryDate?: string
-    }>("InternetDocument", "save", methodProperties)
+    }
+    try {
+      ;[doc] = await this.request("InternetDocument", "save", methodProperties)
+    } catch (err) {
+      // Accounts without a NP contract can't pay NonCash — retry with Cash
+      // instead of failing the fulfillment.
+      if (
+        err instanceof Error &&
+        err.message.includes("NonCash is unavailable") &&
+        methodProperties.PaymentMethod === "NonCash"
+      ) {
+        ;[doc] = await this.request("InternetDocument", "save", {
+          ...methodProperties,
+          PaymentMethod: "Cash",
+        })
+      } else {
+        throw err
+      }
+    }
 
     if (!doc?.IntDocNumber) {
       throw new Error("Nova Poshta: waybill was not created.")
