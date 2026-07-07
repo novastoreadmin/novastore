@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "@/animations/gsap-config";
+import { gsap, ScrollTrigger } from "@/animations/gsap-config";
 
 const features = [
   {
@@ -46,39 +46,111 @@ const features = [
 ];
 
 export function ProductStorytelling() {
+  return (
+    <>
+      <MobileStorytelling />
+      <DesktopStorytelling />
+    </>
+  );
+}
+
+/**
+ * Mobile (< lg): plain stacked flow — image card followed by copy for each
+ * feature. No pinning or scroll scrubbing; those patterns break on small
+ * viewports where all the absolutely-positioned layers overlap.
+ */
+function MobileStorytelling() {
+  return (
+    <section className="lg:hidden bg-bg px-6 py-20">
+      <div className="space-y-16">
+        {features.map((feature, i) => (
+          <motion.div
+            key={feature.label}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-bg-elevated border border-border">
+              <Image
+                src={feature.image}
+                alt={feature.title}
+                fill
+                sizes="(max-width: 1024px) 92vw, 500px"
+                className="object-cover"
+                priority={i === 0}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-bg/60 via-transparent to-bg/10" />
+              <div className="absolute bottom-3 left-3 flex items-baseline gap-2 px-3 py-2 rounded-lg bg-black/40 backdrop-blur-md border border-white/[0.08]">
+                <span className="text-sm font-bold text-white">
+                  {feature.stat}
+                </span>
+                <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-white/60">
+                  {feature.statLabel}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-text-muted">
+                {feature.label} — Feature
+              </span>
+              <h3 className="mt-2 text-2xl font-bold tracking-tight leading-tight">
+                {feature.title}
+              </h3>
+              <p className="mt-3 text-[15px] text-text-secondary leading-relaxed">
+                {feature.description}
+              </p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Desktop (lg+): pinned full-screen section, scroll scrubs through features.
+ * The ScrollTrigger is created only at lg+ via gsap.matchMedia so no pin
+ * spacer leaks into the mobile layout.
+ */
+function DesktopStorytelling() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [progress, setProgress] = useState(0);
 
   useGSAP(
     () => {
-      ScrollTrigger.create({
-        trigger: sectionRef.current,
-        start: "top top",
-        end: `+=${features.length * 100}%`,
-        pin: true,
-        scrub: 1,
-        onUpdate: (self) => {
-          const p = self.progress;
-          setProgress(p);
-          const index = Math.min(
-            Math.floor(p * features.length),
-            features.length - 1
-          );
-          setActiveIndex(index);
-        },
+      const mm = gsap.matchMedia();
+      mm.add("(min-width: 1024px)", () => {
+        ScrollTrigger.create({
+          trigger: sectionRef.current,
+          start: "top top",
+          end: `+=${features.length * 100}%`,
+          pin: true,
+          scrub: 1,
+          onUpdate: (self) => {
+            const p = self.progress;
+            setProgress(p);
+            const index = Math.min(
+              Math.floor(p * features.length),
+              features.length - 1
+            );
+            setActiveIndex(index);
+          },
+        });
       });
+      return () => mm.revert();
     },
     { scope: sectionRef }
   );
 
-  const featureProgress =
-    (progress * features.length) % 1;
+  const featureProgress = (progress * features.length) % 1;
 
   return (
     <section
       ref={sectionRef}
-      className="relative h-screen bg-bg overflow-hidden"
+      className="relative hidden lg:block h-screen bg-bg overflow-hidden"
     >
       {/* Progress bar */}
       <div className="absolute top-0 left-0 right-0 h-px bg-border z-10">

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Search, Menu, X, ChevronRight, User } from "lucide-react";
+import { ShoppingBag, Menu, X, ChevronRight, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartStore, useUIStore } from "@/lib/store";
 import { useCustomer } from "@/hooks/use-customer";
@@ -75,36 +75,29 @@ export function Header() {
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              className="p-2.5 rounded-xl text-text-secondary hover:text-text-primary hover:bg-accent-subtle transition-all duration-300"
-              aria-label="Search"
-            >
-              <Search className="w-[18px] h-[18px]" />
-            </button>
-
+          <div className="flex items-center gap-1 sm:gap-2">
             <Link
               href={authStatus === "authenticated" ? "/account" : "/account/login"}
-              className="relative p-2.5 rounded-xl text-text-secondary hover:text-text-primary hover:bg-accent-subtle transition-all duration-300"
+              className="relative p-3 rounded-xl text-text-secondary hover:text-text-primary hover:bg-accent-subtle transition-all duration-300"
               aria-label="Account"
             >
-              <User className="w-[18px] h-[18px]" />
+              <User className="w-5 h-5" />
               {authStatus === "authenticated" && (
-                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-400 rounded-full" />
               )}
             </Link>
 
             <button
               onClick={toggleCart}
-              className="relative p-2.5 rounded-xl text-text-secondary hover:text-text-primary hover:bg-accent-subtle transition-all duration-300"
+              className="relative p-3 rounded-xl text-text-secondary hover:text-text-primary hover:bg-accent-subtle transition-all duration-300"
               aria-label="Cart"
             >
-              <ShoppingBag className="w-[18px] h-[18px]" />
+              <ShoppingBag className="w-5 h-5" />
               {itemCount > 0 && (
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-white text-black text-[10px] font-bold rounded-full flex items-center justify-center"
+                  className="absolute top-0.5 right-0.5 w-4.5 h-4.5 bg-white text-black text-[10px] font-bold rounded-full flex items-center justify-center"
                 >
                   {itemCount}
                 </motion.span>
@@ -113,13 +106,13 @@ export function Header() {
 
             <button
               onClick={() => setMenuOpen(!isMenuOpen)}
-              className="lg:hidden p-2.5 rounded-xl text-text-secondary hover:text-text-primary hover:bg-accent-subtle transition-all duration-300"
+              className="lg:hidden p-3 rounded-xl text-text-secondary hover:text-text-primary hover:bg-accent-subtle transition-all duration-300"
               aria-label="Menu"
             >
               {isMenuOpen ? (
-                <X className="w-[18px] h-[18px]" />
+                <X className="w-5 h-5" />
               ) : (
-                <Menu className="w-[18px] h-[18px]" />
+                <Menu className="w-5 h-5" />
               )}
             </button>
           </div>
@@ -136,7 +129,7 @@ export function Header() {
             className="fixed inset-0 z-40 bg-bg/95 backdrop-blur-xl lg:hidden"
           >
             <div className="flex flex-col justify-center h-full px-8 pt-20">
-              {navLinks.map((link, i) => (
+              {[{ label: "All Products", href: "/products" }, ...navLinks].map((link, i) => (
                 <motion.div
                   key={link.href}
                   initial={{ opacity: 0, x: -30 }}

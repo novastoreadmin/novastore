@@ -84,11 +84,11 @@ export function CollectionsSection() {
             <motion.div
               whileHover={{ scale: 1.01 }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className={`group relative h-[280px] md:h-[360px] rounded-2xl bg-gradient-to-br ${cat.gradient} border border-border overflow-hidden cursor-pointer`}
+              className={`group relative h-[140px] md:h-[360px] rounded-2xl bg-gradient-to-br ${cat.gradient} border border-border overflow-hidden cursor-pointer`}
             >
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-bg/80" />
 
-              <div className="absolute bottom-0 left-0 right-0 p-8 md:p-10">
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
                 <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-muted mb-2">
                   {cat.subtitle}
                 </p>

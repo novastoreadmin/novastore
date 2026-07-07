@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { gsap, ScrollTrigger } from "@/animations/gsap-config";
 import { Button } from "@/components/ui/button";
@@ -41,38 +41,44 @@ export function Hero() {
           "-=1.2"
         );
 
-      gsap.to(orbRef.current, {
-        y: -80,
-        ease: "none",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: 1,
-        },
-      });
+      // Scroll-driven parallax/fade only on larger screens: on mobile the
+      // scrubbed opacity tween fights the intro timeline and can leave the
+      // headline invisible.
+      const mm = gsap.matchMedia();
+      mm.add("(min-width: 768px)", () => {
+        gsap.to(orbRef.current, {
+          y: -80,
+          ease: "none",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: 1,
+          },
+        });
 
-      gsap.to(headlineRef.current, {
-        y: -40,
-        opacity: 0.3,
-        ease: "none",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "50% top",
-          scrub: 1,
-        },
-      });
+        gsap.to(headlineRef.current, {
+          y: -40,
+          opacity: 0.3,
+          ease: "none",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "50% top",
+            scrub: 1,
+          },
+        });
 
-      gsap.to(gridRef.current, {
-        opacity: 0.03,
-        ease: "none",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: 1,
-        },
+        gsap.to(gridRef.current, {
+          opacity: 0.03,
+          ease: "none",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: 1,
+          },
+        });
       });
     }, sectionRef);
 
@@ -82,7 +88,7 @@ export function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-bg"
+      className="relative min-h-[100svh] flex items-center justify-center overflow-hidden bg-bg"
     >
       {/* Grid background */}
       <div
@@ -159,17 +165,16 @@ export function Hero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 2 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
       >
         <span className="text-[10px] uppercase tracking-[0.3em] text-text-muted">
           Scroll
         </span>
         <motion.div
-          animate={{ y: [0, 8, 0] }}
+          animate={{ y: [0, 6, 0] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          className="w-5 h-8 rounded-full border border-border flex items-start justify-center pt-1.5"
         >
-          <div className="w-1 h-1.5 rounded-full bg-text-muted" />
+          <ChevronDown className="w-4 h-4 text-text-muted" />
         </motion.div>
       </motion.div>
     </section>

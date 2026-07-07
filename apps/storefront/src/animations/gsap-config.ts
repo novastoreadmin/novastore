@@ -14,6 +14,11 @@ if (typeof window !== "undefined") {
   ScrollTrigger.defaults({
     markers: false,
   });
+
+  // Mobile browsers resize the viewport when the URL bar collapses; without
+  // this, every resize re-runs ScrollTrigger.refresh() mid-scroll and the
+  // page visibly jumps.
+  ScrollTrigger.config({ ignoreMobileResize: true });
 }
 
 export { gsap, ScrollTrigger };
