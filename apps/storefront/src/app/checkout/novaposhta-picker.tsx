@@ -147,7 +147,7 @@ export function NovaPoshtaPicker({
               onWarehouseChange(null);
             }}
             onFocus={() => cityResults.length > 0 && setCityOpen(true)}
-            placeholder="Почніть вводити місто…"
+            placeholder="Почніть вводити місто (українською)…"
             className={inputClass}
           />
           {cityLoading ? (

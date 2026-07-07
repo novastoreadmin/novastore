@@ -64,6 +64,45 @@ export type Waybill = {
   estimatedDeliveryDate?: string
 }
 
+// Digraphs first, then single letters. Reverse of the official UA→Latin
+// romanization — lossy, but good enough for shipping labels.
+const UA_DIGRAPHS: [RegExp, string][] = [
+  [/shch/g, "щ"],
+  [/zgh/g, "зг"],
+  [/kh/g, "х"],
+  [/ts/g, "ц"],
+  [/ch/g, "ч"],
+  [/sh/g, "ш"],
+  [/zh/g, "ж"],
+  [/yu/g, "ю"],
+  [/iu/g, "ю"],
+  [/ya/g, "я"],
+  [/ia/g, "я"],
+  [/ye/g, "є"],
+  [/ie/g, "є"],
+  [/yi/g, "ї"],
+]
+const UA_SINGLES: Record<string, string> = {
+  a: "а", b: "б", c: "к", d: "д", e: "е", f: "ф", g: "ґ", h: "г", i: "і",
+  j: "й", k: "к", l: "л", m: "м", n: "н", o: "о", p: "п", q: "к", r: "р",
+  s: "с", t: "т", u: "у", v: "в", w: "в", x: "кс", y: "и", z: "з",
+}
+
+/**
+ * Best-effort Latin→Ukrainian transliteration ("Taras" -> "Тарас").
+ * Nova Poshta rejects Latin letters in recipient names/streets, while the
+ * storefront lets customers type either alphabet. Cyrillic input is returned
+ * unchanged; each word keeps a capitalized first letter.
+ */
+export function uaTransliterate(input: string): string {
+  if (!input || !/[a-z]/i.test(input)) return input
+  let s = input.toLowerCase()
+  for (const [re, cyr] of UA_DIGRAPHS) s = s.replace(re, cyr)
+  s = s.replace(/[a-z]/g, (ch) => UA_SINGLES[ch] ?? ch)
+  // Capitalize the first letter of every word (names on waybills).
+  return s.replace(/(^|[\s'’-])(\S)/g, (_, sep, ch) => sep + ch.toUpperCase())
+}
+
 /** "067 123 45 67" / "+38 (067) 123-45-67" / "0671234567" -> "380671234567" */
 export function normalizeUaPhone(phone: string): string {
   const digits = (phone || "").replace(/\D/g, "")
@@ -138,15 +177,23 @@ export class NovaPoshtaClient {
 
   async searchCities(query: string, limit = 10): Promise<NpCity[]> {
     if (!query?.trim()) return []
-    const data = await this.request<{
-      Ref: string
-      Description: string
-      AreaDescription?: string
-    }>("Address", "getCities", {
-      FindByString: query.trim(),
-      Limit: String(limit),
-      Page: "1",
-    })
+    let data: { Ref: string; Description: string; AreaDescription?: string }[]
+    try {
+      data = await this.request("Address", "getCities", {
+        FindByString: query.trim(),
+        Limit: String(limit),
+        Page: "1",
+      })
+    } catch (err) {
+      // NP quirk: a Latin query ("Kyiv") is rejected with the misleading
+      // "FindByString is not specified". Surface what actually went wrong.
+      if (err instanceof Error && err.message.includes("FindByString is not specified")) {
+        throw new Error(
+          `Nova Poshta: назву міста "${query.trim()}" не розпізнано — вкажіть її українською (кирилицею), напр. "Київ".`
+        )
+      }
+      throw err
+    }
     return data.map((c) => ({
       ref: c.Ref,
       name: c.Description,
@@ -208,7 +255,7 @@ export class NovaPoshtaClient {
       cities.find((c) => c.name === this.options.senderCityName) ?? cities[0]
     if (!city) {
       throw new Error(
-        `Nova Poshta: sender city "${this.options.senderCityName}" not found.`
+        `Nova Poshta: місто відправника "${this.options.senderCityName}" не знайдено — перевірте NP_SENDER_CITY_NAME (українською, напр. "Київ").`
       )
     }
 
@@ -239,8 +286,9 @@ export class NovaPoshtaClient {
       Ref: string
       ContactPerson: { data: { Ref: string }[] }
     }>("Counterparty", "save", {
-      FirstName: input.firstName,
-      LastName: input.lastName,
+      // NP rejects Latin letters in names — transliterate what customers type.
+      FirstName: uaTransliterate(input.firstName),
+      LastName: uaTransliterate(input.lastName),
       Phone: normalizeUaPhone(input.phone),
       Email: input.email ?? "",
       CounterpartyType: "PrivatePerson",
@@ -307,10 +355,12 @@ export class NovaPoshtaClient {
         NewAddress: "1",
         RecipientCityName: input.cityName,
         RecipientArea: "",
-        RecipientAddressName: input.street,
+        RecipientAddressName: uaTransliterate(input.street),
         RecipientHouse: input.house,
         RecipientFlat: input.flat ?? "",
-        RecipientName: `${input.recipient.lastName} ${input.recipient.firstName}`,
+        RecipientName: uaTransliterate(
+          `${input.recipient.lastName} ${input.recipient.firstName}`
+        ),
         RecipientType: "PrivatePerson",
         RecipientsPhone: recipientPhone,
       }

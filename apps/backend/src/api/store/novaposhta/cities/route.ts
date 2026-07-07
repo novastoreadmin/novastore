@@ -18,6 +18,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse): Promise<void
     const cities = await getNovaPoshtaClient().searchCities(q, 10)
     res.json({ cities })
   } catch (error) {
+    // Latin input ("Kyiv") is not an outage — just no matches for the picker.
+    if (error instanceof Error && error.message.includes("кирилицею")) {
+      res.json({ cities: [] })
+      return
+    }
     const logger = req.scope.resolve(ContainerRegistrationKeys.LOGGER)
     logger.error(
       `[NovaPoshta] city search failed: ${error instanceof Error ? error.message : error}`

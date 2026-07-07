@@ -56,11 +56,12 @@ export default async function orderPlacedNovaPoshtaHandler({
   } catch (err) {
     // Never fail the order because the waybill couldn't be created — the admin
     // can retry from the order's Fulfillment section.
-    logger.error(
-      `[NovaPoshta] Auto-fulfillment failed for order ${data.id}: ${
-        err instanceof Error ? err.message : err
-      }`
-    )
+    const detail =
+      err instanceof Error
+        ? err.message
+        : // Workflow engines often reject with plain error-shaped objects.
+          ((err as { message?: string })?.message ?? JSON.stringify(err))
+    logger.error(`[NovaPoshta] Auto-fulfillment failed for order ${data.id}: ${detail}`)
   }
 }
 
