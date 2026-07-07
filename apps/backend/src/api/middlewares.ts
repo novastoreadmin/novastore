@@ -45,5 +45,27 @@ export default defineMiddlewares({
         enforceOrderOwnership,
       ],
     },
+    {
+      // Monobank signs the RAW request body (ECDSA, X-Sign header) — keep it
+      // for signature verification in the webhook route.
+      matcher: "/mono/webhook",
+      methods: ["POST"],
+      bodyParser: { preserveRawBody: true },
+    },
+    {
+      // Saved cards are strictly per-customer (wallet id = customer id).
+      matcher: "/store/monobank/cards",
+      methods: ["GET", "DELETE"],
+      middlewares: [authenticate("customer", ["bearer", "session"])],
+    },
+    {
+      // Widget params work for guests too; auth (when present) unlocks the
+      // "save card" tokenization with wallet id = customer id.
+      matcher: "/store/monobank/widget-params",
+      methods: ["GET"],
+      middlewares: [
+        authenticate("customer", ["bearer", "session"], { allowUnauthenticated: true }),
+      ],
+    },
   ],
 })

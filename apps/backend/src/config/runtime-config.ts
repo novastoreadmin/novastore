@@ -56,6 +56,9 @@ export function resolvePaymentProviders(
               token: env.MONO_TOKEN,
               storefrontUrl: env.STOREFRONT_URL || "http://localhost:3000",
               backendUrl: env.MEDUSA_BACKEND_URL || "http://localhost:9000",
+              // "hold" blocks funds for up to 9 days and captures on shipment
+              // (finalize); "debit" charges immediately. Default: debit.
+              paymentType: env.MONO_PAYMENT_TYPE === "hold" ? "hold" : "debit",
             },
           },
         ]

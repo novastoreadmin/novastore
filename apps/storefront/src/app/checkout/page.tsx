@@ -30,6 +30,8 @@ import { useCustomer } from "@/hooks/use-customer";
 import { formatPrice } from "@/lib/utils";
 import { NovaPoshtaPicker } from "./novaposhta-picker";
 import type { NpCity, NpWarehouse } from "@/lib/novaposhta";
+import { deleteSavedCard, getSavedCards, type SavedCard } from "@/lib/monobank";
+import { MonoPayWidgetButton } from "./monopay-button";
 
 type Step = "information" | "shipping" | "payment";
 
@@ -173,6 +175,45 @@ export default function CheckoutPage() {
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoError, setInfoError] = useState<string | null>(null);
 
+  // Monobank saved cards (one-click). null = pay with a new card.
+  const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
+  const [selectedCard, setSelectedCard] = useState<string | null>(null);
+  const [saveCard, setSaveCard] = useState(false);
+  const [deletingCard, setDeletingCard] = useState<string | null>(null);
+
+  // monoPay widget: the payment session must exist before the widget can get
+  // its signed params; when the widget isn't configured we fall back to the
+  // hosted payment page button.
+  const [monoSessionReady, setMonoSessionReady] = useState(false);
+  const [widgetUnavailable, setWidgetUnavailable] = useState(false);
+
+  useEffect(() => {
+    if (currentStep !== "payment") {
+      // Re-initiate on every entry: totals may have changed on previous steps.
+      setMonoSessionReady(false);
+      return;
+    }
+    if (!cartId || !cart || widgetUnavailable) return;
+    let active = true;
+    (async () => {
+      try {
+        const providers = cart.region_id ? await getPaymentProviders(cart.region_id) : [];
+        if (!providers.some((p) => p.id === MONO_PROVIDER_ID)) {
+          if (active) setWidgetUnavailable(true);
+          return;
+        }
+        await initiatePaymentSession(cartId, MONO_PROVIDER_ID);
+        if (active) setMonoSessionReady(true);
+      } catch {
+        if (active) setWidgetUnavailable(true);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, cartId, widgetUnavailable]);
+
   const currency = cart?.currency_code;
   const items = cart?.items ?? [];
 
@@ -218,7 +259,22 @@ export default function CheckoutPage() {
       lastName: prev.lastName || customer.last_name || "",
       phone: prev.phone || customer.phone || "",
     }));
+    // One-click payments: load the customer's saved Monobank cards.
+    getSavedCards().then(setSavedCards).catch(() => {});
   }, [authStatus, customer, cartId]);
+
+  async function removeSavedCard(cardToken: string) {
+    setDeletingCard(cardToken);
+    try {
+      await deleteSavedCard(cardToken);
+      setSavedCards((prev) => prev.filter((c) => c.cardToken !== cardToken));
+      if (selectedCard === cardToken) setSelectedCard(null);
+    } catch {
+      // leave the card in the list; user can retry
+    } finally {
+      setDeletingCard(null);
+    }
+  }
 
   const updateContact = (field: keyof ContactInfo) => (value: string) =>
     setContactInfo((prev) => ({ ...prev, [field]: value }));
@@ -356,29 +412,45 @@ export default function CheckoutPage() {
         providers[0]?.id;
       if (!providerId) throw new Error("No payment provider available. Check backend config.");
 
-      const session = await initiatePaymentSession(cartId, providerId);
+      const session = await initiatePaymentSession(cartId, providerId, {
+        // New card + "save my card" ticked → tokenize it in the Monobank wallet.
+        save_card: !selectedCard && saveCard,
+        // A saved card selected → one-click wallet payment on the backend.
+        card_token: selectedCard ?? undefined,
+      });
 
       if (providerId === MONO_PROVIDER_ID) {
-        // Monobank returns a hosted payment page URL in the session data. Send
-        // the customer there; the cart is completed on /checkout/payment-return
-        // once they come back.
         const sessions =
           (
             session as {
               payment_collection?: {
                 payment_sessions?: {
                   provider_id: string;
-                  data?: { pageUrl?: string };
+                  data?: { pageUrl?: string; tdsUrl?: string; used_card_token?: boolean };
                 }[];
               };
             }
           ).payment_collection?.payment_sessions ?? [];
-        const pageUrl = sessions.find((s) => s.provider_id === MONO_PROVIDER_ID)?.data?.pageUrl;
-        if (!pageUrl) {
-          throw new Error("Monobank did not return a payment page. Please try again.");
+        const monoData = sessions.find((s) => s.provider_id === MONO_PROVIDER_ID)?.data;
+
+        // Saved-card payment that requires a 3DS challenge — go through it;
+        // Monobank returns the customer to /checkout/payment-return after.
+        if (monoData?.tdsUrl) {
+          window.location.assign(monoData.tdsUrl);
+          return;
         }
-        window.location.assign(pageUrl);
-        return; // keep the button spinner while the browser navigates away
+        // Regular flow: Monobank's hosted payment page.
+        if (monoData?.pageUrl) {
+          window.location.assign(monoData.pageUrl);
+          return;
+        }
+        // Saved-card payment without 3DS — charged synchronously; the
+        // payment-return page polls the status and completes the cart.
+        if (monoData?.used_card_token) {
+          window.location.assign(`/checkout/payment-return?cartId=${encodeURIComponent(cartId)}`);
+          return;
+        }
+        throw new Error("Monobank did not return a payment page. Please try again.");
       }
 
       // System/test provider authorizes immediately — complete the cart inline.
@@ -686,27 +758,106 @@ export default function CheckoutPage() {
                 <h2 className="text-2xl font-bold tracking-tight mb-8">
                   Payment
                 </h2>
+
+                {/* Saved cards (one-click) for logged-in customers */}
+                {authStatus === "authenticated" && savedCards.length > 0 && (
+                  <div className="space-y-3 mb-6">
+                    {savedCards.map((card) => {
+                      const isSelected = selectedCard === card.cardToken;
+                      return (
+                        <div
+                          key={card.cardToken}
+                          className={`flex items-center justify-between p-5 rounded-xl border transition-all duration-300 ${
+                            isSelected
+                              ? "border-white/20 bg-accent-subtle"
+                              : "border-border hover:border-white/10"
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCard(card.cardToken)}
+                            className="flex items-center gap-4 flex-1 text-left cursor-pointer"
+                          >
+                            <div
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                isSelected ? "border-white" : "border-border"
+                              }`}
+                            >
+                              {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                            </div>
+                            <CreditCard className="w-4 h-4 text-text-secondary" />
+                            <span className="text-sm font-medium font-mono">
+                              {card.maskedPan.replace(/\*+/, " •••• ")}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeSavedCard(card.cardToken)}
+                            disabled={deletingCard === card.cardToken}
+                            className="text-xs text-text-muted hover:text-red-400 transition-colors disabled:opacity-50 px-2 py-1"
+                          >
+                            {deletingCard === card.cardToken ? "…" : "Видалити"}
+                          </button>
+                        </div>
+                      );
+                    })}
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCard(null)}
+                      className={`w-full flex items-center gap-4 p-5 rounded-xl border text-left cursor-pointer transition-all duration-300 ${
+                        selectedCard === null
+                          ? "border-white/20 bg-accent-subtle"
+                          : "border-border hover:border-white/10"
+                      }`}
+                    >
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                          selectedCard === null ? "border-white" : "border-border"
+                        }`}
+                      >
+                        {selectedCard === null && (
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        )}
+                      </div>
+                      <span className="text-sm font-medium">Нова картка</span>
+                    </button>
+                  </div>
+                )}
+
                 <div className="p-6 rounded-xl border border-border bg-bg-card">
                   <div className="flex items-center gap-2 mb-4">
                     <CreditCard className="w-4 h-4 text-text-secondary" />
-                    <span className="text-sm font-medium">Pay with Monobank</span>
+                    <span className="text-sm font-medium">
+                      {selectedCard ? "Оплата збереженою карткою" : "Pay with Monobank"}
+                    </span>
                   </div>
                   <p className="text-sm text-text-secondary leading-relaxed">
-                    After clicking{" "}
-                    <span className="text-text-primary font-medium">
-                      Proceed to Payment
-                    </span>{" "}
-                    you&apos;ll be redirected to Monobank&apos;s secure payment
-                    page. Bank card, Apple Pay and Google Pay are supported.
-                    Once the payment is confirmed you&apos;ll return here
-                    automatically.
+                    {selectedCard
+                      ? "Оплата пройде в один клік. Якщо банк вимагатиме підтвердження (3-D Secure), вас перенаправить на сторінку перевірки."
+                      : "After clicking Pay you'll be redirected to Monobank's secure payment page. Bank card, Apple Pay and Google Pay are supported. Once the payment is confirmed you'll return here automatically."}
                   </p>
+
+                  {/* Tokenize the card for one-click next time (logged-in only) */}
+                  {authStatus === "authenticated" && !selectedCard && (
+                    <label className="flex items-center gap-3 mt-5 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={saveCard}
+                        onChange={(e) => setSaveCard(e.target.checked)}
+                        className="w-4 h-4 rounded border-border bg-bg accent-white"
+                      />
+                      <span className="text-sm text-text-secondary">
+                        Зберегти картку для наступних покупок
+                      </span>
+                    </label>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 mt-4 text-xs text-text-muted">
                   <Lock className="w-3 h-3" />
                   <span>
-                    Payments are processed by Monobank. We never see your card
-                    details.
+                    Картка зберігається в Monobank, ми бачимо лише її маску.
+                    Payments are processed by Monobank.
                   </span>
                 </div>
               </div>
@@ -737,16 +888,35 @@ export default function CheckoutPage() {
                   {orderError && (
                     <p className="text-xs text-red-400 max-w-xs text-right">{orderError}</p>
                   )}
-                  <Button
-                    size="lg"
-                    onClick={placeOrder}
-                    isLoading={placingOrder}
-                    disabled={placingOrder}
-                    className="group"
-                  >
-                    <Lock className="mr-2 w-3.5 h-3.5" />
-                    <span>Proceed to Payment</span>
-                  </Button>
+                  {/* Official monoPay widget button (QR / app deep-link). Falls
+                      back to the hosted-page button when the widget keys are
+                      not configured. Saved-card payments use the classic
+                      button — the widget only handles new-card payments. */}
+                  {selectedCard === null && !widgetUnavailable && cartId && monoSessionReady ? (
+                    <MonoPayWidgetButton
+                      cartId={cartId}
+                      saveCard={saveCard}
+                      onUnavailable={() => setWidgetUnavailable(true)}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={placeOrder}
+                      disabled={placingOrder || (selectedCard === null && !widgetUnavailable && !monoSessionReady)}
+                      className="h-12 min-w-[220px] px-8 rounded-xl bg-black text-white border border-white/20 hover:border-white/40 hover:bg-[#111] transition-all duration-300 flex items-center justify-center gap-2.5 disabled:opacity-60 cursor-pointer"
+                    >
+                      {placingOrder ? (
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Lock className="w-3.5 h-3.5" />
+                      )}
+                      <span className="text-sm font-medium">Оплатити</span>
+                      <span className="text-base leading-none tracking-tight">
+                        <span className="font-extrabold">mono</span>
+                        <span className="font-normal">pay</span>
+                      </span>
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col items-end gap-2">
