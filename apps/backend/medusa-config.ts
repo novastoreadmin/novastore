@@ -128,7 +128,11 @@ export default defineConfig({
             id: "local",
             options: {
               upload_dir: "static",
-              backend_url: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
+              // Must include the /static suffix — this is the public URL prefix
+              // for uploaded files (CSV exports, admin uploads). Without it the
+              // download links point outside /static and 404 in the browser
+              // ("file wasn't available on site").
+              backend_url: `${process.env.MEDUSA_BACKEND_URL || "http://localhost:9000"}/static`,
             },
           },
         ],
