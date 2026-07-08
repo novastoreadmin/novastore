@@ -287,7 +287,7 @@ const UkraineMap = ({
 }) => {
   const outline = UA_OUTLINE.map(([lon, lat]) => `${px(lon).toFixed(1)},${py(lat).toFixed(1)}`).join(" ")
   return (
-    <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="w-full h-48" role="img" aria-label="Мапа доставок по Україні">
+    <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="w-full h-[270px]" role="img" aria-label="Мапа доставок по Україні">
       <polygon
         points={outline}
         fill="currentColor"
@@ -419,48 +419,54 @@ const GoogleDeliveryMap = ({
 
   useEffect(() => {
     if (!ready || !overlayRef.current) return
-    const makeLayer = (
-      id: string,
-      rgb: [number, number, number],
-      getCount: (p: MapPoint) => number,
-    ) => {
-      const data = points
-        .map((p) => ({ ...p, _n: getCount(p) }))
-        .filter((p) => p._n > 0)
-      if (!data.length) return null
-      return new ScatterplotLayer({
-        id,
-        data,
-        getPosition: (d: MapPoint) => [d.lon, d.lat],
-        getFillColor: rgb,
-        getLineColor: [0, 0, 0],
-        stroked: true,
-        lineWidthMinPixels: 1,
-        opacity: 0.85,
-        radiusMinPixels: 4,
-        radiusMaxPixels: 12,
-        getRadius: (d: MapPoint & { _n: number }) => 3000 + Math.sqrt(d._n) * 4000,
+    type Enriched = MapPoint & { visible: number; _color: [number, number, number] }
+    const data: Enriched[] = points
+      .map((p) => {
+        const vp = filter.pending    ? p.pending    : 0
+        const vi = filter.in_transit ? p.in_transit : 0
+        const vd = filter.delivered  ? p.delivered  : 0
+        const visible = vp + vi + vd
+        if (!visible) return null
+        const _color: [number, number, number] =
+          vp >= vi && vp >= vd ? [249, 115,  22]
+          : vi >= vd           ? [ 59, 130, 246]
+          :                      [ 16, 185, 129]
+        return { ...p, visible, _color }
       })
-    }
+      .filter((p): p is Enriched => p !== null)
     overlayRef.current.setProps({
       layers: [
-        filter.pending   ? makeLayer("pending",    [249, 115,  22], (p) => p.pending)    : null,
-        filter.in_transit ? makeLayer("in_transit", [ 59, 130, 246], (p) => p.in_transit) : null,
-        filter.delivered  ? makeLayer("delivered",  [ 16, 185, 129], (p) => p.delivered)  : null,
-      ].filter(Boolean),
+        new ScatterplotLayer<Enriched>({
+          id: "deliveries",
+          data,
+          getPosition: (d) => [d.lon, d.lat],
+          getFillColor: (d) => d._color,
+          getLineColor: [0, 0, 0],
+          stroked: true,
+          lineWidthMinPixels: 1,
+          opacity: 0.85,
+          radiusMinPixels: 4,
+          radiusMaxPixels: 12,
+          getRadius: (d) => 3000 + Math.sqrt(d.visible) * 4000,
+          updateTriggers: {
+            getFillColor: [filter.pending, filter.in_transit, filter.delivered],
+            getRadius:    [filter.pending, filter.in_transit, filter.delivered],
+          },
+        }),
+      ],
     })
   }, [ready, points, filter])
 
   if (failed) {
     return (
-      <div className="flex h-72 items-center justify-center rounded-lg border border-ui-border-base">
+      <div className="flex h-[270px] items-center justify-center rounded-lg border border-ui-border-base">
         <Text size="small" className="text-ui-fg-error">
           Не вдалося завантажити Google Maps — перевірте GOOGLE_MAPS_API_KEY
         </Text>
       </div>
     )
   }
-  return <div ref={containerRef} className="h-48 w-full overflow-hidden rounded-lg" />
+  return <div ref={containerRef} className="h-[270px] w-full overflow-hidden rounded-lg" />
 }
 
 /** Two series side-by-side per day — the reference's "Delivery Statistics". */
