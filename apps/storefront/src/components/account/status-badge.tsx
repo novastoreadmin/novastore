@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 // Humanizes Medusa status enums ("not_paid" -> "Not paid") and colors them
 // by how "done" they are, so the cabinet reads at a glance.
@@ -20,6 +21,13 @@ export function humanizeStatus(status: string | null | undefined): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
+/** Translated status text: dictionary lookup with the humanized enum as fallback. */
+export function useStatusText() {
+  const { d } = useI18n();
+  return (status: string | null | undefined) =>
+    (status && d.account.statuses[status]) || humanizeStatus(status);
+}
+
 export function StatusBadge({
   status,
   label,
@@ -27,6 +35,7 @@ export function StatusBadge({
   status: string | null | undefined;
   label?: string;
 }) {
+  const statusText = useStatusText();
   const tone = status && GOOD.has(status) ? "good" : status && BAD.has(status) ? "bad" : "pending";
   return (
     <span
@@ -46,7 +55,7 @@ export function StatusBadge({
         )}
       />
       {label ? `${label}: ` : ""}
-      {humanizeStatus(status)}
+      {statusText(status)}
     </span>
   );
 }

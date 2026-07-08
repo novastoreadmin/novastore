@@ -6,51 +6,22 @@ import { Cpu, Monitor, Battery, Wifi, Shield, Zap } from "lucide-react";
 import { Section, SectionHeader } from "@/components/ui/section";
 import { fadeUp } from "@/animations/variants";
 import { gsap, ScrollTrigger } from "@/animations/gsap-config";
+import { useI18n } from "@/lib/i18n";
 
-const features = [
-  {
-    icon: Cpu,
-    title: "10Gbps Transfers",
-    description:
-      "USB 3.2 Gen2 controllers move data at up to 10Gbps with 1000-1200MB/s real-world speeds. No more waiting on the progress bar.",
-  },
-  {
-    icon: Monitor,
-    title: "4K & 8K Video Out",
-    description:
-      "Mirror or extend to a 4K@60Hz display through the hub, or push 8K@60Hz over a single USB-C cable.",
-  },
-  {
-    icon: Zap,
-    title: "240W PD 3.1 Charging",
-    description:
-      "E-marked cables and hubs deliver up to 240W (48V/5A) to charge laptops, phones and consoles at full speed.",
-  },
-  {
-    icon: Wifi,
-    title: "Gigabit Ethernet",
-    description:
-      "The slim hub adds true Gigabit (1000Mbps) wired networking alongside 5Gbps USB data and HDMI.",
-  },
-  {
-    icon: Shield,
-    title: "Aluminum Build",
-    description:
-      "Aircraft-grade aluminum shells dissipate heat and protect your gear, in profiles as thin as 6mm.",
-  },
-  {
-    icon: Battery,
-    title: "Year-Long Tracking",
-    description:
-      "The Find My tracker runs about a year on a replaceable battery, with global coverage built into the Find app.",
-  },
-];
+// Icons per card; titles/descriptions come from d.showcase.cards (same order).
+const cardIcons = [Cpu, Monitor, Zap, Wifi, Shield, Battery];
+
+type ShowcaseFeature = {
+  icon: (typeof cardIcons)[number];
+  title: string;
+  description: string;
+};
 
 function FeatureCard({
   feature,
   index,
 }: {
-  feature: (typeof features)[number];
+  feature: ShowcaseFeature;
   index: number;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -104,6 +75,12 @@ function FeatureCard({
 
 export function FeatureShowcase() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { d } = useI18n();
+
+  const features: ShowcaseFeature[] = d.showcase.cards.map((card, i) => ({
+    icon: cardIcons[i],
+    ...card,
+  }));
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -130,9 +107,9 @@ export function FeatureShowcase() {
   return (
     <Section stagger>
       <SectionHeader
-        label="Capabilities"
-        title="Built Without Compromise"
-        description="Every accessory engineered to move data, power and pixels faster — without the bulk."
+        label={d.showcase.label}
+        title={d.showcase.title}
+        description={d.showcase.description}
       />
 
       <div

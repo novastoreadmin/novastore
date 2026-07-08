@@ -5,10 +5,12 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { gsap, ScrollTrigger } from "@/animations/gsap-config";
+import { useI18n } from "@/lib/i18n";
 
 export function CheckoutCTA() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  const { d } = useI18n();
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -44,36 +46,35 @@ export function CheckoutCTA() {
         className="relative z-10 text-center px-6 max-w-3xl mx-auto"
       >
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted mb-6">
-          Ready to Elevate
+          {d.cta.label}
         </p>
 
         <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] text-gradient-hero">
-          Your Next Chapter
+          {d.cta.title1}
           <br />
-          Starts Here
+          {d.cta.title2}
         </h2>
 
         <p className="mt-8 text-lg md:text-xl text-text-secondary max-w-xl mx-auto leading-relaxed">
-          Experience technology that anticipates your ambition. Free shipping on
-          every order. 30-day returns.
+          {d.cta.subtitle}
         </p>
 
         <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link href="/products">
             <Button size="xl" className="group">
-              <span>Shop Now</span>
+              <span>{d.common.shopNow}</span>
               {/* <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" /> */}
             </Button>
           </Link>
           <Link href="/about">
             <Button variant="ghost" size="xl" className="text-text-secondary">
-              Learn More
+              {d.common.learnMore}
             </Button>
           </Link>
         </div>
 
         <p className="mt-8 text-xs text-text-muted">
-          Free express shipping · 30-day returns · 1-year warranty
+          {d.cta.bullets}
         </p>
       </div>
     </section>

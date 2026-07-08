@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/store";
 import { addToCart, createCart } from "@/lib/medusa";
 import { RelatedProducts } from "./related-products";
+import { useI18n } from "@/lib/i18n";
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                      */
@@ -109,6 +110,7 @@ const FEATURE_ICONS = [Cpu, Battery, Wifi, Shield, Monitor, Zap];
 /* -------------------------------------------------------------------------- */
 
 export function ProductDetail({ product, relatedProducts }: ProductDetailProps) {
+  const { d } = useI18n();
   /* ---- State ---- */
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
@@ -297,7 +299,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
     } catch (error) {
       console.error("Failed to add to cart:", error);
       setAddError(
-        error instanceof Error ? error.message : "Couldn't add this item to your cart."
+        error instanceof Error ? error.message : d.productDetail.errorAdd
       );
     } finally {
       setIsAdding(false);
@@ -422,7 +424,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                 )}
                 {!inStock && selectedVariant && (
                   <p className="mt-2 text-sm text-error font-medium">
-                    Currently out of stock
+                    {d.productDetail.currentlyOut}
                   </p>
                 )}
               </motion.div>
@@ -559,7 +561,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                         className="flex items-center gap-2"
                       >
                         <Check size={18} />
-                        Added
+                        {d.productDetail.added}
                       </motion.span>
                     ) : (
                       <motion.span
@@ -568,7 +570,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                       >
-                        {inStock ? "Add to Cart" : "Out of Stock"}
+                        {inStock ? d.productDetail.addToCart : d.productDetail.outOfStock}
                       </motion.span>
                     )}
                   </AnimatePresence>
@@ -600,15 +602,15 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                 variants={fadeUp}
                 className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted mb-6"
               >
-                Overview
+                {d.productDetail.overviewLabel}
               </motion.p>
               <motion.h2
                 variants={fadeUp}
                 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-8"
               >
-                Designed Without
+                {d.productDetail.overviewTitle1}
                 <br />
-                Compromise
+                {d.productDetail.overviewTitle2}
               </motion.h2>
               <motion.div variants={fadeUp}>
                 <div
@@ -629,7 +631,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                     onClick={() => setDescriptionExpanded(!descriptionExpanded)}
                     className="mt-4 flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer group"
                   >
-                    {descriptionExpanded ? "Show Less" : "Read More"}
+                    {descriptionExpanded ? d.productDetail.showLess : d.productDetail.readMore}
                     <ChevronDown
                       size={14}
                       className={cn(
@@ -661,13 +663,13 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
               variants={fadeUp}
               className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted mb-6"
             >
-              Tech Specs
+              {d.productDetail.specsLabel}
             </motion.p>
             <motion.h2
               variants={fadeUp}
               className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight"
             >
-              Under the Surface
+              {d.productDetail.specsTitle}
             </motion.h2>
           </motion.div>
 
@@ -709,13 +711,13 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
               variants={fadeUp}
               className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted mb-6"
             >
-              Features
+              {d.productDetail.featuresLabel}
             </motion.p>
             <motion.h2
               variants={fadeUp}
               className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight"
             >
-              What Sets It Apart
+              {d.productDetail.featuresTitle}
             </motion.h2>
           </motion.div>
 

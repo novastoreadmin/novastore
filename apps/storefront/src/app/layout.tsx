@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   ),
   openGraph: {
     type: "website",
-    locale: "en_US",
+    locale: "uk_UA",
     siteName: "NOVA",
   },
 };
@@ -40,8 +40,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // lang starts as "uk" (SSR default language); I18nProvider updates it on
+  // the client when the visitor picks another language.
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="uk" className={inter.variable}>
       {/* suppressHydrationWarning: browser extensions (Grammarly et al.) inject
           attributes into <body> before React hydrates, tripping a false-positive
           mismatch warning. Suppression covers this element's attributes only —

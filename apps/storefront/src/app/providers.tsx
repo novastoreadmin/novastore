@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MotionConfig } from "framer-motion";
 import { useState, type ReactNode } from "react";
 import { SmoothScroll } from "@/components/layout/smooth-scroll";
+import { I18nProvider } from "@/lib/i18n";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -23,7 +24,9 @@ export function Providers({ children }: { children: ReactNode }) {
       {/* Honors the visitor's OS "reduce motion" setting for every
           framer-motion animation site-wide. */}
       <MotionConfig reducedMotion="user">
-        <SmoothScroll>{children}</SmoothScroll>
+        <I18nProvider>
+          <SmoothScroll>{children}</SmoothScroll>
+        </I18nProvider>
       </MotionConfig>
     </QueryClientProvider>
   );

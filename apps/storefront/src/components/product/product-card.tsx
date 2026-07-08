@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
 import { fadeUp, cardHover } from "@/animations/variants";
+import { useI18n } from "@/lib/i18n";
 
 interface ProductCardProduct {
   id: string;
@@ -28,6 +29,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, className, index = 0 }: ProductCardProps) {
+  const { d } = useI18n();
   const price = product.variants[0]?.calculated_price;
 
   return (
@@ -72,7 +74,7 @@ export function ProductCard({ product, className, index = 0 }: ProductCardProps)
             {/* View label on hover */}
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
               <span className="px-6 py-2.5 text-sm font-medium tracking-wide uppercase bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white">
-                View
+                {d.common.view}
               </span>
             </div>
           </div>

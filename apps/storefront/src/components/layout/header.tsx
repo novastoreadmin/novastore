@@ -7,15 +7,44 @@ import { ShoppingBag, Search, Menu, X, ChevronRight, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartStore, useUIStore } from "@/lib/store";
 import { useCustomer } from "@/hooks/use-customer";
+import { useI18n } from "@/lib/i18n";
+import type { Lang } from "@/i18n/dictionaries";
 
-const navLinks = [
-  { label: "Card Readers", href: "/categories/card-readers" },
-  { label: "SSD Enclosures", href: "/categories/ssd-enclosures" },
-  { label: "Memory", href: "/categories/memory" },
-  { label: "USB-C Cables", href: "/categories/usb-c-cables" },
-  { label: "Accessories", href: "/categories/accessories" },
-  // { label: "Audio", href: "/categories/headphones" },
-];
+const navSlugs = [
+  "card-readers",
+  "ssd-enclosures",
+  "memory",
+  "usb-c-cables",
+  "accessories",
+] as const;
+
+function LangSwitcher({ className }: { className?: string }) {
+  const { lang, setLang } = useI18n();
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-0.5 rounded-xl border border-border p-0.5",
+        className
+      )}
+    >
+      {(["uk", "en"] as Lang[]).map((code) => (
+        <button
+          key={code}
+          onClick={() => setLang(code)}
+          aria-pressed={lang === code}
+          className={cn(
+            "px-2 py-1 rounded-[10px] text-[11px] font-semibold tracking-wide uppercase transition-all duration-300",
+            lang === code
+              ? "bg-white text-black"
+              : "text-text-muted hover:text-text-primary"
+          )}
+        >
+          {code === "uk" ? "UA" : "EN"}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -24,6 +53,12 @@ export function Header() {
   const { itemCount, toggle: toggleCart } = useCartStore();
   const { isMenuOpen, setMenuOpen } = useUIStore();
   const { status: authStatus } = useCustomer();
+  const { d } = useI18n();
+
+  const navLinks = navSlugs.map((slug) => ({
+    label: d.header.nav[slug],
+    href: `/categories/${slug}`,
+  }));
 
   useEffect(() => {
     const handleScroll = () => {
@@ -81,9 +116,11 @@ export function Header() {
           </div>
 
           <div className="flex items-center gap-3">
+            <LangSwitcher className="hidden md:flex" />
+
             <button
               className="p-2.5 rounded-xl text-text-secondary hover:text-text-primary hover:bg-accent-subtle transition-all duration-300"
-              aria-label="Search"
+              aria-label={d.header.search}
             >
               <Search className="w-[18px] h-[18px]" />
             </button>
@@ -91,7 +128,7 @@ export function Header() {
             <Link
               href={authStatus === "authenticated" ? "/account" : "/account/login"}
               className="relative p-2.5 rounded-xl text-text-secondary hover:text-text-primary hover:bg-accent-subtle transition-all duration-300"
-              aria-label="Account"
+              aria-label={d.header.account}
             >
               <User className="w-[18px] h-[18px]" />
               {authStatus === "authenticated" && (
@@ -102,7 +139,7 @@ export function Header() {
             <button
               onClick={toggleCart}
               className="relative p-2.5 rounded-xl text-text-secondary hover:text-text-primary hover:bg-accent-subtle transition-all duration-300"
-              aria-label="Cart"
+              aria-label={d.header.cart}
             >
               <ShoppingBag className="w-[18px] h-[18px]" />
               {itemCount > 0 && (
@@ -119,7 +156,7 @@ export function Header() {
             <button
               onClick={() => setMenuOpen(!isMenuOpen)}
               className="lg:hidden p-2.5 rounded-xl text-text-secondary hover:text-text-primary hover:bg-accent-subtle transition-all duration-300"
-              aria-label="Menu"
+              aria-label={d.header.menu}
             >
               {isMenuOpen ? (
                 <X className="w-[18px] h-[18px]" />
@@ -160,6 +197,19 @@ export function Header() {
                   </Link>
                 </motion.div>
               ))}
+
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{
+                  delay: navLinks.length * 0.08,
+                  duration: 0.5,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                className="pt-8"
+              >
+                <LangSwitcher className="w-fit" />
+              </motion.div>
             </div>
           </motion.div>
         )}

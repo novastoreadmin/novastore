@@ -8,6 +8,7 @@ import { ArrowUpRight } from "lucide-react";
 import { fadeUp, staggerContainer } from "@/animations/variants";
 import { gsap } from "@/animations/gsap-config";
 import { cn, formatPrice } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 interface Category {
   id: string;
@@ -42,6 +43,7 @@ export function ProductsView({
   products: Product[];
   categories: Category[];
 }) {
+  const { d } = useI18n();
   const gridRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [minPrice, setMinPrice] = useState("");
@@ -99,20 +101,19 @@ export function ProductsView({
             variants={fadeUp}
             className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted mb-4"
           >
-            Full Catalog
+            {d.productsPage.label}
           </motion.p>
           <motion.h1
             variants={fadeUp}
             className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.95]"
           >
-            All Products
+            {d.productsPage.title}
           </motion.h1>
           <motion.p
             variants={fadeUp}
             className="mt-6 text-lg text-text-secondary max-w-lg"
           >
-            Every NOVA accessory in one place. Filter by category and price to find
-            exactly what you need.
+            {d.productsPage.subtitle}
           </motion.p>
         </motion.div>
 
@@ -129,7 +130,7 @@ export function ProductsView({
                   : "bg-bg-card text-text-secondary border border-border hover:border-white/20"
               )}
             >
-              All
+              {d.productsPage.all}
             </button>
             {categories.map((category) => (
               <button
@@ -153,7 +154,7 @@ export function ProductsView({
           <div className="flex flex-wrap items-end gap-4">
             <div>
               <label htmlFor="minPrice" className="block text-xs font-medium text-text-secondary mb-2">
-                Min price{currency ? ` (${currency.toUpperCase()})` : ""}
+                {d.productsPage.minPrice}{currency ? ` (${currency.toUpperCase()})` : ""}
               </label>
               <input
                 id="minPrice"
@@ -167,13 +168,13 @@ export function ProductsView({
             </div>
             <div>
               <label htmlFor="maxPrice" className="block text-xs font-medium text-text-secondary mb-2">
-                Max price{currency ? ` (${currency.toUpperCase()})` : ""}
+                {d.productsPage.maxPrice}{currency ? ` (${currency.toUpperCase()})` : ""}
               </label>
               <input
                 id="maxPrice"
                 type="number"
                 min={0}
-                placeholder="Any"
+                placeholder={d.productsPage.anyPlaceholder}
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
                 className="w-32 h-11 px-4 rounded-xl bg-bg-card border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/10 transition-all"
@@ -188,13 +189,13 @@ export function ProductsView({
                 }}
                 className="h-11 px-4 text-sm text-text-secondary hover:text-text-primary transition-colors"
               >
-                Clear filters
+                {d.productsPage.clearFilters}
               </button>
             )}
           </div>
 
           <p className="text-sm text-text-muted">
-            {filteredProducts.length} product{filteredProducts.length === 1 ? "" : "s"}
+            {d.productsPage.productsCount(filteredProducts.length)}
           </p>
         </div>
 
@@ -202,10 +203,10 @@ export function ProductsView({
         {filteredProducts.length === 0 ? (
           <div className="py-24 text-center">
             <p className="text-lg font-medium text-text-secondary">
-              No products match your filters.
+              {d.productsPage.emptyTitle}
             </p>
             <p className="text-sm text-text-muted mt-2">
-              Try widening your price range or clearing the category filter.
+              {d.productsPage.emptyHint}
             </p>
           </div>
         ) : (
@@ -247,7 +248,7 @@ export function ProductsView({
                         {product.title}
                       </h3>
                       <p className="mt-2 text-sm text-text-muted">
-                        Starting at{" "}
+                        {d.productsPage.startingAt}{" "}
                         <span className="text-text-secondary font-medium">
                           {formatPrice(price, currencyCode)}
                         </span>

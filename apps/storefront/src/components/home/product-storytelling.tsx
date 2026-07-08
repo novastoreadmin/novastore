@@ -5,45 +5,22 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/animations/gsap-config";
+import { useI18n } from "@/lib/i18n";
 
-const features = [
-  {
-    label: "01",
-    title: "10Gbps Transfer Engine",
-    description:
-      "USB 3.2 Gen2 interfaces move data at up to 10Gbps, with real-world read/write speeds of 1000-1200MB/s. Offload a full shoot or boot from an external drive in moments.",
-    stat: "10Gbps",
-    statLabel: "Transfer Speed",
-    image: "/images/home/feature-transfer.jpg",
-  },
-  {
-    label: "02",
-    title: "Aluminum Unibody",
-    description:
-      "Precision-machined aluminum-alloy shells dissipate heat and shrug off daily wear, in profiles as thin as 6mm. Built to live in your bag.",
-    stat: "6mm",
-    statLabel: "Slim Profile",
-    image: "/images/home/feature-unibody.jpg",
-  },
-  {
-    label: "03",
-    title: "240W Power Delivery",
-    description:
-      "PD 3.1 cables and hubs deliver up to 240W (48V/5A) with E-marker safety, charging laptops, phones and consoles at full speed.",
-    stat: "240W",
-    statLabel: "Fast Charging",
-    image: "/images/home/feature-power.jpg",
-  },
-  {
-    label: "04",
-    title: "8K Display Output",
-    description:
-      "Drive an 8K@60Hz display over a single cable, or 4K@60Hz from the slim hub. Your full desk setup, anywhere you go.",
-    stat: "8K@60Hz",
-    statLabel: "Video Output",
-    image: "/images/home/feature-display.jpg",
-  },
+// Language-independent parts; titles/descriptions/statLabels come from the
+// dictionary (d.storytelling.features, same order).
+const featureMeta = [
+  { label: "01", stat: "10Gbps", image: "/images/home/feature-transfer.jpg" },
+  { label: "02", stat: "6mm", image: "/images/home/feature-unibody.jpg" },
+  { label: "03", stat: "240W", image: "/images/home/feature-power.jpg" },
+  { label: "04", stat: "8K@60Hz", image: "/images/home/feature-display.jpg" },
 ];
+
+type Feature = (typeof featureMeta)[number] & {
+  title: string;
+  description: string;
+  statLabel: string;
+};
 
 /**
  * Desktop (md+): pinned scroll-scrubbed scene — text chapters swap while the
@@ -58,6 +35,12 @@ export function ProductStorytelling() {
   const pinnedRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+  const { d } = useI18n();
+
+  const features: Feature[] = featureMeta.map((meta, i) => ({
+    ...meta,
+    ...d.storytelling.features[i],
+  }));
 
   useGSAP(
     () => {
@@ -231,7 +214,7 @@ export function ProductStorytelling() {
             </div>
 
             <span className="mt-6 block text-xs font-medium uppercase tracking-[0.2em] text-text-muted">
-              {feature.label} — Feature
+              {feature.label} — {d.storytelling.featureLabel}
             </span>
 
             <h3 className="mt-3 text-3xl font-bold tracking-tight leading-[1.1]">
@@ -259,9 +242,10 @@ function AnimatedFeature({
   feature,
   index,
 }: {
-  feature: (typeof features)[number];
+  feature: Feature;
   index: number;
 }) {
+  const { d } = useI18n();
   return (
     <motion.div
       key={index}
@@ -271,7 +255,7 @@ function AnimatedFeature({
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
     >
       <span className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted">
-        {feature.label} — Feature
+        {feature.label} — {d.storytelling.featureLabel}
       </span>
 
       <h3 className="mt-4 text-3xl md:text-5xl font-bold tracking-tight leading-[1.1]">

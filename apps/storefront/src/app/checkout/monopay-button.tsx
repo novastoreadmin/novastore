@@ -8,6 +8,7 @@ import {
   loadMonoPayScript,
   type MonoPayError,
 } from "@/lib/monopay-widget";
+import { useI18n } from "@/lib/i18n";
 
 /**
  * Офіційна кнопка monoPay (JS-віджет Monobank) для кроку оплати.
@@ -34,6 +35,7 @@ export function MonoPayWidgetButton({
   saveCard: boolean;
   onUnavailable: () => void;
 }) {
+  const { d } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -44,8 +46,9 @@ export function MonoPayWidgetButton({
   const handleError = useCallback((error: MonoPayError) => {
     setStatus("error");
     setErrorMsg(
-      error?.message || error?.description || "Не вдалося виконати оплату. Спробуйте ще раз."
+      error?.message || error?.description || d.checkout.monopay.payFailed
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -82,10 +85,7 @@ export function MonoPayWidgetButton({
               // оплати, інакше замовлення не зможе завершитися.
               const attached = await attachWidgetInvoice(cartId, data.invoiceId);
               if (!attached) {
-                handleError({
-                  message:
-                    "Не вдалося зареєструвати платіж. Оновіть сторінку та спробуйте ще раз.",
-                });
+                handleError({ message: d.checkout.monopay.registerFailed });
               }
             },
             onSuccess: () => {
@@ -138,7 +138,7 @@ export function MonoPayWidgetButton({
       {status === "loading" && (
         <div className="h-12 min-w-[220px] px-8 rounded-xl bg-black border border-white/15 flex items-center justify-center gap-2 text-white/70">
           <Loader2 className="w-4 h-4 animate-spin" />
-          <span className="text-sm">Завантаження monoPay…</span>
+          <span className="text-sm">{d.checkout.monopay.loading}</span>
         </div>
       )}
       {/* Кнопку сюди вставляє сам віджет */}

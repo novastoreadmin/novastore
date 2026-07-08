@@ -13,14 +13,9 @@ import {
 } from "framer-motion";
 import { Section } from "@/components/ui/section";
 import { fadeUp } from "@/animations/variants";
+import { useI18n } from "@/lib/i18n";
 
-const layers = [
-  "Aluminum Shell",
-  "Thermal Pad",
-  "Controller Chip",
-  "Logic Board",
-  "USB-C Interface",
-];
+const LAYER_COUNT = 5;
 
 function LayerItem({
   label,
@@ -31,7 +26,7 @@ function LayerItem({
   index: number;
   progress: MotionValue<number>;
 }) {
-  const start = index / layers.length;
+  const start = index / LAYER_COUNT;
   const end = Math.min(start + 0.15, 1);
   const dotColor = useTransform(
     progress,
@@ -62,6 +57,8 @@ export function TechnologySection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const visualRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
+  const { d } = useI18n();
+  const layers = d.technology.layers;
 
   // Scroll-linked progress as motion values: no React re-renders while scrolling.
   const { scrollYProgress } = useScroll({
@@ -114,22 +111,21 @@ export function TechnologySection() {
               variants={fadeUp}
               className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted mb-6"
             >
-              Engineering
+              {d.technology.label}
             </motion.p>
             <motion.h2
               variants={fadeUp}
               className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1]"
             >
-              Engineered
+              {d.technology.title1}
               <br />
-              From Within
+              {d.technology.title2}
             </motion.h2>
             <motion.p
               variants={fadeUp}
               className="mt-6 text-lg text-text-secondary leading-relaxed max-w-md"
             >
-              Five precision layers working in concert. Each component
-              purpose-built, every connection optimized for performance.
+              {d.technology.description}
             </motion.p>
 
             <motion.div variants={fadeUp} className="mt-12 space-y-4">
@@ -173,7 +169,7 @@ export function TechnologySection() {
                   style={prefersReducedMotion ? undefined : { opacity: captionOpacity }}
                   className="absolute bottom-4 left-4 text-[11px] font-medium uppercase tracking-[0.15em] text-white/70"
                 >
-                  Layer by Layer
+                  {d.technology.captionMain}
                 </motion.div>
               </motion.div>
 
@@ -202,7 +198,7 @@ export function TechnologySection() {
                   }
                   className="absolute bottom-3 left-3 text-[10px] font-medium uppercase tracking-[0.15em] text-white/70"
                 >
-                  9210CN Controller
+                  {d.technology.captionChip}
                 </motion.div>
               </motion.div>
             </div>

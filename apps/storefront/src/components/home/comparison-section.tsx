@@ -6,21 +6,12 @@ import { Check, Minus } from "lucide-react";
 import { Section, SectionHeader } from "@/components/ui/section";
 import { fadeUp } from "@/animations/variants";
 import { gsap, ScrollTrigger } from "@/animations/gsap-config";
-
-const specs = [
-  { label: "Build", nova: "Aluminum alloy", competitor: "Plastic" },
-  { label: "Transfer Speed", nova: "Up to 10Gbps", competitor: "Up to 5Gbps" },
-  { label: "Fast Charging", nova: "240W PD 3.1", competitor: "60W" },
-  { label: "Video Output", nova: "Up to 8K@60Hz", competitor: "4K@30Hz" },
-  { label: "Compatibility", nova: "Universal", competitor: "Limited" },
-  { label: "Heat Dissipation", nova: true, competitor: false },
-  { label: "E-marker Safety", nova: true, competitor: false },
-  { label: "2-Year Warranty", nova: true, competitor: false },
-  { label: "24/7 Support", nova: true, competitor: false },
-];
+import { useI18n } from "@/lib/i18n";
 
 export function ComparisonSection() {
   const tableRef = useRef<HTMLDivElement>(null);
+  const { d } = useI18n();
+  const specs = d.comparison.rows;
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -47,9 +38,9 @@ export function ComparisonSection() {
   return (
     <Section stagger className="bg-bg-elevated">
       <SectionHeader
-        label="Comparison"
-        title="Beyond the Competition"
-        description="See how NOVA accessories outclass the generic alternatives."
+        label={d.comparison.label}
+        title={d.comparison.title}
+        description={d.comparison.description}
       />
 
       <div ref={tableRef} className="max-w-4xl mx-auto">
@@ -58,14 +49,14 @@ export function ComparisonSection() {
           variants={fadeUp}
           className="grid grid-cols-3 gap-4 pb-6 border-b border-border mb-2"
         >
-          <div className="text-sm text-text-muted">Specification</div>
+          <div className="text-sm text-text-muted">{d.comparison.colSpec}</div>
           <div className="text-center">
             <span className="text-sm font-semibold text-text-primary tracking-wide">
               NOVA
             </span>
           </div>
           <div className="text-center">
-            <span className="text-sm text-text-muted">Others</span>
+            <span className="text-sm text-text-muted">{d.comparison.colOthers}</span>
           </div>
         </motion.div>
 
