@@ -287,7 +287,7 @@ const UkraineMap = ({
 }) => {
   const outline = UA_OUTLINE.map(([lon, lat]) => `${px(lon).toFixed(1)},${py(lat).toFixed(1)}`).join(" ")
   return (
-    <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="w-full" role="img" aria-label="Мапа доставок по Україні">
+    <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="w-full h-48" role="img" aria-label="Мапа доставок по Україні">
       <polygon
         points={outline}
         fill="currentColor"
@@ -429,7 +429,7 @@ const GoogleDeliveryMap = ({
       </div>
     )
   }
-  return <div ref={containerRef} className="h-72 w-full overflow-hidden rounded-lg" />
+  return <div ref={containerRef} className="h-48 w-full overflow-hidden rounded-lg" />
 }
 
 /** Two series side-by-side per day — the reference's "Delivery Statistics". */
