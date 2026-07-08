@@ -12,6 +12,7 @@ dist/
 coverage/
 .medusa/
 uploads/
+apps/backend/static/*.csv
 test-results/
 playwright-report/
 blob-report/

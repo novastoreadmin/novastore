@@ -128,17 +128,32 @@ export default defineConfig({
             id: "local",
             options: {
               upload_dir: "static",
-              backend_url: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
+              // Must include the /static suffix — this is the public URL prefix
+              // for uploaded files (CSV exports, admin uploads). Without it the
+              // download links point outside /static and 404 in the browser
+              // ("file wasn't available on site").
+              backend_url: `${process.env.MEDUSA_BACKEND_URL || "http://localhost:9000"}/static`,
             },
           },
         ],
       },
     },
-    // Notification module
+    // Notification module. The admin's export/import workflows send their
+    // "file is ready" notifications to the "feed" channel — without a provider
+    // for it the send step throws and the workflow COMPENSATES, deleting the
+    // just-generated CSV (admin shows "Failed to export products").
     {
       resolve: "@medusajs/medusa/notification",
       options: {
-        providers: [],
+        providers: [
+          {
+            resolve: require.resolve("@medusajs/medusa/notification-local"),
+            id: "local",
+            options: {
+              channels: ["feed"],
+            },
+          },
+        ],
       },
     },
     // Auth module - overrides defineConfig's own default (which uses the same
