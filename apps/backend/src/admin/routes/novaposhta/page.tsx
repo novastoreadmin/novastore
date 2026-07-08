@@ -87,8 +87,23 @@ function statusColor(code: string | null): "green" | "red" | "orange" | "blue" |
 const fmtDate = (d?: string | null) =>
   d ? new Date(d).toLocaleString("uk-UA", { dateStyle: "short", timeStyle: "short" }) : "—"
 
+type CabinetDoc = {
+  ref: string
+  ttn: string
+  createdAt: string
+  recipient: string
+  cityRecipient: string
+  status: string
+  statusCode: string | null
+  cost: string
+  weight: string
+}
+
 const NovaPoshtaPageInner = () => {
   const qc = useQueryClient()
+  // "store" = shipments linked to orders (editable); "cabinet" = EVERY waybill
+  // on the NP account for the period, read-only (my.novaposhta view).
+  const [source, setSource] = useState<"store" | "cabinet">("store")
   const [q, setQ] = useState("")
   const [statusCode, setStatusCode] = useState("all")
   const [dateFrom, setDateFrom] = useState("")
@@ -115,7 +130,25 @@ const NovaPoshtaPageInner = () => {
       sdk.client.fetch<ListResponse>("/admin/novaposhta/shipments", {
         query: queryParams,
       }),
+    enabled: source === "store",
   })
+
+  const cabinetQuery = useQuery({
+    queryKey: ["np-cabinet", dateFrom, dateTo],
+    queryFn: () =>
+      sdk.client.fetch<{ documents: CabinetDoc[]; count: number }>(
+        "/admin/novaposhta/cabinet",
+        { query: { date_from: dateFrom || undefined, date_to: dateTo || undefined } }
+      ),
+    enabled: source === "cabinet",
+  })
+  const cabinetDocs = (cabinetQuery.data?.documents ?? []).filter(
+    (d) =>
+      !q ||
+      d.ttn.includes(q) ||
+      d.recipient.toLowerCase().includes(q.toLowerCase()) ||
+      d.cityRecipient.toLowerCase().includes(q.toLowerCase())
+  )
   const rows = data?.shipments ?? []
   const count = data?.count ?? 0
   const pageCount = Math.max(1, Math.ceil(count / PAGE_SIZE))
@@ -150,18 +183,39 @@ const NovaPoshtaPageInner = () => {
       <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
         <div className="flex items-center gap-x-3">
           <Heading level="h2">Nova Poshta — відправлення</Heading>
-          <Badge size="2xsmall">{count}</Badge>
+          <Badge size="2xsmall">{source === "store" ? count : cabinetDocs.length}</Badge>
+          <div className="w-56">
+            <Select
+              size="small"
+              value={source}
+              onValueChange={(v) => setSource(v as "store" | "cabinet")}
+            >
+              <Select.Trigger>
+                <Select.Value />
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="store">Замовлення магазину</Select.Item>
+                <Select.Item value="cabinet">Всі з кабінету НП</Select.Item>
+              </Select.Content>
+            </Select>
+          </div>
         </div>
         <div className="flex gap-x-2">
+          {source === "store" && (
+            <Button
+              variant="secondary"
+              isLoading={syncMutation.isPending}
+              disabled={selected.size === 0}
+              onClick={() => syncMutation.mutate([...selected])}
+            >
+              Синхронізувати вибрані ({selected.size})
+            </Button>
+          )}
           <Button
             variant="secondary"
-            isLoading={syncMutation.isPending}
-            disabled={selected.size === 0}
-            onClick={() => syncMutation.mutate([...selected])}
+            isLoading={source === "store" ? isFetching : cabinetQuery.isFetching}
+            onClick={() => (source === "store" ? refetch() : cabinetQuery.refetch())}
           >
-            Синхронізувати вибрані ({selected.size})
-          </Button>
-          <Button variant="secondary" isLoading={isFetching} onClick={() => refetch()}>
             Оновити
           </Button>
         </div>
@@ -234,7 +288,86 @@ const NovaPoshtaPageInner = () => {
         )}
       </div>
 
+      {/* Cabinet view: every waybill on the NP account, read-only */}
+      {source === "cabinet" && (
+        <div className="overflow-x-auto">
+          <Table>
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell>ТТН</Table.HeaderCell>
+                <Table.HeaderCell>Отримувач</Table.HeaderCell>
+                <Table.HeaderCell>Куди</Table.HeaderCell>
+                <Table.HeaderCell>Статус НП</Table.HeaderCell>
+                <Table.HeaderCell className="text-right">Вартість</Table.HeaderCell>
+                <Table.HeaderCell>Створено</Table.HeaderCell>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {cabinetQuery.error && (
+                <Table.Row>
+                  <Table.Cell colSpan={6}>
+                    <Text className="text-ui-fg-error px-2 py-6">
+                      {(cabinetQuery.error as Error).message || "Не вдалося отримати список з НП"}
+                    </Text>
+                  </Table.Cell>
+                </Table.Row>
+              )}
+              {!cabinetQuery.error && cabinetDocs.length === 0 && (
+                <Table.Row>
+                  <Table.Cell colSpan={6}>
+                    <Text className="text-ui-fg-subtle px-2 py-6">
+                      {cabinetQuery.isFetching
+                        ? "Завантаження з Нової Пошти…"
+                        : "Немає накладних за період"}
+                    </Text>
+                  </Table.Cell>
+                </Table.Row>
+              )}
+              {cabinetDocs.map((d) => (
+                <Table.Row key={d.ref}>
+                  <Table.Cell>
+                    <a
+                      href={`https://novaposhta.ua/tracking/?cargo_number=${d.ttn}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-ui-fg-interactive hover:underline font-mono"
+                    >
+                      {d.ttn}
+                    </a>
+                  </Table.Cell>
+                  <Table.Cell>{d.recipient || "—"}</Table.Cell>
+                  <Table.Cell className="max-w-56 truncate" title={d.cityRecipient}>
+                    {d.cityRecipient || "—"}
+                  </Table.Cell>
+                  <Table.Cell className="max-w-48">
+                    <Badge
+                      size="2xsmall"
+                      color={statusColor(d.statusCode)}
+                      className="inline-block max-w-full truncate align-bottom"
+                      title={d.status || undefined}
+                    >
+                      {d.status || "невідомо"}
+                    </Badge>
+                  </Table.Cell>
+                  <Table.Cell className="text-right">{d.cost ? `${d.cost} ₴` : "—"}</Table.Cell>
+                  <Table.Cell>{d.createdAt || "—"}</Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
+          <div className="px-6 py-3">
+            <Text size="xsmall" className="text-ui-fg-muted">
+              Режим перегляду: список з кабінету Нової Пошти (включно з накладними,
+              створеними поза магазином). Редагування і Sync доступні в режимі
+              «Замовлення магазину».
+            </Text>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
+      {source === "store" && (
+        <>
       <div className="overflow-x-auto">
         <Table>
           <Table.Header>
@@ -380,6 +513,9 @@ const NovaPoshtaPageInner = () => {
           </Button>
         </div>
       </div>
+
+        </>
+      )}
 
       <EditDrawer row={editRow} onClose={() => setEditRow(null)} />
     </Container>
