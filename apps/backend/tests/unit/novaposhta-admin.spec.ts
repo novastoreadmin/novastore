@@ -226,6 +226,10 @@ describe("statusTone", () => {
     expect(statusTone("4")).toBe("orange")
     expect(statusTone(null)).toBe("grey")
   })
+
+  it("maps 'created, not yet handed to NP' to a neutral blue, not a warning color", () => {
+    expect(statusTone("1")).toBe("blue")
+  })
 })
 
 /* ---------------------------------- audit ----------------------------------- */

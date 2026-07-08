@@ -73,8 +73,12 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: "102", label: "Відмова / повернення" },
 ]
 
-function statusColor(code: string | null): "green" | "red" | "orange" | "grey" {
+// Mirrors src/lib/novaposhta-admin.ts#statusTone (that module is server-only
+// and can't be imported into the admin bundle).
+function statusColor(code: string | null): "green" | "red" | "orange" | "blue" | "grey" {
   if (!code) return "grey"
+  // Waybill created but not yet handed to NP — normal, not a warning.
+  if (code === "1") return "blue"
   if (["9", "10", "11", "106"].includes(code)) return "green"
   if (["2", "3", "102", "103", "105", "108"].includes(code)) return "red"
   return "orange"
@@ -302,13 +306,18 @@ const NovaPoshtaPageInner = () => {
                 <Table.Cell className="max-w-56 truncate" title={row.destination}>
                   {row.destination || "—"}
                 </Table.Cell>
-                <Table.Cell>
+                <Table.Cell className="max-w-48">
                   {row.canceled ? (
                     <Badge size="2xsmall" color="red">
                       Скасовано
                     </Badge>
                   ) : (
-                    <Badge size="2xsmall" color={statusColor(row.np_status_code)}>
+                    <Badge
+                      size="2xsmall"
+                      color={statusColor(row.np_status_code)}
+                      className="inline-block max-w-full truncate align-bottom"
+                      title={row.np_status || undefined}
+                    >
                       {row.np_status || "невідомо"}
                     </Badge>
                   )}

@@ -192,11 +192,16 @@ export function filterRows(rows: ShipmentRow[], filters: ShipmentFilters): Shipm
  * NP StatusCode → UI tone. Codes per
  * https://developers.novaposhta.ua/view/model/a99d2f28-8512-11ec-8ced-005056b2dbe1/method/a9ae7bc9-8512-11ec-8ced-005056b2dbe1
  */
-export function statusTone(code: string | null | undefined): "green" | "red" | "orange" | "grey" {
+export function statusTone(
+  code: string | null | undefined
+): "green" | "red" | "orange" | "blue" | "grey" {
   if (!code) return "grey"
+  // Waybill created by the sender but not yet handed to NP — normal early
+  // state, not a warning. Neutral blue instead of an alarming red/orange.
+  if (code === "1") return "blue"
   if (["9", "10", "11", "106"].includes(code)) return "green" // received
   if (["2", "3", "102", "103", "105", "108"].includes(code)) return "red" // deleted / not found / refused / returned
-  return "orange" // created / in transit / at warehouse
+  return "orange" // in transit / at warehouse
 }
 
 /* ------------------------------ edit validation ----------------------------- */
