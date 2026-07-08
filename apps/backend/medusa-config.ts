@@ -138,11 +138,22 @@ export default defineConfig({
         ],
       },
     },
-    // Notification module
+    // Notification module. The admin's export/import workflows send their
+    // "file is ready" notifications to the "feed" channel — without a provider
+    // for it the send step throws and the workflow COMPENSATES, deleting the
+    // just-generated CSV (admin shows "Failed to export products").
     {
       resolve: "@medusajs/medusa/notification",
       options: {
-        providers: [],
+        providers: [
+          {
+            resolve: require.resolve("@medusajs/medusa/notification-local"),
+            id: "local",
+            options: {
+              channels: ["feed"],
+            },
+          },
+        ],
       },
     },
     // Auth module - overrides defineConfig's own default (which uses the same
