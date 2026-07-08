@@ -42,7 +42,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="bg-bg text-text-primary font-body antialiased">
+      {/* suppressHydrationWarning: browser extensions (Grammarly et al.) inject
+          attributes into <body> before React hydrates, tripping a false-positive
+          mismatch warning. Suppression covers this element's attributes only —
+          children are still fully validated. */}
+      <body
+        className="bg-bg text-text-primary font-body antialiased"
+        suppressHydrationWarning
+      >
         <Providers>
           <Header />
           <main className="min-h-screen">{children}</main>

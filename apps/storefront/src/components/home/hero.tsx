@@ -41,9 +41,14 @@ export function Hero() {
           "-=1.2"
         );
 
+      // immediateRender:false is load-bearing on every scrubbed tween here:
+      // without it the scrub snapshots its start values WHILE the entrance
+      // timeline still holds the elements at opacity:0 / y:80, and the
+      // headline stays invisible at the top of the page.
       gsap.to(orbRef.current, {
         y: -80,
         ease: "none",
+        immediateRender: false,
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
@@ -56,6 +61,7 @@ export function Hero() {
         y: -40,
         opacity: 0.3,
         ease: "none",
+        immediateRender: false,
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
@@ -67,6 +73,7 @@ export function Hero() {
       gsap.to(gridRef.current, {
         opacity: 0.03,
         ease: "none",
+        immediateRender: false,
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",

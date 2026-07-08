@@ -55,7 +55,12 @@ export function Header() {
             : "bg-transparent"
         )}
       >
-        <nav className="mx-auto max-w-[1440px] px-6 md:px-10 lg:px-16 h-[72px] flex items-center justify-between">
+        <nav
+          className={cn(
+            "mx-auto max-w-[1440px] px-6 md:px-10 lg:px-16 flex items-center justify-between transition-[height] duration-500",
+            scrolled ? "h-[60px]" : "h-[72px]"
+          )}
+        >
           <Link
             href="/"
             className="text-xl font-bold tracking-[0.15em] text-text-primary hover:opacity-80 transition-opacity"
