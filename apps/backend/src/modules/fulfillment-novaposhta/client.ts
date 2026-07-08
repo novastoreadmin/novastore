@@ -64,6 +64,31 @@ export type Waybill = {
   estimatedDeliveryDate?: string
 }
 
+/** One tracked document from TrackingDocument.getStatusDocuments. */
+export type NpTrackedDocument = {
+  ttn: string
+  /** Document ref (RefEW) — only returned for documents owned by the API key. */
+  ref?: string
+  status: string
+  statusCode: string
+  recipientFullName?: string
+  cityRecipient?: string
+  warehouseRecipient?: string
+  scheduledDeliveryDate?: string
+  actualDeliveryDate?: string
+  documentCost?: string
+  documentWeight?: string
+  payerType?: string
+  dateCreated?: string
+}
+
+/** Same shape as creation plus the NP document ref to update. */
+export type UpdateWaybillInput = CreateWaybillInput & {
+  ref: string
+  payerType?: "Sender" | "Recipient"
+  paymentMethod?: "Cash" | "NonCash"
+}
+
 // Digraphs first, then single letters. Reverse of the official UA→Latin
 // romanization — lossy, but good enough for shipping labels.
 const UA_DIGRAPHS: [RegExp, string][] = [
@@ -307,14 +332,22 @@ export class NovaPoshtaClient {
     return { recipientRef: recipient.Ref, contactRecipientRef: contactRef }
   }
 
-  async createWaybill(input: CreateWaybillInput): Promise<Waybill> {
+  /**
+   * Builds the InternetDocument properties for save/update. Shared by
+   * createWaybill and updateWaybill so an admin edit reproduces exactly the
+   * payload the original creation used (plus overrides).
+   */
+  private async buildWaybillProperties(
+    input: CreateWaybillInput,
+    overrides?: { payerType?: "Sender" | "Recipient"; paymentMethod?: "Cash" | "NonCash" }
+  ): Promise<Record<string, unknown>> {
     const sender = await this.ensureSenderContext()
     const recipientPhone = normalizeUaPhone(input.recipient.phone)
 
     const weight = Number(input.weightKg ?? this.options.defaultWeightKg)
     const common = {
-      PayerType: this.options.payerType,
-      PaymentMethod: this.options.paymentMethod,
+      PayerType: overrides?.payerType ?? this.options.payerType,
+      PaymentMethod: overrides?.paymentMethod ?? this.options.paymentMethod,
       DateTime: todayNpFormat(),
       CargoType: "Parcel",
       Weight: String(Number.isFinite(weight) && weight > 0 ? weight : 1),
@@ -373,6 +406,13 @@ export class NovaPoshtaClient {
       }
     }
 
+    return methodProperties
+  }
+
+  private async saveOrUpdateDocument(
+    calledMethod: "save" | "update",
+    methodProperties: Record<string, unknown>
+  ): Promise<Waybill> {
     let doc: {
       Ref: string
       IntDocNumber: string
@@ -380,7 +420,7 @@ export class NovaPoshtaClient {
       EstimatedDeliveryDate?: string
     }
     try {
-      ;[doc] = await this.request("InternetDocument", "save", methodProperties)
+      ;[doc] = await this.request("InternetDocument", calledMethod, methodProperties)
     } catch (err) {
       // Accounts without a NP contract can't pay NonCash — retry with Cash
       // instead of failing the fulfillment.
@@ -389,7 +429,7 @@ export class NovaPoshtaClient {
         err.message.includes("NonCash is unavailable") &&
         methodProperties.PaymentMethod === "NonCash"
       ) {
-        ;[doc] = await this.request("InternetDocument", "save", {
+        ;[doc] = await this.request("InternetDocument", calledMethod, {
           ...methodProperties,
           PaymentMethod: "Cash",
         })
@@ -399,7 +439,11 @@ export class NovaPoshtaClient {
     }
 
     if (!doc?.IntDocNumber) {
-      throw new Error("Nova Poshta: waybill was not created.")
+      throw new Error(
+        calledMethod === "save"
+          ? "Nova Poshta: waybill was not created."
+          : "Nova Poshta: waybill was not updated."
+      )
     }
     return {
       ref: doc.Ref,
@@ -407,6 +451,78 @@ export class NovaPoshtaClient {
       cost: doc.CostOnSite,
       estimatedDeliveryDate: doc.EstimatedDeliveryDate,
     }
+  }
+
+  async createWaybill(input: CreateWaybillInput): Promise<Waybill> {
+    const methodProperties = await this.buildWaybillProperties(input)
+    return this.saveOrUpdateDocument("save", methodProperties)
+  }
+
+  /**
+   * Edits an existing waybill (InternetDocument.update). NP requires the FULL
+   * property set again, so callers pass the same input as creation with the
+   * changed fields applied, plus the document `ref`. NP only allows updates
+   * until the parcel is accepted at the warehouse — later attempts fail with
+   * a readable NP error that should be surfaced to the admin as-is.
+   */
+  async updateWaybill(input: UpdateWaybillInput): Promise<Waybill> {
+    const { ref, payerType, paymentMethod, ...createInput } = input
+    const methodProperties = await this.buildWaybillProperties(createInput, {
+      payerType,
+      paymentMethod,
+    })
+    return this.saveOrUpdateDocument("update", { ...methodProperties, Ref: ref })
+  }
+
+  /* -------------------------------- tracking ------------------------------- */
+
+  /**
+   * Live status for up to 100 ТТН per API call (documents are batched
+   * automatically). Returns a map keyed by ТТН; unknown numbers come back
+   * from NP with StatusCode "3" and are included as-is.
+   */
+  async trackDocuments(ttns: string[]): Promise<Map<string, NpTrackedDocument>> {
+    const result = new Map<string, NpTrackedDocument>()
+    const unique = [...new Set(ttns.filter(Boolean))]
+
+    for (let i = 0; i < unique.length; i += 100) {
+      const batch = unique.slice(i, i + 100)
+      const data = await this.request<{
+        Number: string
+        RefEW?: string
+        Status: string
+        StatusCode: string | number
+        RecipientFullName?: string
+        CityRecipient?: string
+        WarehouseRecipient?: string
+        ScheduledDeliveryDate?: string
+        ActualDeliveryDate?: string
+        DocumentCost?: string
+        DocumentWeight?: string
+        PayerType?: string
+        DateCreated?: string
+      }>("TrackingDocument", "getStatusDocuments", {
+        Documents: batch.map((ttn) => ({ DocumentNumber: ttn, Phone: "" })),
+      })
+      for (const d of data) {
+        result.set(d.Number, {
+          ttn: d.Number,
+          ref: d.RefEW || undefined,
+          status: d.Status,
+          statusCode: String(d.StatusCode),
+          recipientFullName: d.RecipientFullName || undefined,
+          cityRecipient: d.CityRecipient || undefined,
+          warehouseRecipient: d.WarehouseRecipient || undefined,
+          scheduledDeliveryDate: d.ScheduledDeliveryDate || undefined,
+          actualDeliveryDate: d.ActualDeliveryDate || undefined,
+          documentCost: d.DocumentCost || undefined,
+          documentWeight: d.DocumentWeight || undefined,
+          payerType: d.PayerType || undefined,
+          dateCreated: d.DateCreated || undefined,
+        })
+      }
+    }
+    return result
   }
 
   async deleteWaybill(ref: string): Promise<void> {

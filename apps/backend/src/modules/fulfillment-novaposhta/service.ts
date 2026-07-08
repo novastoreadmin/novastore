@@ -186,6 +186,16 @@ export class NovaPoshtaFulfillmentProvider extends AbstractFulfillmentProviderSe
         np_document_ref: waybill.ref,
         np_delivery_cost: waybill.cost,
         np_estimated_delivery: waybill.estimatedDeliveryDate,
+        // Additive: carried so the admin extension can rebuild the full
+        // InternetDocument.update payload without re-reading the shipping
+        // method. Nothing in the checkout/fulfillment flow reads these.
+        np_kind: d.np_kind,
+        np_city_ref: d.np_city_ref,
+        np_city_name: d.np_city_name,
+        np_warehouse_ref: d.np_warehouse_ref,
+        np_street: d.np_street,
+        np_house: d.np_house,
+        np_flat: d.np_flat,
       },
       labels: [
         {
