@@ -303,13 +303,14 @@ const UkraineMap = ({
           (filter.in_transit ? p.in_transit : 0) +
           (filter.delivered ? p.delivered : 0)
         if (!visible) return null
-        const r = Math.min(16, 5 + Math.sqrt(visible) * 3)
+        const r = Math.min(10, 3 + Math.sqrt(visible) * 2)
+        const vp = filter.pending    ? p.pending    : 0
+        const vi = filter.in_transit ? p.in_transit : 0
+        const vd = filter.delivered  ? p.delivered  : 0
         const color =
-          filter.pending && p.pending > 0
-            ? C.orange
-            : filter.in_transit && p.in_transit > 0
-              ? C.blue
-              : C.green
+          vp >= vi && vp >= vd ? C.orange
+          : vi >= vd           ? C.blue
+          :                      C.green
         return (
           <g key={p.city} className="transition-all duration-500">
             <circle cx={px(p.lon)} cy={py(p.lat)} r={r} fill={color} opacity="0.25" />
@@ -340,6 +341,27 @@ const UkraineMap = ({
  * the caller falls back to the built-in SVG map.
  */
 type MapPoint = Payload["logistics"]["map_points"][number]
+
+const DARK_MAP_STYLES = [
+  { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }] },
+  { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#6b9a76" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }] },
+  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }] },
+  { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#f3d19c" }] },
+  { featureType: "transit", elementType: "geometry", stylers: [{ color: "#2f3948" }] },
+  { featureType: "transit.station", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }] },
+  { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] },
+]
 
 const visibleCountOf = (p: MapPoint, f: MapStateFilter) =>
   (f.pending ? p.pending : 0) + (f.in_transit ? p.in_transit : 0) + (f.delivered ? p.delivered : 0)
@@ -375,8 +397,8 @@ const GoogleDeliveryMap = ({
           center: { lat: 48.8, lng: 31.2 },
           zoom: 5,
           disableDefaultUI: true,
-          zoomControl: true,
-          ...(mapId ? { mapId } : {}),
+          zoomControl: false,
+          ...(mapId ? { mapId, colorScheme: "DARK" } : { styles: DARK_MAP_STYLES }),
         })
         const overlay = new GoogleMapsOverlay({ layers: [] })
         overlay.setMap(map as never)
@@ -397,26 +419,35 @@ const GoogleDeliveryMap = ({
 
   useEffect(() => {
     if (!ready || !overlayRef.current) return
-    const data = points
-      .map((p) => ({ ...p, visible: visibleCountOf(p, filter) }))
-      .filter((p) => p.visible > 0)
+    const makeLayer = (
+      id: string,
+      rgb: [number, number, number],
+      getCount: (p: MapPoint) => number,
+    ) => {
+      const data = points
+        .map((p) => ({ ...p, _n: getCount(p) }))
+        .filter((p) => p._n > 0)
+      if (!data.length) return null
+      return new ScatterplotLayer({
+        id,
+        data,
+        getPosition: (d: MapPoint) => [d.lon, d.lat],
+        getFillColor: rgb,
+        getLineColor: [0, 0, 0],
+        stroked: true,
+        lineWidthMinPixels: 1,
+        opacity: 0.85,
+        radiusMinPixels: 4,
+        radiusMaxPixels: 12,
+        getRadius: (d: MapPoint & { _n: number }) => 3000 + Math.sqrt(d._n) * 4000,
+      })
+    }
     overlayRef.current.setProps({
       layers: [
-        new ScatterplotLayer({
-          id: "deliveries",
-          data,
-          getPosition: (d: MapPoint) => [d.lon, d.lat],
-          // Tutorial marker color.
-          getFillColor: [255, 133, 27],
-          getLineColor: [0, 0, 0],
-          stroked: true,
-          lineWidthMinPixels: 1,
-          opacity: 0.85,
-          radiusMinPixels: 7,
-          radiusMaxPixels: 26,
-          getRadius: (d: MapPoint & { visible: number }) => 8000 + Math.sqrt(d.visible) * 9000,
-        }),
-      ],
+        filter.pending   ? makeLayer("pending",    [249, 115,  22], (p) => p.pending)    : null,
+        filter.in_transit ? makeLayer("in_transit", [ 59, 130, 246], (p) => p.in_transit) : null,
+        filter.delivered  ? makeLayer("delivered",  [ 16, 185, 129], (p) => p.delivered)  : null,
+      ].filter(Boolean),
     })
   }, [ready, points, filter])
 
