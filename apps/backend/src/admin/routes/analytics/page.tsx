@@ -21,7 +21,10 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { importLibrary, setOptions } from "@googlemaps/js-api-loader"
+import { GoogleMapsOverlay } from "@deck.gl/google-maps"
+import { ScatterplotLayer } from "@deck.gl/layers"
 import { sdk } from "../../lib/sdk"
 
 /**
@@ -325,6 +328,110 @@ const UkraineMap = ({
   )
 }
 
+/* ------------------------- Google Maps + deck.gl map ------------------------- */
+
+/**
+ * Delivery map per the Google Maps Platform deck.gl tutorial
+ * (mapsplatform.google.com → "How to build your first Google Maps Platform
+ * integration with deck.gl"): a ScatterplotLayer rendered through
+ * GoogleMapsOverlay on a Google map with the tutorial's marker color
+ * [255, 133, 27]. The browser key is fetched at runtime from
+ * /admin/analytics/maps-config (backend env), never bundled. Without a key
+ * the caller falls back to the built-in SVG map.
+ */
+type MapPoint = Payload["logistics"]["map_points"][number]
+
+const visibleCountOf = (p: MapPoint, f: MapStateFilter) =>
+  (f.pending ? p.pending : 0) + (f.in_transit ? p.in_transit : 0) + (f.delivered ? p.delivered : 0)
+
+const GoogleDeliveryMap = ({
+  points,
+  filter,
+  mapKey,
+  mapId,
+}: {
+  points: MapPoint[]
+  filter: MapStateFilter
+  mapKey: string
+  mapId: string | null
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const overlayRef = useRef<GoogleMapsOverlay | null>(null)
+  const [ready, setReady] = useState(false)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    async function init() {
+      try {
+        setOptions({ key: mapKey, v: "weekly" })
+        // No @types/google.maps in this project — a minimal structural type
+        // is all the overlay needs.
+        const maps = (await importLibrary("maps")) as unknown as {
+          Map: new (el: HTMLElement, opts: Record<string, unknown>) => unknown
+        }
+        if (cancelled || !containerRef.current) return
+        const map = new maps.Map(containerRef.current, {
+          center: { lat: 48.8, lng: 31.2 },
+          zoom: 5,
+          disableDefaultUI: true,
+          zoomControl: true,
+          ...(mapId ? { mapId } : {}),
+        })
+        const overlay = new GoogleMapsOverlay({ layers: [] })
+        overlay.setMap(map as never)
+        overlayRef.current = overlay
+        setReady(true)
+      } catch {
+        if (!cancelled) setFailed(true)
+      }
+    }
+    init()
+    return () => {
+      cancelled = true
+      overlayRef.current?.setMap(null)
+      overlayRef.current = null
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapKey, mapId])
+
+  useEffect(() => {
+    if (!ready || !overlayRef.current) return
+    const data = points
+      .map((p) => ({ ...p, visible: visibleCountOf(p, filter) }))
+      .filter((p) => p.visible > 0)
+    overlayRef.current.setProps({
+      layers: [
+        new ScatterplotLayer({
+          id: "deliveries",
+          data,
+          getPosition: (d: MapPoint) => [d.lon, d.lat],
+          // Tutorial marker color.
+          getFillColor: [255, 133, 27],
+          getLineColor: [0, 0, 0],
+          stroked: true,
+          lineWidthMinPixels: 1,
+          opacity: 0.85,
+          radiusMinPixels: 7,
+          radiusMaxPixels: 26,
+          getRadius: (d: MapPoint & { visible: number }) => 8000 + Math.sqrt(d.visible) * 9000,
+        }),
+      ],
+    })
+  }, [ready, points, filter])
+
+  if (failed) {
+    return (
+      <div className="flex h-72 items-center justify-center rounded-lg border border-ui-border-base">
+        <Text size="small" className="text-ui-fg-error">
+          Не вдалося завантажити Google Maps — перевірте GOOGLE_MAPS_API_KEY
+        </Text>
+      </div>
+    )
+  }
+  return <div ref={containerRef} className="h-72 w-full overflow-hidden rounded-lg" />
+}
+
 /** Two series side-by-side per day — the reference's "Delivery Statistics". */
 const GroupedBars = ({
   a,
@@ -345,7 +452,14 @@ const GroupedBars = ({
   const slot = w / a.length
   const bw = Math.max(2, Math.min(10, slot / 2 - 2))
   return (
-    <svg viewBox={`0 0 ${w} ${height}`} className="w-full" role="img">
+    // preserveAspectRatio="none": the chart stretches to the panel's full
+    // width while keeping a fixed on-screen height (reference layout).
+    <svg
+      viewBox={`0 0 ${w} ${height}`}
+      preserveAspectRatio="none"
+      className="w-full h-44"
+      role="img"
+    >
       {a.map((p, i) => {
         const hA = (p.value / max) * (height - 12)
         const hB = ((b[i]?.value ?? 0) / max) * (height - 12)
@@ -537,6 +651,14 @@ const AnalyticsPageInner = () => {
   const { data, isFetching, refetch, error } = useQuery({
     queryKey: ["nova-analytics", params],
     queryFn: () => sdk.client.fetch<Payload>("/admin/analytics", { query: params }),
+  })
+
+  const { data: mapsConfig } = useQuery({
+    queryKey: ["np-maps-config"],
+    queryFn: () =>
+      sdk.client.fetch<{ key: string | null; map_id: string | null }>(
+        "/admin/analytics/maps-config"
+      ),
   })
 
   const preset = (days: number) => {
@@ -777,43 +899,61 @@ const AnalyticsPageInner = () => {
                     />
                   </div>
 
-                  {/* Statistics bars + tracking panel (reference layout 2:1) */}
-                  <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-                    <Panel title="Статистика доставки — відправлено vs доставлено">
-                      <div className="mb-2 flex gap-4">
-                        {[
-                          { c: "#93c5fd", t: "Відправлено" },
-                          { c: C.blue, t: "Доставлено" },
-                        ].map((l) => (
-                          <span key={l.t} className="flex items-center gap-1.5">
-                            <span className="h-2.5 w-2.5 rounded-full" style={{ background: l.c }} />
-                            <Text size="xsmall" className="text-ui-fg-subtle">
-                              {l.t}
-                            </Text>
-                          </span>
-                        ))}
-                      </div>
-                      <GroupedBars a={L.shipments_by_day} b={L.delivered_by_day} />
-                    </Panel>
-                    <Panel title="Відстеження доставки">
-                      <TrackingPanel activity={tracked} />
-                    </Panel>
-                  </div>
+                  {/* Delivery statistics — full width (reference: Delivery Statistics) */}
+                  <Panel title="Статистика доставки — відправлено vs доставлено">
+                    <div className="mb-2 flex gap-4">
+                      {[
+                        { c: "#93c5fd", t: "Відправлено" },
+                        { c: C.blue, t: "Доставлено" },
+                      ].map((l) => (
+                        <span key={l.t} className="flex items-center gap-1.5">
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ background: l.c }} />
+                          <Text size="xsmall" className="text-ui-fg-subtle">
+                            {l.t}
+                          </Text>
+                        </span>
+                      ))}
+                    </div>
+                    <GroupedBars a={L.shipments_by_day} b={L.delivered_by_day} height={190} />
+                  </Panel>
 
-                  {/* Map with per-state toggles */}
-                  <Panel title="Мапа доставок — куди їдуть посилки">
-                    {L.map_points.length ? (
-                      <>
+                  {/* Map + tracking in ONE block (reference: Tracking Delivery) */}
+                  <Panel title="Мапа та відстеження доставок">
+                    <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+                      <div>
                         <div className="mb-2 flex flex-wrap gap-4">
                           {stateToggle("pending", "Очікує відправлення", C.orange)}
                           {stateToggle("in_transit", "Створено / в дорозі", C.blue)}
                           {stateToggle("delivered", "Доставлено", C.green)}
                         </div>
-                        <UkraineMap points={L.map_points} filter={mapFilter} />
-                      </>
-                    ) : (
-                      <Empty />
-                    )}
+                        {L.map_points.length ? (
+                          mapsConfig?.key ? (
+                            <GoogleDeliveryMap
+                              points={L.map_points}
+                              filter={mapFilter}
+                              mapKey={mapsConfig.key}
+                              mapId={mapsConfig.map_id}
+                            />
+                          ) : (
+                            <>
+                              <UkraineMap points={L.map_points} filter={mapFilter} />
+                              <Text size="xsmall" className="text-ui-fg-muted mt-1">
+                                Google Maps вимкнено — задайте GOOGLE_MAPS_API_KEY
+                                (див. ANALYTICS-ADMIN.md)
+                              </Text>
+                            </>
+                          )
+                        ) : (
+                          <Empty />
+                        )}
+                      </div>
+                      <div className="lg:border-l lg:border-ui-border-base lg:pl-4">
+                        <Text size="small" weight="plus" className="mb-3">
+                          Відстеження доставки
+                        </Text>
+                        <TrackingPanel activity={tracked} />
+                      </div>
+                    </div>
                   </Panel>
 
                   <div className="grid gap-4 lg:grid-cols-2">
