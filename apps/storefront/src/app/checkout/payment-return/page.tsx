@@ -9,10 +9,13 @@ import { Button } from "@/components/ui/button";
 import { completeCart } from "@/lib/medusa";
 import { useCartStore } from "@/lib/store";
 import { useCustomer } from "@/hooks/use-customer";
+import { useI18n } from "@/lib/i18n";
 
 type Phase = "checking" | "success" | "pending" | "error";
 
 function PaymentReturnContent() {
+  const { d } = useI18n();
+  const t = d.checkout.ret;
   const params = useSearchParams();
   const router = useRouter();
   const { setCartId, setItemCount } = useCartStore();
@@ -27,7 +30,7 @@ function PaymentReturnContent() {
   async function tryComplete() {
     if (!cartId) {
       setPhase("error");
-      setErrorMsg("Cart not found. Please try again from checkout.");
+      setErrorMsg(t.cartNotFound);
       return;
     }
 
@@ -49,7 +52,7 @@ function PaymentReturnContent() {
         setTimeout(tryComplete, 3000);
       } else {
         setPhase("error");
-        setErrorMsg("Payment is taking longer than expected. Please check your bank app or contact support.");
+        setErrorMsg(t.takingLong);
       }
     } catch (e) {
       // "cart already completed" means the order was created (e.g. via webhook)
@@ -62,7 +65,7 @@ function PaymentReturnContent() {
         return;
       }
       setPhase("error");
-      setErrorMsg((e as Error).message ?? "Something went wrong. Please contact support.");
+      setErrorMsg((e as Error).message ?? t.genericError);
     }
   }
 
@@ -76,7 +79,7 @@ function PaymentReturnContent() {
       <div className="min-h-screen bg-bg flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-center px-6">
           <Loader2 className="w-8 h-8 text-text-muted animate-spin" />
-          <p className="text-sm text-text-secondary">Verifying your payment…</p>
+          <p className="text-sm text-text-secondary">{t.verifying}</p>
         </div>
       </div>
     );
@@ -92,9 +95,9 @@ function PaymentReturnContent() {
         >
           <Loader2 className="w-8 h-8 text-text-muted animate-spin" />
           <div>
-            <h2 className="text-xl font-semibold mb-2">Payment is processing</h2>
+            <h2 className="text-xl font-semibold mb-2">{t.processingTitle}</h2>
             <p className="text-sm text-text-muted">
-              This usually takes a few seconds. Please don't close this page.
+              {t.processingText}
             </p>
           </div>
         </motion.div>
@@ -114,19 +117,18 @@ function PaymentReturnContent() {
           <div className="w-16 h-16 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-6">
             <Check className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight mb-3">Payment successful!</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-3">{t.successTitle}</h1>
           <p className="text-sm text-text-muted mb-2">
-            Thank you for your purchase. A confirmation email with your order
-            details is on its way.
+            {d.checkout.orderPlacedText}
           </p>
           {orderId && (
             <p className="text-xs text-text-muted font-mono mt-1">
-              Order ID: {orderId.slice(0, 18)}…
+              {d.checkout.orderIdLabel}: {orderId.slice(0, 18)}…
             </p>
           )}
           {authStatus === "authenticated" && orderId && (
             <Link href={`/account/orders/${orderId}`} className="mt-8">
-              <Button size="lg">Track Order in My Account</Button>
+              <Button size="lg">{d.checkout.trackOrder}</Button>
             </Link>
           )}
           <Link href="/" className={authStatus === "authenticated" && orderId ? "mt-3" : "mt-8"}>
@@ -134,7 +136,7 @@ function PaymentReturnContent() {
               size="lg"
               variant={authStatus === "authenticated" && orderId ? "outline" : "primary"}
             >
-              Continue Shopping
+              {d.common.continueShopping}
             </Button>
           </Link>
         </motion.div>
@@ -154,16 +156,16 @@ function PaymentReturnContent() {
           <AlertCircle className="w-8 h-8 text-red-400" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold mb-2">Payment issue</h2>
+          <h2 className="text-xl font-semibold mb-2">{t.issueTitle}</h2>
           <p className="text-sm text-text-muted">{errorMsg}</p>
         </div>
         <div className="flex flex-col gap-3 w-full">
           <Button size="lg" onClick={() => { attempts.current = 0; setPhase("checking"); tryComplete(); }}>
-            Try Again
+            {t.tryAgain}
           </Button>
           <Link href="/">
             <Button size="lg" variant="outline" className="w-full">
-              Return to Shop
+              {d.checkout.returnToShop}
             </Button>
           </Link>
         </div>
@@ -181,7 +183,6 @@ export default function PaymentReturnPage() {
         <div className="min-h-screen bg-bg flex items-center justify-center">
           <div className="flex flex-col items-center gap-4 text-center px-6">
             <Loader2 className="w-8 h-8 text-text-muted animate-spin" />
-            <p className="text-sm text-text-secondary">Verifying your payment…</p>
           </div>
         </div>
       }

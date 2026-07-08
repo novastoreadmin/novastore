@@ -6,8 +6,10 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { gsap, ScrollTrigger } from "@/animations/gsap-config";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 
 export function Hero() {
+  const { d } = useI18n();
   const sectionRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const subRef = useRef<HTMLParagraphElement>(null);
@@ -41,9 +43,14 @@ export function Hero() {
           "-=1.2"
         );
 
+      // immediateRender:false is load-bearing on every scrubbed tween here:
+      // without it the scrub snapshots its start values WHILE the entrance
+      // timeline still holds the elements at opacity:0 / y:80, and the
+      // headline stays invisible at the top of the page.
       gsap.to(orbRef.current, {
         y: -80,
         ease: "none",
+        immediateRender: false,
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
@@ -56,6 +63,7 @@ export function Hero() {
         y: -40,
         opacity: 0.3,
         ease: "none",
+        immediateRender: false,
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
@@ -67,6 +75,7 @@ export function Hero() {
       gsap.to(gridRef.current, {
         opacity: 0.03,
         ease: "none",
+        immediateRender: false,
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
@@ -116,7 +125,7 @@ export function Hero() {
         >
           <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
           <span className="text-xs font-medium text-text-secondary tracking-wide">
-            New — Floppy Disk SSD Enclosure
+            {d.hero.badge}
           </span>
         </motion.div>
 
@@ -124,28 +133,28 @@ export function Hero() {
           ref={headlineRef}
           className="text-[clamp(2.5rem,8vw,8rem)] font-bold leading-[0.9] tracking-[-0.03em] text-gradient-hero"
         >
-          The Future
+          {d.hero.title1}
           <br />
-          of Performance
+          {d.hero.title2}
         </h1>
 
         <p
           ref={subRef}
           className="mt-8 text-lg md:text-xl text-text-secondary max-w-xl mx-auto leading-relaxed"
         >
-          Engineered beyond limits. Designed for those who refuse to compromise.
+          {d.hero.subtitle}
         </p>
 
         <div ref={ctaRef} className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link href="/products/floppy-disk-style-ssd-enclosure">
             <Button size="xl" className="group">
-              <span>Explore the SSD Enclosure</span>
+              <span>{d.hero.ctaPrimary}</span>
               {/* <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" /> */}
             </Button>
           </Link>
           <Link href="/products">
             <Button variant="outline" size="xl">
-              View All Products
+              {d.hero.ctaSecondary}
             </Button>
           </Link>
         </div>
@@ -162,7 +171,7 @@ export function Hero() {
         className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
       >
         <span className="text-[10px] uppercase tracking-[0.3em] text-text-muted">
-          Scroll
+          {d.hero.scroll}
         </span>
         <motion.div
           animate={{ y: [0, 8, 0] }}

@@ -7,42 +7,25 @@ import { ArrowUpRight } from "lucide-react";
 import { Section, SectionHeader } from "@/components/ui/section";
 import { fadeUp } from "@/animations/variants";
 import { gsap, ScrollTrigger } from "@/animations/gsap-config";
+import { useI18n } from "@/lib/i18n";
 
-const categories = [
-  {
-    title: "Card Readers",
-    subtitle: "Fun Styling & Compact",
-    href: "/categories/card-readers",
-    gradient: "from-white/[0.04] to-white/[0.01]",
-  },
-  {
-    title: "SSD Enclosures",
-    subtitle: "Ultra Slim & Light Design",
-    href: "/categories/ssd-enclosures",
-    gradient: "from-white/[0.03] to-transparent",
-  },
-  {
-    title: "Memory",
-    subtitle: "High Capacity & Speed",
-    href: "/categories/memory",
-    gradient: "from-white/[0.03] to-transparent",
-  },
-  {
-    title: "USB-C Cables",
-    subtitle: "Flexible & Durable",
-    href: "/categories/usb-c-cables",
-    gradient: "from-white/[0.04] to-white/[0.02]",
-  },
-  {
-    title: "Accessories",
-    subtitle: "Multifunctional designs",
-    href: "/categories/accessories",
-    gradient: "from-white/[0.03] to-transparent",
-  },
-];
+const categoryMeta = [
+  { slug: "card-readers", gradient: "from-white/[0.04] to-white/[0.01]" },
+  { slug: "ssd-enclosures", gradient: "from-white/[0.03] to-transparent" },
+  { slug: "memory", gradient: "from-white/[0.03] to-transparent" },
+  { slug: "usb-c-cables", gradient: "from-white/[0.04] to-white/[0.02]" },
+  { slug: "accessories", gradient: "from-white/[0.03] to-transparent" },
+] as const;
 
 export function CollectionsSection() {
   const gridRef = useRef<HTMLDivElement>(null);
+  const { d } = useI18n();
+
+  const categories = categoryMeta.map(({ slug, gradient }) => ({
+    ...d.collections.items[slug],
+    href: `/categories/${slug}`,
+    gradient,
+  }));
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -70,9 +53,9 @@ export function CollectionsSection() {
   return (
     <Section stagger>
       <SectionHeader
-        label="Collections"
-        title="Explore Categories"
-        description="Find the perfect device for every dimension of your life."
+        label={d.collections.label}
+        title={d.collections.title}
+        description={d.collections.description}
       />
 
       <div

@@ -3,41 +3,43 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "@/animations/variants";
-
-const footerSections = [
-  {
-    title: "Products",
-    links: [
-      { label: "Card Readers", href: "/categories/card-readers" },
-      { label: "SSD Enclosures", href: "/categories/ssd-enclosures" },
-      { label: "Memory", href: "/categories/memory" },
-      { label: "USB-C Cables", href: "/categories/usb-c-cables" },
-      { label: "Accessories", href: "/categories/accessories" },
-      // { label: "Audio", href: "/categories/headphones" },
-    ],
-  },
-  {
-    title: "Support",
-    links: [
-      { label: "Contact Us", href: "/support" },
-      { label: "Shipping", href: "/shipping" },
-      { label: "Returns", href: "/returns" },
-      { label: "Warranty", href: "/warranty" },
-      { label: "FAQ", href: "/faq" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { label: "About", href: "/about" },
-      { label: "Careers", href: "/careers" },
-      { label: "Press", href: "/press" },
-      { label: "Sustainability", href: "/sustainability" },
-    ],
-  },
-];
+import { useI18n } from "@/lib/i18n";
 
 export function Footer() {
+  const { d } = useI18n();
+
+  const footerSections = [
+    {
+      title: d.footer.products,
+      links: [
+        { label: d.header.nav["card-readers"], href: "/categories/card-readers" },
+        { label: d.header.nav["ssd-enclosures"], href: "/categories/ssd-enclosures" },
+        { label: d.header.nav.memory, href: "/categories/memory" },
+        { label: d.header.nav["usb-c-cables"], href: "/categories/usb-c-cables" },
+        { label: d.header.nav.accessories, href: "/categories/accessories" },
+      ],
+    },
+    {
+      title: d.footer.support,
+      links: [
+        { label: d.footer.links.contact, href: "/support" },
+        { label: d.footer.links.shipping, href: "/shipping" },
+        { label: d.footer.links.returns, href: "/returns" },
+        { label: d.footer.links.warranty, href: "/warranty" },
+        { label: d.footer.links.faq, href: "/faq" },
+      ],
+    },
+    {
+      title: d.footer.company,
+      links: [
+        { label: d.footer.links.about, href: "/about" },
+        { label: d.footer.links.careers, href: "/careers" },
+        { label: d.footer.links.press, href: "/press" },
+        { label: d.footer.links.sustainability, href: "/sustainability" },
+      ],
+    },
+  ];
+
   return (
     <footer className="border-t border-border bg-bg">
       <div className="mx-auto max-w-[1440px] px-6 md:px-10 lg:px-16">
@@ -56,7 +58,7 @@ export function Footer() {
               NOVA
             </Link>
             <p className="mt-4 text-sm text-text-muted leading-relaxed max-w-xs">
-              Premium electronics engineered for those who demand the extraordinary.
+              {d.footer.tagline}
             </p>
           </motion.div>
 
@@ -83,17 +85,17 @@ export function Footer() {
 
         <div className="border-t border-border py-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-text-muted">
-            &copy; {new Date().getFullYear()} NOVA. All rights reserved.
+            &copy; {new Date().getFullYear()} NOVA. {d.footer.rights}
           </p>
           <div className="flex items-center gap-6">
             <Link href="/privacy" className="text-xs text-text-muted hover:text-text-secondary transition-colors">
-              Privacy
+              {d.footer.links.privacy}
             </Link>
             <Link href="/terms" className="text-xs text-text-muted hover:text-text-secondary transition-colors">
-              Terms
+              {d.footer.links.terms}
             </Link>
             <Link href="/cookies" className="text-xs text-text-muted hover:text-text-secondary transition-colors">
-              Cookies
+              {d.footer.links.cookies}
             </Link>
           </div>
         </div>

@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
 import { AccountField } from "@/components/account/account-field";
 import { loginCustomer } from "@/lib/auth";
 import { useCustomer } from "@/hooks/use-customer";
+import { useI18n } from "@/lib/i18n";
 
 export default function LoginPage() {
+  const { d } = useI18n();
   const router = useRouter();
   const { setCustomer } = useCustomer();
   const [email, setEmail] = useState("");
@@ -36,7 +38,7 @@ export default function LoginPage() {
     } catch {
       // Medusa returns 401 for both unknown email and wrong password; keep
       // the message generic on purpose (don't leak which one it was).
-      setError("Invalid email or password.");
+      setError(d.account.login.invalid);
       setSubmitting(false);
     }
   }
@@ -53,15 +55,15 @@ export default function LoginPage() {
           <div className="w-14 h-14 mx-auto rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-5">
             <LogIn className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Sign in</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{d.account.login.title}</h1>
           <p className="text-sm text-text-muted mt-2">
-            Access your orders, payment and delivery status.
+            {d.account.login.subtitle}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <AccountField
-            label="Email"
+            label={d.checkout.email}
             type="email"
             name="email"
             placeholder="your@email.com"
@@ -71,7 +73,7 @@ export default function LoginPage() {
             onChange={setEmail}
           />
           <AccountField
-            label="Password"
+            label={d.account.login.password}
             type="password"
             name="password"
             placeholder="••••••••"
@@ -90,17 +92,17 @@ export default function LoginPage() {
             isLoading={submitting}
             disabled={submitting || !email.trim() || !password}
           >
-            Sign In
+            {d.account.login.signIn}
           </Button>
         </form>
 
         <p className="text-sm text-text-muted text-center mt-8">
-          New to NOVA?{" "}
+          {d.account.login.newTo}{" "}
           <Link
             href="/account/register"
             className="text-text-primary underline underline-offset-4 hover:opacity-80 transition-opacity"
           >
-            Create an account
+            {d.account.login.createAccount}
           </Link>
         </p>
       </motion.div>

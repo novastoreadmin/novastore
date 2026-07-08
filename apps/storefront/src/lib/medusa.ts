@@ -57,7 +57,7 @@ export async function getProducts(params?: {
       id: params?.id,
       region_id: await getRegionId(),
       fields:
-        "+thumbnail,+variants.calculated_price,+variants.inventory_quantity,*categories",
+        "+thumbnail,+metadata,+variants.calculated_price,+variants.inventory_quantity,*categories",
     },
     { next: { tags: ["products"] } }
   );

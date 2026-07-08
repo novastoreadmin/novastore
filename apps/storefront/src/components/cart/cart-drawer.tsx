@@ -8,6 +8,7 @@ import { useCartStore } from "@/lib/store";
 import { getCart, updateCartItem, removeCartItem } from "@/lib/medusa";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 interface CartItem {
   id: string;
@@ -39,6 +40,7 @@ const maxQuantity = (item: CartItem) => {
 };
 
 export function CartDrawer() {
+  const { d } = useI18n();
   const { isOpen, setIsOpen, cartId, setCartId, setItemCount } = useCartStore();
   const [items, setItems] = useState<CartItem[]>([]);
   const [currency, setCurrency] = useState<string | undefined>(undefined);
@@ -78,7 +80,7 @@ export function CartDrawer() {
       if (status === 404 || msg.includes("not found") || msg.includes("404")) {
         setCartId(null);
       } else {
-        setError("Couldn't load your cart. Please try again.");
+        setError(d.cart.errorLoad);
       }
       setItems([]);
     } finally {
@@ -97,7 +99,7 @@ export function CartDrawer() {
       setItemCount(cart.items?.length ?? 0);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Couldn't update quantity. Please try again."
+        err instanceof Error ? err.message : d.cart.errorQty
       );
     } finally {
       setUpdating(null);
@@ -116,7 +118,7 @@ export function CartDrawer() {
       setItemCount(typed.items?.length ?? 0);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Couldn't remove item. Please try again."
+        err instanceof Error ? err.message : d.cart.errorRemove
       );
     } finally {
       setUpdating(null);
@@ -150,7 +152,7 @@ export function CartDrawer() {
             {/* Header */}
             <div className="flex items-center justify-between px-6 h-[72px] border-b border-border">
               <h2 className="text-lg font-semibold tracking-tight">
-                Cart ({items.length})
+                {d.cart.title} ({items.length})
               </h2>
               <button
                 onClick={() => setIsOpen(false)}
@@ -175,17 +177,17 @@ export function CartDrawer() {
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <ShoppingBag className="w-12 h-12 text-text-muted mb-4" />
                   <p className="text-lg font-medium text-text-secondary">
-                    Your cart is empty
+                    {d.cart.empty}
                   </p>
                   <p className="text-sm text-text-muted mt-2">
-                    Add some products to get started.
+                    {d.cart.emptyHint}
                   </p>
                   <Button
                     variant="outline"
                     className="mt-6"
                     onClick={() => setIsOpen(false)}
                   >
-                    Continue Shopping
+                    {d.common.continueShopping}
                   </Button>
                 </div>
               ) : (
@@ -209,7 +211,9 @@ export function CartDrawer() {
                           {item.product_title ?? item.title}
                         </p>
                         <p className="text-xs text-text-muted mt-0.5">
-                          {item.variant_title}
+                          {item.variant_title
+                            ? d.catalog.optionValues[item.variant_title] ?? item.variant_title
+                            : ""}
                         </p>
 
                         <div className="flex items-center justify-between mt-3">
@@ -265,20 +269,20 @@ export function CartDrawer() {
             {items.length > 0 && (
               <div className="border-t border-border px-6 py-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-text-secondary">Subtotal</span>
+                  <span className="text-sm text-text-secondary">{d.cart.subtotal}</span>
                   <span className="text-lg font-semibold">
                     {formatPrice(subtotal, currency)}
                   </span>
                 </div>
                 <p className="text-xs text-text-muted">
-                  Shipping and taxes calculated at checkout.
+                  {d.cart.shippingNote}
                 </p>
                 <Link
                   href="/checkout"
                   onClick={() => setIsOpen(false)}
                 >
                   <Button size="lg" className="w-full group">
-                    <span>Checkout</span>
+                    <span>{d.cart.checkout}</span>
                     <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>

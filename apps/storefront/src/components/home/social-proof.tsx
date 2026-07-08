@@ -5,33 +5,14 @@ import { Star } from "lucide-react";
 import { Section, SectionHeader } from "@/components/ui/section";
 import { fadeUp, staggerContainer } from "@/animations/variants";
 import { useCountUp } from "@/hooks/use-scroll-animation";
+import { useI18n } from "@/lib/i18n";
 
-const stats = [
-  { value: 2400000, suffix: "+", label: "Devices Sold" },
-  { value: 4.9, suffix: "/5", label: "Average Rating", decimals: true },
-  { value: 98, suffix: "%", label: "Customer Satisfaction" },
-  { value: 142, suffix: "", label: "Countries Shipped" },
-];
-
-const testimonials = [
-  {
-    name: "Alex Chen",
-    role: "Photographer",
-    text: "I offload an entire wedding shoot in minutes now. The dual-slot card reader and the SSD enclosure live in my bag permanently.",
-    rating: 5,
-  },
-  {
-    name: "Sarah Kim",
-    role: "Content Creator",
-    text: "Recording ProRes straight to the floppy-disk SSD enclosure is a workflow upgrade and a desk flex. The build quality is unreal.",
-    rating: 5,
-  },
-  {
-    name: "Marcus Reed",
-    role: "Remote Engineer",
-    text: "One slim USB-C hub turns my laptop into a full desk — 4K display, Gigabit ethernet, and charging over a single cable. I never travel without it.",
-    rating: 5,
-  },
+// Numbers are language-independent; labels come from d.social.stats (same order).
+const statMeta = [
+  { value: 200, suffix: "+" },
+  { value: 4.9, suffix: "/5", decimals: true },
+  { value: 98, suffix: "%" },
+  { value: 142, suffix: "" },
 ];
 
 function StatCard({
@@ -58,12 +39,20 @@ function StatCard({
 }
 
 export function SocialProof() {
+  const { d } = useI18n();
+
+  const stats = statMeta.map((meta, i) => ({
+    ...meta,
+    label: d.social.stats[i],
+  }));
+  const testimonials = d.social.testimonials.map((t) => ({ ...t, rating: 5 }));
+
   return (
     <Section stagger>
       <SectionHeader
-        label="Trust"
-        title="Chosen by Millions"
-        description="Join a community of creators and pros who demand more from their everyday gear."
+        label={d.social.label}
+        title={d.social.title}
+        description={d.social.description}
       />
 
       {/* Stats */}

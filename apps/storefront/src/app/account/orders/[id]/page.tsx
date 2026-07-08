@@ -5,14 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, CreditCard, MapPin, Truck } from "lucide-react";
-import { StatusBadge, humanizeStatus } from "@/components/account/status-badge";
+import { StatusBadge, useStatusText } from "@/components/account/status-badge";
 import { getCustomerOrder, type CustomerOrder } from "@/lib/auth";
 import { useCustomer } from "@/hooks/use-customer";
 import { formatPrice } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
-function formatDate(value: string | Date | undefined) {
+function formatDate(value: string | Date | undefined, locale: string) {
   if (!value) return "";
-  return new Date(value).toLocaleDateString("en-GB", {
+  return new Date(value).toLocaleDateString(locale, {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -24,6 +25,9 @@ export default function OrderDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { d, lang } = useI18n();
+  const dateLocale = lang === "uk" ? "uk-UA" : "en-GB";
+  const statusText = useStatusText();
   const { id } = use(params);
   const router = useRouter();
   const { status } = useCustomer();
@@ -43,7 +47,7 @@ export default function OrderDetailPage({
         if (active) setOrder(o);
       })
       .catch(() => {
-        if (active) setError("We couldn't find this order in your account.");
+        if (active) setError(d.account.orderNotFoundText);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -65,13 +69,13 @@ export default function OrderDetailPage({
     return (
       <div className="min-h-screen bg-bg pt-24 pb-16 flex items-center justify-center">
         <div className="text-center px-6">
-          <h1 className="text-xl font-bold tracking-tight mb-2">Order not found</h1>
+          <h1 className="text-xl font-bold tracking-tight mb-2">{d.account.orderNotFound}</h1>
           <p className="text-sm text-text-muted mb-6">{error}</p>
           <Link
             href="/account"
             className="text-sm text-text-primary underline underline-offset-4"
           >
-            Back to my account
+            {d.account.backToAccount}
           </Link>
         </div>
       </div>
@@ -95,28 +99,28 @@ export default function OrderDetailPage({
             className="inline-flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors mb-8"
           >
             <ArrowLeft className="w-4 h-4" />
-            My Account
+            {d.account.myAccount}
           </Link>
 
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">
-                Order #{order.display_id}
+                {d.account.orderNo}{order.display_id}
               </h1>
               <p className="text-sm text-text-muted mt-1">
-                Placed on {formatDate(order.created_at)}
+                {d.account.placedOn} {formatDate(order.created_at, dateLocale)}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <StatusBadge label="Payment" status={order.payment_status} />
-              <StatusBadge label="Delivery" status={order.fulfillment_status} />
+              <StatusBadge label={d.account.paymentLabel} status={order.payment_status} />
+              <StatusBadge label={d.account.deliveryLabel} status={order.fulfillment_status} />
             </div>
           </div>
 
           {/* Items */}
           <div className="rounded-2xl bg-bg-card border border-border p-6 mb-6">
             <h2 className="text-sm font-semibold uppercase tracking-[0.1em] text-text-muted mb-5">
-              Items
+              {d.account.itemsTitle}
             </h2>
             <div className="space-y-4">
               {items.map((item) => (
@@ -125,7 +129,7 @@ export default function OrderDetailPage({
                     <p className="text-sm font-medium truncate">
                       {item.product_title ?? item.title}
                     </p>
-                    <p className="text-xs text-text-muted">Qty {item.quantity}</p>
+                    <p className="text-xs text-text-muted">{d.checkout.qty} {item.quantity}</p>
                   </div>
                   <span className="text-sm font-medium">
                     {formatPrice((item.unit_price ?? 0) * item.quantity, order.currency_code)}
@@ -135,15 +139,15 @@ export default function OrderDetailPage({
             </div>
             <div className="space-y-2 border-t border-border pt-5 mt-5 text-sm">
               <div className="flex justify-between">
-                <span className="text-text-secondary">Subtotal</span>
+                <span className="text-text-secondary">{d.checkout.subtotal}</span>
                 <span>{formatPrice(order.subtotal ?? 0, order.currency_code)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Shipping</span>
+                <span className="text-text-secondary">{d.checkout.shippingCost}</span>
                 <span>{formatPrice(order.shipping_total ?? 0, order.currency_code)}</span>
               </div>
               <div className="flex justify-between font-semibold pt-2 border-t border-border">
-                <span>Total</span>
+                <span>{d.checkout.total}</span>
                 <span>{formatPrice(order.total ?? 0, order.currency_code)}</span>
               </div>
             </div>
@@ -154,16 +158,16 @@ export default function OrderDetailPage({
             <div className="rounded-2xl bg-bg-card border border-border p-6">
               <div className="flex items-center gap-2 mb-4">
                 <CreditCard className="w-4 h-4 text-text-secondary" />
-                <h2 className="text-sm font-semibold">Payment</h2>
+                <h2 className="text-sm font-semibold">{d.account.paymentLabel}</h2>
               </div>
               <p className="text-sm text-text-secondary">
-                Status:{" "}
+                {d.account.statusLabel}:{" "}
                 <span className="text-text-primary">
-                  {humanizeStatus(order.payment_status)}
+                  {statusText(order.payment_status)}
                 </span>
               </p>
               <p className="text-sm text-text-secondary mt-1">
-                Amount:{" "}
+                {d.account.amountLabel}:{" "}
                 <span className="text-text-primary">
                   {formatPrice(order.total ?? 0, order.currency_code)}
                 </span>
@@ -173,17 +177,17 @@ export default function OrderDetailPage({
             <div className="rounded-2xl bg-bg-card border border-border p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Truck className="w-4 h-4 text-text-secondary" />
-                <h2 className="text-sm font-semibold">Delivery</h2>
+                <h2 className="text-sm font-semibold">{d.account.deliveryLabel}</h2>
               </div>
               <p className="text-sm text-text-secondary">
-                Status:{" "}
+                {d.account.statusLabel}:{" "}
                 <span className="text-text-primary">
-                  {humanizeStatus(order.fulfillment_status)}
+                  {statusText(order.fulfillment_status)}
                 </span>
               </p>
               {shippingMethod && (
                 <p className="text-sm text-text-secondary mt-1">
-                  Method: <span className="text-text-primary">{shippingMethod.name}</span>
+                  {d.account.methodLabel}: <span className="text-text-primary">{shippingMethod.name}</span>
                 </p>
               )}
               {address && (

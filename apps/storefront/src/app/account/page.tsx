@@ -10,10 +10,11 @@ import { StatusBadge } from "@/components/account/status-badge";
 import { listCustomerOrders, logoutCustomer, type CustomerOrder } from "@/lib/auth";
 import { useCustomer } from "@/hooks/use-customer";
 import { formatPrice } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
-function formatDate(value: string | Date | undefined) {
+function formatDate(value: string | Date | undefined, locale: string) {
   if (!value) return "";
-  return new Date(value).toLocaleDateString("en-GB", {
+  return new Date(value).toLocaleDateString(locale, {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -21,6 +22,8 @@ function formatDate(value: string | Date | undefined) {
 }
 
 export default function AccountPage() {
+  const { d, lang } = useI18n();
+  const dateLocale = lang === "uk" ? "uk-UA" : "en-GB";
   const router = useRouter();
   const { customer, status, setCustomer } = useCustomer();
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
@@ -86,20 +89,20 @@ export default function AccountPage() {
               <div>
                 <h1 className="text-2xl font-bold tracking-tight">
                   {[customer.first_name, customer.last_name].filter(Boolean).join(" ") ||
-                    "My Account"}
+                    d.account.myAccount}
                 </h1>
                 <p className="text-sm text-text-muted">{customer.email}</p>
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="w-3.5 h-3.5 mr-2" />
-              Sign Out
+              {d.account.signOut}
             </Button>
           </div>
 
           {/* Orders */}
           <h2 className="text-sm font-semibold uppercase tracking-[0.1em] text-text-muted mb-6">
-            My Orders
+            {d.account.myOrders}
           </h2>
 
           {ordersLoading ? (
@@ -109,12 +112,12 @@ export default function AccountPage() {
           ) : orders.length === 0 ? (
             <div className="rounded-2xl bg-bg-card border border-border p-10 text-center">
               <Package className="w-10 h-10 text-text-muted mx-auto mb-4" />
-              <p className="text-sm text-text-secondary">You have no orders yet.</p>
+              <p className="text-sm text-text-secondary">{d.account.noOrders}</p>
               <p className="text-xs text-text-muted mt-1 mb-6">
-                Once you place an order, its payment and delivery status will appear here.
+                {d.account.noOrdersHint}
               </p>
               <Link href="/products">
-                <Button size="md">Browse Products</Button>
+                <Button size="md">{d.account.browseProducts}</Button>
               </Link>
             </div>
           ) : (
@@ -128,14 +131,14 @@ export default function AccountPage() {
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-semibold">
-                      Order #{order.display_id}
+                      {d.account.orderNo}{order.display_id}
                       <span className="text-text-muted font-normal ml-2 text-xs">
-                        {formatDate(order.created_at)}
+                        {formatDate(order.created_at, dateLocale)}
                       </span>
                     </p>
                     <div className="flex flex-wrap items-center gap-2 mt-2">
-                      <StatusBadge label="Payment" status={order.payment_status} />
-                      <StatusBadge label="Delivery" status={order.fulfillment_status} />
+                      <StatusBadge label={d.account.paymentLabel} status={order.payment_status} />
+                      <StatusBadge label={d.account.deliveryLabel} status={order.fulfillment_status} />
                     </div>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">

@@ -32,13 +32,14 @@ import { NovaPoshtaPicker } from "./novaposhta-picker";
 import type { NpCity, NpWarehouse } from "@/lib/novaposhta";
 import { deleteSavedCard, getSavedCards, type SavedCard } from "@/lib/monobank";
 import { MonoPayWidgetButton } from "./monopay-button";
+import { useI18n } from "@/lib/i18n";
 
 type Step = "information" | "shipping" | "payment";
 
-const steps: { id: Step; label: string; icon: LucideIcon }[] = [
-  { id: "information", label: "Information", icon: MapPin },
-  { id: "shipping", label: "Shipping", icon: Truck },
-  { id: "payment", label: "Payment", icon: CreditCard },
+const steps: { id: Step; icon: LucideIcon }[] = [
+  { id: "information", icon: MapPin },
+  { id: "shipping", icon: Truck },
+  { id: "payment", icon: CreditCard },
 ];
 
 /* -------------------------------------------------------------------------- */
@@ -148,6 +149,7 @@ const EMPTY_CONTACT: ContactInfo = {
 const MONO_PROVIDER_ID = "pp_monobank_monobank";
 
 export default function CheckoutPage() {
+  const { d } = useI18n();
   const { cartId, setCartId, setItemCount } = useCartStore();
   const { customer, status: authStatus } = useCustomer();
   const [currentStep, setCurrentStep] = useState<Step>("information");
@@ -313,9 +315,7 @@ export default function CheckoutPage() {
     if (!cartId || !selectedShipping) return false;
     if (!npSelectionReady) {
       setShippingError(
-        selectedNpKind === "warehouse"
-          ? "Оберіть місто та відділення Нової Пошти."
-          : "Вкажіть місто, вулицю та будинок для доставки кур'єром."
+        selectedNpKind === "warehouse" ? d.checkout.errNpWarehouse : d.checkout.errNpCourier
       );
       return false;
     }
@@ -346,7 +346,7 @@ export default function CheckoutPage() {
       return true;
     } catch (err) {
       setShippingError(
-        err instanceof Error ? err.message : "Не вдалося зберегти спосіб доставки."
+        err instanceof Error ? err.message : d.checkout.errSaveShipping
       );
       return false;
     } finally {
@@ -375,7 +375,7 @@ export default function CheckoutPage() {
         setCart(updated as Cart);
       } catch (err: unknown) {
         setInfoError(
-          err instanceof Error ? err.message : "Couldn't save your information. Please try again."
+          err instanceof Error ? err.message : d.checkout.errSaveInfo
         );
         setSavingInfo(false);
         return;
@@ -410,7 +410,7 @@ export default function CheckoutPage() {
         providers.find((p) => p.id === MONO_PROVIDER_ID)?.id ??
         providers.find((p) => p.id === "pp_system_system")?.id ??
         providers[0]?.id;
-      if (!providerId) throw new Error("No payment provider available. Check backend config.");
+      if (!providerId) throw new Error(d.checkout.errNoProvider);
 
       const session = await initiatePaymentSession(cartId, providerId, {
         // New card + "save my card" ticked → tokenize it in the Monobank wallet.
@@ -450,7 +450,7 @@ export default function CheckoutPage() {
           window.location.assign(`/checkout/payment-return?cartId=${encodeURIComponent(cartId)}`);
           return;
         }
-        throw new Error("Monobank did not return a payment page. Please try again.");
+        throw new Error(d.checkout.errMonoNoPage);
       }
 
       // System/test provider authorizes immediately — complete the cart inline.
@@ -461,11 +461,11 @@ export default function CheckoutPage() {
         setCartId(null);
         setItemCount(0);
       } else {
-        throw new Error("Order could not be completed. Please try again.");
+        throw new Error(d.checkout.errComplete);
       }
       setPlacingOrder(false);
     } catch (err: unknown) {
-      setOrderError(err instanceof Error ? err.message : "Failed to place order.");
+      setOrderError(err instanceof Error ? err.message : d.checkout.errPlaceOrder);
       setPlacingOrder(false);
     }
   }
@@ -488,24 +488,23 @@ export default function CheckoutPage() {
           <div className="w-16 h-16 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-6">
             <Check className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight mb-3">Order placed!</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-3">{d.checkout.orderPlacedTitle}</h1>
           <p className="text-sm text-text-muted mb-2">
-            Thank you for your purchase. A confirmation email with your order
-            details is on its way.
+            {d.checkout.orderPlacedText}
           </p>
           {orderId && (
             <p className="text-xs text-text-muted font-mono mt-1">
-              Order ID: {orderId.slice(0, 18)}…
+              {d.checkout.orderIdLabel}: {orderId.slice(6, 18)}…
             </p>
           )}
           {authStatus === "authenticated" && orderId && (
             <Link href={`/account/orders/${orderId}`} className="mt-8">
-              <Button size="lg">Track Order in My Account</Button>
+              <Button size="lg">{d.checkout.trackOrder}</Button>
             </Link>
           )}
           <Link href="/" className={authStatus === "authenticated" && orderId ? "mt-3" : "mt-8"}>
             <Button size="lg" variant={authStatus === "authenticated" && orderId ? "outline" : "primary"}>
-              Continue Shopping
+              {d.common.continueShopping}
             </Button>
           </Link>
         </motion.div>
@@ -519,12 +518,12 @@ export default function CheckoutPage() {
       <div className="min-h-screen bg-bg pt-24 pb-16 flex items-center justify-center">
         <div className="flex flex-col items-center text-center px-6">
           <ShoppingBag className="w-12 h-12 text-text-muted mb-4" />
-          <h1 className="text-2xl font-bold tracking-tight">Your cart is empty</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{d.checkout.emptyTitle}</h1>
           <p className="text-sm text-text-muted mt-2 max-w-sm">
-            Add a few products before heading to checkout.
+            {d.checkout.emptyText}
           </p>
           <Link href="/" className="mt-6">
-            <Button size="lg">Continue Shopping</Button>
+            <Button size="lg">{d.common.continueShopping}</Button>
           </Link>
         </div>
       </div>
@@ -568,7 +567,7 @@ export default function CheckoutPage() {
                   ) : (
                     <Icon className="w-3.5 h-3.5" />
                   )}
-                  <span className="hidden sm:inline">{step.label}</span>
+                  <span className="hidden sm:inline">{d.checkout.steps[step.id]}</span>
                 </button>
                 {i < steps.length - 1 && (
                   <div className="w-8 md:w-16 h-px bg-border mx-2" />
@@ -578,7 +577,7 @@ export default function CheckoutPage() {
           })}
         </div>
 
-        <div className="grid lg:grid-cols-[1fr,400px] gap-12 lg:gap-16">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-12 lg:gap-16">
           {/* Form */}
           <motion.div
             key={currentStep}
@@ -589,11 +588,11 @@ export default function CheckoutPage() {
             {currentStep === "information" && (
               <div>
                 <h2 className="text-2xl font-bold tracking-tight mb-8">
-                  Contact Information
+                  {d.checkout.contactTitle}
                 </h2>
                 <div className="space-y-5">
                   <InputField
-                    label="Email"
+                    label={d.checkout.email}
                     type="email"
                     placeholder="your@email.com"
                     required
@@ -603,21 +602,21 @@ export default function CheckoutPage() {
                   />
 
                   <h3 className="text-lg font-semibold tracking-tight pt-4">
-                    Shipping Address
+                    {d.checkout.shippingAddressTitle}
                   </h3>
 
                   <div className="grid grid-cols-2 gap-4">
                     <InputField
-                      label="First Name"
-                      placeholder="Taras"
+                      label={d.checkout.firstName}
+                      placeholder="Тарас"
                       required
                       name="firstName"
                       value={contactInfo.firstName}
                       onChange={updateContact("firstName")}
                     />
                     <InputField
-                      label="Last Name"
-                      placeholder="Shevchenko"
+                      label={d.checkout.lastName}
+                      placeholder="Шевченко"
                       required
                       name="lastName"
                       value={contactInfo.lastName}
@@ -626,16 +625,16 @@ export default function CheckoutPage() {
                   </div>
 
                   <InputField
-                    label="Address"
-                    placeholder="vul. Khreshchatyk, 1"
+                    label={d.checkout.address}
+                    placeholder="вул. Хрещатик, 1"
                     required
                     name="address1"
                     value={contactInfo.address1}
                     onChange={updateContact("address1")}
                   />
                   <InputField
-                    label="Apartment, suite, etc."
-                    placeholder="kv. 12"
+                    label={d.checkout.apartment}
+                    placeholder="кв. 12"
                     name="address2"
                     value={contactInfo.address2}
                     onChange={updateContact("address2")}
@@ -643,15 +642,15 @@ export default function CheckoutPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <InputField
-                      label="City"
-                      placeholder="Kyiv"
+                      label={d.checkout.city}
+                      placeholder="Київ"
                       required
                       name="city"
                       value={contactInfo.city}
                       onChange={updateContact("city")}
                     />
                     <InputField
-                      label="ZIP Code"
+                      label={d.checkout.zip}
                       placeholder="01001"
                       required
                       name="postalCode"
@@ -661,7 +660,7 @@ export default function CheckoutPage() {
                   </div>
 
                   <InputField
-                    label="Phone"
+                    label={d.checkout.phone}
                     type="tel"
                     placeholder="+380 (44) 123-45-67"
                     name="phone"
@@ -675,11 +674,11 @@ export default function CheckoutPage() {
             {currentStep === "shipping" && (
               <div>
                 <h2 className="text-2xl font-bold tracking-tight mb-8">
-                  Shipping Method
+                  {d.checkout.shippingTitle}
                 </h2>
                 {shippingOptions.length === 0 ? (
                   <p className="text-sm text-text-muted">
-                    No shipping options are available for this cart.
+                    {d.checkout.noShippingOptions}
                   </p>
                 ) : (
                   <div className="space-y-3">
@@ -756,7 +755,7 @@ export default function CheckoutPage() {
             {currentStep === "payment" && (
               <div>
                 <h2 className="text-2xl font-bold tracking-tight mb-8">
-                  Payment
+                  {d.checkout.paymentTitle}
                 </h2>
 
                 {/* Saved cards (one-click) for logged-in customers */}
@@ -796,7 +795,7 @@ export default function CheckoutPage() {
                             disabled={deletingCard === card.cardToken}
                             className="text-xs text-text-muted hover:text-red-400 transition-colors disabled:opacity-50 px-2 py-1"
                           >
-                            {deletingCard === card.cardToken ? "…" : "Видалити"}
+                            {deletingCard === card.cardToken ? "…" : d.checkout.deleteCard}
                           </button>
                         </div>
                       );
@@ -820,7 +819,7 @@ export default function CheckoutPage() {
                           <div className="w-2 h-2 rounded-full bg-white" />
                         )}
                       </div>
-                      <span className="text-sm font-medium">Нова картка</span>
+                      <span className="text-sm font-medium">{d.checkout.newCard}</span>
                     </button>
                   </div>
                 )}
@@ -829,13 +828,13 @@ export default function CheckoutPage() {
                   <div className="flex items-center gap-2 mb-4">
                     <CreditCard className="w-4 h-4 text-text-secondary" />
                     <span className="text-sm font-medium">
-                      {selectedCard ? "Оплата збереженою карткою" : "Pay with Monobank"}
+                      {selectedCard ? d.checkout.payWithSavedCard : d.checkout.payWithMono}
                     </span>
                   </div>
                   <p className="text-sm text-text-secondary leading-relaxed">
                     {selectedCard
-                      ? "Оплата пройде в один клік. Якщо банк вимагатиме підтвердження (3-D Secure), вас перенаправить на сторінку перевірки."
-                      : "After clicking Pay you'll be redirected to Monobank's secure payment page. Bank card, Apple Pay and Google Pay are supported. Once the payment is confirmed you'll return here automatically."}
+                      ? d.checkout.savedCardDescription
+                      : d.checkout.monoDescription}
                   </p>
 
                   {/* Tokenize the card for one-click next time (logged-in only) */}
@@ -848,17 +847,14 @@ export default function CheckoutPage() {
                         className="w-4 h-4 rounded border-border bg-bg accent-white"
                       />
                       <span className="text-sm text-text-secondary">
-                        Зберегти картку для наступних покупок
+                        {d.checkout.saveCardLabel}
                       </span>
                     </label>
                   )}
                 </div>
                 <div className="flex items-center gap-2 mt-4 text-xs text-text-muted">
                   <Lock className="w-3 h-3" />
-                  <span>
-                    Картка зберігається в Monobank, ми бачимо лише її маску.
-                    Payments are processed by Monobank.
-                  </span>
+                  <span>{d.checkout.secureNote}</span>
                 </div>
               </div>
             )}
@@ -871,7 +867,7 @@ export default function CheckoutPage() {
                   className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  Back
+                  {d.checkout.back}
                 </button>
               ) : (
                 <Link
@@ -879,7 +875,7 @@ export default function CheckoutPage() {
                   className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  Return to Shop
+                  {d.checkout.returnToShop}
                 </Link>
               )}
 
@@ -910,7 +906,7 @@ export default function CheckoutPage() {
                       ) : (
                         <Lock className="w-3.5 h-3.5" />
                       )}
-                      <span className="text-sm font-medium">Оплатити</span>
+                      <span className="text-sm font-medium">{d.checkout.pay}</span>
                       <span className="text-base leading-none tracking-tight">
                         <span className="font-extrabold">mono</span>
                         <span className="font-normal">pay</span>
@@ -943,7 +939,7 @@ export default function CheckoutPage() {
                     }
                     className="group"
                   >
-                    <span>Continue</span>
+                    <span>{d.checkout.continue}</span>
                     <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </div>
@@ -955,7 +951,7 @@ export default function CheckoutPage() {
           <div className="lg:sticky lg:top-24 self-start">
             <div className="rounded-2xl bg-bg-card border border-border p-8">
               <h3 className="text-sm font-semibold uppercase tracking-[0.1em] text-text-muted mb-6">
-                Order Summary
+                {d.checkout.orderSummary}
               </h3>
 
               <div className="space-y-4 mb-8">
@@ -974,7 +970,12 @@ export default function CheckoutPage() {
                           {item.product_title ?? item.title}
                         </p>
                         <p className="text-xs text-text-muted">
-                          {[item.variant_title, `Qty ${item.quantity}`]
+                          {[
+                            item.variant_title
+                              ? d.catalog.optionValues[item.variant_title] ?? item.variant_title
+                              : undefined,
+                            `${d.checkout.qty} ${item.quantity}`,
+                          ]
                             .filter(Boolean)
                             .join(" · ")}
                         </p>
@@ -989,23 +990,23 @@ export default function CheckoutPage() {
 
               <div className="space-y-3 border-t border-border pt-6">
                 <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Subtotal</span>
+                  <span className="text-text-secondary">{d.checkout.subtotal}</span>
                   <span>{formatPrice(subtotal, currency)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Shipping</span>
+                  <span className="text-text-secondary">{d.checkout.shippingCost}</span>
                   <span className={selectedShipping ? "" : "text-text-muted"}>
                     {selectedShipping
                       ? formatPrice(shippingTotal, currency)
-                      : "Calculated next"}
+                      : d.checkout.calculatedNext}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Tax</span>
-                  <span className="text-text-muted">Included</span>
+                  <span className="text-text-secondary">{d.checkout.tax}</span>
+                  <span className="text-text-muted">{d.checkout.taxIncluded}</span>
                 </div>
                 <div className="flex justify-between text-base font-semibold pt-3 border-t border-border">
-                  <span>Total</span>
+                  <span>{d.checkout.total}</span>
                   <span>{formatPrice(total, currency)}</span>
                 </div>
               </div>

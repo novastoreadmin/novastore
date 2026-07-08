@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { gsap, ScrollTrigger } from "@/animations/gsap-config";
 import { fadeUp, staggerContainer } from "@/animations/variants";
 import { ProductCard } from "./product-card";
+import { useI18n } from "@/lib/i18n";
 
 interface RelatedProduct {
   id: string;
@@ -25,6 +26,7 @@ interface RelatedProductsProps {
 }
 
 export function RelatedProducts({ products }: RelatedProductsProps) {
+  const { d } = useI18n();
   const sectionRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -76,13 +78,13 @@ export function RelatedProducts({ products }: RelatedProductsProps) {
             variants={fadeUp}
             className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted mb-5"
           >
-            Explore More
+            {d.productDetail.relatedLabel}
           </motion.p>
           <motion.h2
             variants={fadeUp}
             className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight"
           >
-            You May Also Like
+            {d.productDetail.related}
           </motion.h2>
         </motion.div>
 

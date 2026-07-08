@@ -8,6 +8,7 @@ import {
   type NpCity,
   type NpWarehouse,
 } from "@/lib/novaposhta";
+import { useI18n } from "@/lib/i18n";
 
 /**
  * Nova Poshta delivery pickers for the checkout Shipping step.
@@ -56,6 +57,8 @@ export function NovaPoshtaPicker({
   onFlatChange: (v: string) => void;
   defaultCityQuery?: string;
 }) {
+  const { d } = useI18n();
+  const t = d.checkout.np;
   const [cityQuery, setCityQuery] = useState(city?.name ?? defaultCityQuery ?? "");
   const [cityResults, setCityResults] = useState<NpCity[]>([]);
   const [cityOpen, setCityOpen] = useState(false);
@@ -132,12 +135,12 @@ export function NovaPoshtaPicker({
     <div ref={rootRef} className="mt-6 p-5 rounded-xl border border-border bg-bg-card/50 space-y-5">
       <div className="flex items-center gap-2 text-sm font-medium">
         <MapPin className="w-4 h-4 text-text-secondary" />
-        {kind === "warehouse" ? "Пункт видачі Нової Пошти" : "Адреса для кур'єра Нової Пошти"}
+        {kind === "warehouse" ? t.pickupTitle : t.courierTitle}
       </div>
 
       {/* City */}
       <div className="relative">
-        <FieldLabel required>Місто</FieldLabel>
+        <FieldLabel required>{t.cityLabel}</FieldLabel>
         <div className="relative">
           <input
             value={cityQuery}
@@ -147,7 +150,7 @@ export function NovaPoshtaPicker({
               onWarehouseChange(null);
             }}
             onFocus={() => cityResults.length > 0 && setCityOpen(true)}
-            placeholder="Почніть вводити місто (українською)…"
+            placeholder={t.cityPlaceholder}
             className={inputClass}
           />
           {cityLoading ? (
@@ -171,7 +174,7 @@ export function NovaPoshtaPicker({
                 >
                   <span className="text-text-primary">{c.name}</span>
                   {c.area && (
-                    <span className="text-xs text-text-muted ml-2">{c.area} обл.</span>
+                    <span className="text-xs text-text-muted ml-2">{c.area} {t.regionSuffix}</span>
                   )}
                 </button>
               </li>
@@ -183,7 +186,7 @@ export function NovaPoshtaPicker({
       {/* Warehouse (branch delivery) */}
       {kind === "warehouse" && (
         <div className="relative">
-          <FieldLabel required>Відділення / поштомат</FieldLabel>
+          <FieldLabel required>{t.warehouseLabel}</FieldLabel>
           <button
             type="button"
             disabled={!city}
@@ -195,9 +198,9 @@ export function NovaPoshtaPicker({
                 ? warehouse.description
                 : city
                   ? warehouseLoading
-                    ? "Завантаження відділень…"
-                    : "Оберіть відділення"
-                  : "Спершу оберіть місто"}
+                    ? t.warehouseLoading
+                    : t.warehousePick
+                  : t.cityFirst}
             </span>
             <ChevronDown className="w-4 h-4 text-text-muted flex-shrink-0 ml-2" />
           </button>
@@ -207,14 +210,14 @@ export function NovaPoshtaPicker({
                 <input
                   value={warehouseQuery}
                   onChange={(e) => setWarehouseQuery(e.target.value)}
-                  placeholder="Пошук за номером чи адресою…"
+                  placeholder={t.warehouseSearch}
                   className="w-full h-10 px-3 rounded-lg bg-bg border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-white/20"
                 />
               </div>
               <ul className="max-h-56 overflow-auto">
                 {filteredWarehouses.length === 0 && (
                   <li className="px-4 py-3 text-sm text-text-muted">
-                    {warehouseLoading ? "Завантаження…" : "Нічого не знайдено"}
+                    {warehouseLoading ? t.loading : t.nothingFound}
                   </li>
                 )}
                 {filteredWarehouses.slice(0, 100).map((w) => (
@@ -239,18 +242,18 @@ export function NovaPoshtaPicker({
 
       {/* Street address (courier delivery) */}
       {kind === "courier" && (
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr,100px,100px] gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px] gap-4">
           <div>
-            <FieldLabel required>Вулиця</FieldLabel>
+            <FieldLabel required>{t.street}</FieldLabel>
             <input
               value={street}
               onChange={(e) => onStreetChange(e.target.value)}
-              placeholder="вул. Хрещатик"
+              placeholder={t.streetPlaceholder}
               className={inputClass}
             />
           </div>
           <div>
-            <FieldLabel required>Будинок</FieldLabel>
+            <FieldLabel required>{t.house}</FieldLabel>
             <input
               value={house}
               onChange={(e) => onHouseChange(e.target.value)}
@@ -259,7 +262,7 @@ export function NovaPoshtaPicker({
             />
           </div>
           <div>
-            <FieldLabel>Квартира</FieldLabel>
+            <FieldLabel>{t.flat}</FieldLabel>
             <input
               value={flat}
               onChange={(e) => onFlatChange(e.target.value)}

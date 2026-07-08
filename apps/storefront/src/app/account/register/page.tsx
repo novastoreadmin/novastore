@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
 import { AccountField } from "@/components/account/account-field";
 import { registerCustomer } from "@/lib/auth";
 import { useCustomer } from "@/hooks/use-customer";
+import { useI18n } from "@/lib/i18n";
 
 export default function RegisterPage() {
+  const { d } = useI18n();
   const router = useRouter();
   const { setCustomer } = useCustomer();
   const [firstName, setFirstName] = useState("");
@@ -32,11 +34,11 @@ export default function RegisterPage() {
     e.preventDefault();
     if (submitting) return;
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(d.account.register.errPasswordShort);
       return;
     }
     if (password !== confirm) {
-      setError("Passwords don't match.");
+      setError(d.account.register.errPasswordMatch);
       return;
     }
     setSubmitting(true);
@@ -60,8 +62,8 @@ export default function RegisterPage() {
       const message = err instanceof Error ? err.message : "";
       setError(
         /exists|identity/i.test(message)
-          ? "An account with this email already exists. Try signing in instead."
-          : "Couldn't create your account. Please try again."
+          ? d.account.register.errExists
+          : d.account.register.errGeneric
       );
       setSubmitting(false);
     }
@@ -79,27 +81,27 @@ export default function RegisterPage() {
           <div className="w-14 h-14 mx-auto rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-5">
             <UserPlus className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Create account</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{d.account.register.title}</h1>
           <p className="text-sm text-text-muted mt-2">
-            Track your orders and check delivery status in your personal cabinet.
+            {d.account.register.subtitle}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <AccountField
-              label="First Name"
+              label={d.checkout.firstName}
               name="firstName"
-              placeholder="Taras"
+              placeholder="Тарас"
               required
               autoComplete="given-name"
               value={firstName}
               onChange={setFirstName}
             />
             <AccountField
-              label="Last Name"
+              label={d.checkout.lastName}
               name="lastName"
-              placeholder="Shevchenko"
+              placeholder="Шевченко"
               required
               autoComplete="family-name"
               value={lastName}
@@ -107,7 +109,7 @@ export default function RegisterPage() {
             />
           </div>
           <AccountField
-            label="Email"
+            label={d.checkout.email}
             type="email"
             name="email"
             placeholder="your@email.com"
@@ -117,7 +119,7 @@ export default function RegisterPage() {
             onChange={setEmail}
           />
           <AccountField
-            label="Password (min. 8 characters)"
+            label={d.account.register.passwordMin}
             type="password"
             name="password"
             placeholder="••••••••"
@@ -127,7 +129,7 @@ export default function RegisterPage() {
             onChange={setPassword}
           />
           <AccountField
-            label="Confirm Password"
+            label={d.account.register.confirmPassword}
             type="password"
             name="confirmPassword"
             placeholder="••••••••"
@@ -146,17 +148,17 @@ export default function RegisterPage() {
             isLoading={submitting}
             disabled={submitting || !isValid}
           >
-            Create Account
+            {d.account.register.createAccount}
           </Button>
         </form>
 
         <p className="text-sm text-text-muted text-center mt-8">
-          Already have an account?{" "}
+          {d.account.register.alreadyHave}{" "}
           <Link
             href="/account/login"
             className="text-text-primary underline underline-offset-4 hover:opacity-80 transition-opacity"
           >
-            Sign in
+            {d.account.register.signIn}
           </Link>
         </p>
       </motion.div>
