@@ -57,9 +57,9 @@ export const infoPagesUk: InfoPagesDict = {
         ],
       },
       {
-        heading: "Зроблено для України",
+        heading: "Чому це зручно",
         paragraphs: [
-          "Ми працюємо з дому — доставляємо Новою Поштою по всій країні, приймаємо оплату Monobank і говоримо з вами однією мовою. Кожне замовлення пакуємо так, ніби відправляємо собі.",
+          "Ми доставляємо Новою Поштою по всій країні, приймаємо оплату Monobank і говоримо з вами однією мовою. Кожне замовлення пакуємо так, ніби відправляємо собі. Продаємо лише те, чим користуємося самі.",
         ],
       },
     ],
@@ -425,9 +425,9 @@ export const infoPagesEn: InfoPagesDict = {
         ],
       },
       {
-        heading: "Made for Ukraine",
+        heading: "Why it's convenient",
         paragraphs: [
-          "We ship nationwide with Nova Poshta, accept Monobank payments, and speak your language. Every order is packed like we're shipping it to ourselves.",
+          "We ship nationwide with Nova Poshta, accept Monobank payments, and speak your language. Every order is packed like we're shipping it to ourselves. We sell only what we use ourselves.",
         ],
       },
     ],

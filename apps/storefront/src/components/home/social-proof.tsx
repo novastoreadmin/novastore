@@ -9,7 +9,7 @@ import { useI18n } from "@/lib/i18n";
 
 // Numbers are language-independent; labels come from d.social.stats (same order).
 const statMeta = [
-  { value: 2400000, suffix: "+" },
+  { value: 200, suffix: "+" },
   { value: 4.9, suffix: "/5", decimals: true },
   { value: 98, suffix: "%" },
   { value: 142, suffix: "" },
