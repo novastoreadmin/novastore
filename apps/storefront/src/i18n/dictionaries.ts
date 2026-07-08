@@ -409,6 +409,33 @@ const uk = {
       pending: "В обробці",
     } as Record<string, string>,
   },
+  // Display translation for catalog option titles/values and variant titles.
+  // These are functional identifiers in Medusa (variant matching), so the data
+  // stays as-is and only the RENDERED text is translated via these maps.
+  catalog: {
+    optionTitles: {
+      Color: "Колір",
+      Length: "Довжина",
+    } as Record<string, string>,
+    optionValues: {
+      Blue: "Синій",
+      Yellow: "Жовтий",
+      Grey: "Сірий",
+      Gray: "Сірий",
+      Orange: "Помаранчевий",
+      Green: "Зелений",
+      Silver: "Сріблястий",
+      Red: "Червоний",
+      "0.5ft": "15 см",
+      "1.6ft": "50 см",
+      "3.3ft": "1 м",
+      Default: "Стандарт",
+      "Mac Blue": "Синій Mac",
+      "Windows Yellow": "Жовтий Windows",
+      "White / Red": "Білий / Червоний",
+      "White / Gray": "Білий / Сірий",
+    } as Record<string, string>,
+  },
   infoPages: infoPagesUk,
 };
 
@@ -811,6 +838,11 @@ const en: Dictionary = {
       completed: "Completed",
       pending: "Pending",
     },
+  },
+  // Base catalog identifiers are already English — identity maps (fall back to raw).
+  catalog: {
+    optionTitles: {},
+    optionValues: {},
   },
   infoPages: infoPagesEn,
 };

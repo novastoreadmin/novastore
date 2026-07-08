@@ -23,6 +23,7 @@ import { useCartStore } from "@/lib/store";
 import { addToCart, createCart } from "@/lib/medusa";
 import { RelatedProducts } from "./related-products";
 import { useI18n } from "@/lib/i18n";
+import { localizeProduct } from "@/lib/catalog-i18n";
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                      */
@@ -60,6 +61,15 @@ interface Product {
     model?: string;
     specs?: { label: string; value: string }[];
     features?: { title: string; description: string }[];
+    i18n?: {
+      en?: {
+        title?: string;
+        subtitle?: string;
+        description?: string;
+        specs?: { label: string; value: string }[];
+        features?: { title: string; description: string }[];
+      };
+    };
   } | null;
 }
 
@@ -110,7 +120,12 @@ const FEATURE_ICONS = [Cpu, Battery, Wifi, Shield, Monitor, Zap];
 /* -------------------------------------------------------------------------- */
 
 export function ProductDetail({ product, relatedProducts }: ProductDetailProps) {
-  const { d } = useI18n();
+  const { d, lang } = useI18n();
+  // Language-aware display copy (title/description/specs/features); the
+  // functional bits (options, variants, prices) stay on `product` untouched.
+  const loc = localizeProduct(product, lang);
+  const tOption = (s: string) => d.catalog.optionTitles[s] ?? s;
+  const tValue = (s: string) => d.catalog.optionValues[s] ?? s;
   /* ---- State ---- */
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
@@ -181,9 +196,9 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
     setQuantity((q) => Math.min(q, maxQuantity));
   }, [maxQuantity]);
 
-  /* ---- Derived: real specs/features from product metadata ---- */
-  const specs = product.metadata?.specs ?? [];
-  const features = product.metadata?.features ?? [];
+  /* ---- Derived: real specs/features from product metadata (localized) ---- */
+  const specs = loc.specs;
+  const features = loc.features;
   // Only render option selectors that offer a real choice (hides single-value / "Default").
   const visibleOptions = product.options.filter((o) => o.values.length > 1);
 
@@ -350,7 +365,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                     >
                       <Image
                         src={galleryImages[Math.min(activeImage, galleryImages.length - 1)].url}
-                        alt={product.title}
+                        alt={loc.title}
                         fill
                         priority
                         sizes="(max-width: 1024px) 100vw, 50vw"
@@ -412,7 +427,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                 variants={fadeUp}
                 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] text-gradient-hero"
               >
-                {product.title}
+                {loc.title}
               </motion.h1>
 
               {/* Price */}
@@ -435,11 +450,11 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                   <div key={option.id}>
                     <div className="flex items-center justify-between mb-3">
                       <label className="text-sm font-medium text-text-secondary uppercase tracking-wider">
-                        {option.title}
+                        {tOption(option.title)}
                       </label>
                       {isColorOption(option.title) && selectedOptions[option.title] && (
                         <span className="text-sm text-text-muted">
-                          {selectedOptions[option.title]}
+                          {tValue(selectedOptions[option.title])}
                         </span>
                       )}
                     </div>
@@ -454,7 +469,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                             <button
                               key={value}
                               onClick={() => handleOptionChange(option.title, value)}
-                              aria-label={`Select ${value}`}
+                              aria-label={tValue(value)}
                               className={cn(
                                 "relative w-10 h-10 rounded-full transition-all duration-300 cursor-pointer",
                                 "ring-offset-2 ring-offset-bg",
@@ -504,7 +519,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                                   : "bg-transparent text-text-secondary border-border hover:border-white/30 hover:text-text-primary"
                               )}
                             >
-                              {value}
+                              {tValue(value)}
                             </button>
                           );
                         })}
@@ -588,7 +603,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
       {/* ================================================================== */}
       {/*  DESCRIPTION SECTION                                                */}
       {/* ================================================================== */}
-      {product.description && (
+      {loc.description && (
         <motion.section
           initial="hidden"
           whileInView="visible"
@@ -620,13 +635,13 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                   )}
                 >
                   <p className="text-lg md:text-xl text-text-secondary leading-relaxed whitespace-pre-line">
-                    {product.description}
+                    {loc.description}
                   </p>
                   {!descriptionExpanded && (
                     <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-bg to-transparent" />
                   )}
                 </div>
-                {product.description.length > 200 && (
+                {loc.description.length > 200 && (
                   <button
                     onClick={() => setDescriptionExpanded(!descriptionExpanded)}
                     className="mt-4 flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer group"

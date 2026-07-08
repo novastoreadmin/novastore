@@ -9,6 +9,7 @@ import { fadeUp, staggerContainer } from "@/animations/variants";
 import { gsap } from "@/animations/gsap-config";
 import { cn, formatPrice } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import { localizeTitle } from "@/lib/catalog-i18n";
 
 interface Category {
   id: string;
@@ -21,6 +22,7 @@ interface Product {
   title: string;
   handle: string;
   thumbnail?: string | null;
+  metadata?: { i18n?: { en?: { title?: string } } } | null;
   categories?: Category[];
   variants?: {
     calculated_price?: {
@@ -43,8 +45,12 @@ export function ProductsView({
   products: Product[];
   categories: Category[];
 }) {
-  const { d } = useI18n();
+  const { d, lang } = useI18n();
   const gridRef = useRef<HTMLDivElement>(null);
+
+  // Category chips: dictionary translation by handle, DB name as fallback.
+  const categoryName = (c: Category) =>
+    d.header.nav[c.handle as keyof typeof d.header.nav] ?? c.name;
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
@@ -145,7 +151,7 @@ export function ProductsView({
                     : "bg-bg-card text-text-secondary border border-border hover:border-white/20"
                 )}
               >
-                {category.name}
+                {categoryName(category)}
               </button>
             ))}
           </div>
@@ -229,7 +235,7 @@ export function ProductsView({
                       {product.thumbnail ? (
                         <Image
                           src={product.thumbnail}
-                          alt={product.title}
+                          alt={localizeTitle(product, lang)}
                           fill
                           sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           className="object-cover group-hover:scale-105 transition-transform duration-700"
@@ -245,7 +251,7 @@ export function ProductsView({
 
                     <div className="p-6">
                       <h3 className="text-base font-semibold tracking-tight group-hover:text-text-primary transition-colors">
-                        {product.title}
+                        {localizeTitle(product, lang)}
                       </h3>
                       <p className="mt-2 text-sm text-text-muted">
                         {d.productsPage.startingAt}{" "}

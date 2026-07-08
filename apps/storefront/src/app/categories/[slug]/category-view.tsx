@@ -8,6 +8,8 @@ import { ArrowUpRight } from "lucide-react";
 import { fadeUp, staggerContainer } from "@/animations/variants";
 import { gsap, ScrollTrigger } from "@/animations/gsap-config";
 import { formatPrice } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
+import { localizeTitle } from "@/lib/catalog-i18n";
 
 interface Product {
   id: string;
@@ -15,6 +17,7 @@ interface Product {
   handle: string;
   description?: string;
   thumbnail?: string | null;
+  metadata?: { i18n?: { en?: { title?: string } } } | null;
   variants?: {
     calculated_price?: {
       calculated_amount: number;
@@ -22,8 +25,6 @@ interface Product {
     } | null;
   }[];
 }
-
-
 
 export function CategoryView({
   title,
@@ -34,7 +35,14 @@ export function CategoryView({
   slug: string;
   products: Product[];
 }) {
+  const { d, lang } = useI18n();
   const gridRef = useRef<HTMLDivElement>(null);
+
+  // Category chrome comes from the dictionary (keyed by slug); the prop title
+  // is only a fallback for categories the dictionary doesn't know about.
+  const dictItem =
+    d.collections.items[slug as keyof typeof d.collections.items];
+  const displayTitle = dictItem?.title ?? title;
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -74,21 +82,22 @@ export function CategoryView({
             variants={fadeUp}
             className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted mb-4"
           >
-            Collection
+            {d.collections.label}
           </motion.p>
           <motion.h1
             variants={fadeUp}
             className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.95]"
           >
-            {title}
+            {displayTitle}
           </motion.h1>
-          <motion.p
-            variants={fadeUp}
-            className="mt-6 text-lg text-text-secondary max-w-lg"
-          >
-            Explore our curated selection of premium {title.toLowerCase()}.
-            Every device built without compromise.
-          </motion.p>
+          {dictItem?.subtitle && (
+            <motion.p
+              variants={fadeUp}
+              className="mt-6 text-lg text-text-secondary max-w-lg"
+            >
+              {dictItem.subtitle}
+            </motion.p>
+          )}
         </motion.div>
 
         {/* Product Grid */}
@@ -124,7 +133,7 @@ export function CategoryView({
                     {"thumbnail" in product && product.thumbnail ? (
                       <Image
                         src={product.thumbnail}
-                        alt={product.title}
+                        alt={localizeTitle(product, lang)}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-700"
@@ -141,10 +150,10 @@ export function CategoryView({
                   {/* Info */}
                   <div className="p-6">
                     <h3 className="text-base font-semibold tracking-tight group-hover:text-text-primary transition-colors">
-                      {product.title}
+                      {localizeTitle(product, lang)}
                     </h3>
                     <p className="mt-2 text-sm text-text-muted">
-                      Starting at{" "}
+                      {d.productsPage.startingAt}{" "}
                       <span className="text-text-secondary font-medium">
                         {formatPrice(price, currency)}
                       </span>

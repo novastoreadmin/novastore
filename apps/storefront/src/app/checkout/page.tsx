@@ -970,7 +970,12 @@ export default function CheckoutPage() {
                           {item.product_title ?? item.title}
                         </p>
                         <p className="text-xs text-text-muted">
-                          {[item.variant_title, `${d.checkout.qty} ${item.quantity}`]
+                          {[
+                            item.variant_title
+                              ? d.catalog.optionValues[item.variant_title] ?? item.variant_title
+                              : undefined,
+                            `${d.checkout.qty} ${item.quantity}`,
+                          ]
                             .filter(Boolean)
                             .join(" · ")}
                         </p>

@@ -7,12 +7,14 @@ import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
 import { fadeUp, cardHover } from "@/animations/variants";
 import { useI18n } from "@/lib/i18n";
+import { localizeTitle } from "@/lib/catalog-i18n";
 
 interface ProductCardProduct {
   id: string;
   title: string;
   handle: string;
   thumbnail: string | null;
+  metadata?: { i18n?: { en?: { title?: string } } } | null;
   variants: {
     id: string;
     calculated_price: {
@@ -29,8 +31,9 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, className, index = 0 }: ProductCardProps) {
-  const { d } = useI18n();
+  const { d, lang } = useI18n();
   const price = product.variants[0]?.calculated_price;
+  const title = localizeTitle(product, lang);
 
   return (
     <motion.div
@@ -54,7 +57,7 @@ export function ProductCard({ product, className, index = 0 }: ProductCardProps)
             {product.thumbnail ? (
               <Image
                 src={product.thumbnail}
-                alt={product.title}
+                alt={title}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
@@ -87,7 +90,7 @@ export function ProductCard({ product, className, index = 0 }: ProductCardProps)
           {/* Product info */}
           <div className="p-5">
             <h3 className="text-base font-medium text-text-primary tracking-tight truncate">
-              {product.title}
+              {title}
             </h3>
             {price && (
               <p className="mt-1.5 text-sm text-text-secondary font-medium">

@@ -211,7 +211,9 @@ export function CartDrawer() {
                           {item.product_title ?? item.title}
                         </p>
                         <p className="text-xs text-text-muted mt-0.5">
-                          {item.variant_title}
+                          {item.variant_title
+                            ? d.catalog.optionValues[item.variant_title] ?? item.variant_title
+                            : ""}
                         </p>
 
                         <div className="flex items-center justify-between mt-3">
