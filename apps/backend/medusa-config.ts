@@ -1,3 +1,4 @@
+import path from "path"
 import { defineConfig, loadEnv, Modules } from "@medusajs/framework/utils"
 import { requiredSecret, resolvePaymentProviders } from "./src/config/runtime-config"
 
@@ -38,6 +39,43 @@ export default defineConfig({
   admin: {
     backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
     disable: false,
+    vite: () => ({
+      publicDir: path.resolve(__dirname, "src/admin/assets"),
+      plugins: [
+        {
+          name: "nova-admin-favicon",
+          transformIndexHtml(html: string) {
+            return html
+              .replace(
+                /<link rel="icon" href="data:," data-placeholder-favicon \/>/,
+                `<link rel="icon" type="image/svg+xml" href="favicon.svg" />`
+              )
+              .replace("<head>", "<head>\n        <title>NOVA Admin</title>")
+          },
+        },
+        {
+          name: "nova-admin-rebrand",
+          transformIndexHtml(html: string) {
+            const script = `<script>(function(){
+  function rebrand(node){
+    if (node.nodeType === 3 && node.nodeValue.includes('Welcome to Medusa')) {
+      node.nodeValue = node.nodeValue.replace(/Welcome to Medusa/g, 'Welcome to NOVA');
+    } else if (node.nodeType === 1) {
+      for (var i = 0; i < node.childNodes.length; i++) rebrand(node.childNodes[i]);
+    }
+  }
+  var root = document.getElementById('medusa-admin') || document.body;
+  var observer = new MutationObserver(function(muts){
+    muts.forEach(function(m){ m.addedNodes.forEach(rebrand); });
+  });
+  observer.observe(root, { childList: true, subtree: true });
+  rebrand(root);
+})();</script>`
+            return html.replace("</body>", `${script}</body>`)
+          },
+        },
+      ],
+    }),
   },
   modules: [
     // Redis-backed infrastructure when REDIS_URL is set (production),
