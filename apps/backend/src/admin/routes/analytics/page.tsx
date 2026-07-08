@@ -287,7 +287,7 @@ const UkraineMap = ({
 }) => {
   const outline = UA_OUTLINE.map(([lon, lat]) => `${px(lon).toFixed(1)},${py(lat).toFixed(1)}`).join(" ")
   return (
-    <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="w-full h-[270px]" role="img" aria-label="Мапа доставок по Україні">
+    <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="w-full h-[351px]" role="img" aria-label="Мапа доставок по Україні">
       <polygon
         points={outline}
         fill="currentColor"
@@ -459,14 +459,14 @@ const GoogleDeliveryMap = ({
 
   if (failed) {
     return (
-      <div className="flex h-[270px] items-center justify-center rounded-lg border border-ui-border-base">
+      <div className="flex h-[351px] items-center justify-center rounded-lg border border-ui-border-base">
         <Text size="small" className="text-ui-fg-error">
           Не вдалося завантажити Google Maps — перевірте GOOGLE_MAPS_API_KEY
         </Text>
       </div>
     )
   }
-  return <div ref={containerRef} className="h-[270px] w-full overflow-hidden rounded-lg" />
+  return <div ref={containerRef} className="h-[351px] w-full overflow-hidden rounded-lg" />
 }
 
 /** Two series side-by-side per day — the reference's "Delivery Statistics". */

@@ -66,10 +66,11 @@ const PAGE_SIZE = 20
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: "all", label: "Всі статуси" },
-  { value: "1", label: "Створено" },
-  { value: "4", label: "У дорозі" },
-  { value: "7", label: "Прибув у відділення" },
-  { value: "9", label: "Отримано" },
+  { value: "1",   label: "Створено" },
+  { value: "100", label: "Не здано до відправки" },
+  { value: "4",   label: "У дорозі" },
+  { value: "7",   label: "Прибув у відділення" },
+  { value: "9",   label: "Отримано" },
   { value: "102", label: "Відмова / повернення" },
 ]
 
@@ -78,7 +79,7 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
 function statusColor(code: string | null): "green" | "red" | "orange" | "blue" | "grey" {
   if (!code) return "grey"
   // Waybill created but not yet handed to NP — normal, not a warning.
-  if (code === "1") return "blue"
+  if (code === "1" || code === "100") return "blue"
   if (["9", "10", "11", "106"].includes(code)) return "green"
   if (["2", "3", "102", "103", "105", "108"].includes(code)) return "red"
   return "orange"
