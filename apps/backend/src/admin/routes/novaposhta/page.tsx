@@ -67,11 +67,11 @@ const PAGE_SIZE = 20
 const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: "all", label: "Всі статуси" },
   { value: "1",   label: "Створено" },
-  { value: "100", label: "Не здано до відправки" },
   { value: "4",   label: "У дорозі" },
   { value: "7",   label: "Прибув у відділення" },
   { value: "9",   label: "Отримано" },
   { value: "102", label: "Відмова / повернення" },
+  { value: "2",   label: "Видалено" },
 ]
 
 // Mirrors src/lib/novaposhta-admin.ts#statusTone (that module is server-only
