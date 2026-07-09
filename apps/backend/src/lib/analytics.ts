@@ -182,6 +182,16 @@ export function ecommerceMetrics(orders: AnalyticsOrder[], range: DateRange) {
 
 import { cityCoords } from "./ua-cities"
 
+/**
+ * NP's raw status text for code 1/100 is a long sentence ("Відправник
+ * самостійно створив цю накладну, але ще не надав її до відправки") — too
+ * verbose for a badge. Swap it for a short label everywhere it's displayed.
+ */
+const STATUS_LABEL_OVERRIDES: Record<string, string> = {
+  "1": "Створена накладна",
+  "100": "Створена накладна",
+}
+
 /** Human labels for the NP status buckets the donut shows. */
 const NP_BUCKETS: { key: string; label: string; codes: string[] }[] = [
   { key: "created", label: "Створено", codes: ["1"] },
@@ -299,7 +309,11 @@ export function logisticsMetrics(orders: AnalyticsOrder[], range: DateRange) {
       city: s.city,
       cost: round2(s.cost),
       status_key: bucket,
-      status_label: s.status_text || BUCKET_LABELS[bucket] || bucket,
+      status_label:
+        (s.status_code && STATUS_LABEL_OVERRIDES[s.status_code]) ||
+        s.status_text ||
+        BUCKET_LABELS[bucket] ||
+        bucket,
       created_at: new Date(s.created_at).toISOString(),
     })
   }

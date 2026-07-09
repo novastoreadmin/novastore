@@ -8,6 +8,7 @@ import {
   Heading,
   Input,
   Label,
+  Select,
   Table,
   Tabs,
   Text,
@@ -136,12 +137,22 @@ const C = {
 }
 const STATUS_COLORS: Record<string, string> = {
   pending: C.grey,
-  created: C.blue,
-  in_transit: C.orange,
+  created: C.orange,
+  in_transit: C.blue,
   arrived: C.purple,
   delivered: C.green,
   problem: C.red,
   unknown: C.grey,
+}
+// Same associations as STATUS_COLORS, as Medusa UI Badge color names.
+const STATUS_BADGE_COLORS: Record<string, "grey" | "blue" | "orange" | "purple" | "green" | "red"> = {
+  pending: "grey",
+  created: "orange",
+  in_transit: "blue",
+  arrived: "purple",
+  delivered: "green",
+  problem: "red",
+  unknown: "grey",
 }
 
 const uah = (n: number) =>
@@ -474,7 +485,7 @@ const GroupedBars = ({
   a,
   b,
   colorA = "#93c5fd",
-  colorB = C.blue,
+  colorB = C.green,
   height = 170,
 }: {
   a: Series
@@ -541,14 +552,14 @@ const TrackingPanel = ({
   ]
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-1.5">
         <Text size="small" className="text-ui-fg-subtle">
           Замовлення #{activity.order_display_id}
         </Text>
         <Badge
           size="2xsmall"
           color={stage === 3 ? "green" : stage >= 1 ? "orange" : "grey"}
-          className="max-w-40 truncate"
+          className="w-fit max-w-full whitespace-normal text-left"
           title={activity.status_label}
         >
           {activity.status_label}
@@ -682,7 +693,7 @@ const AnalyticsPageInner = () => {
   })
   const [activityChip, setActivityChip] = useState<string>("all")
   const [activityPage, setActivityPage] = useState(0)
-  const [trackedTtn, setTrackedTtn] = useState<string | null>(null)
+  const [trackedKey, setTrackedKey] = useState<string | null>(null)
 
   const params = useMemo(() => ({ from, to }), [from, to])
   const { data, isFetching, refetch, error } = useQuery({
@@ -872,8 +883,10 @@ const AnalyticsPageInner = () => {
           <Tabs.Content value="logistics" className="px-6 py-4 flex flex-col gap-4">
             {(() => {
               const L = data.logistics
+              const trackKey = (a: Payload["logistics"]["activities"][number]) =>
+                `${a.order_display_id}__${a.ttn ?? ""}`
               const tracked =
-                (trackedTtn ? L.activities.find((a) => a.ttn === trackedTtn) : undefined) ??
+                (trackedKey ? L.activities.find((a) => trackKey(a) === trackedKey) : undefined) ??
                 L.activities.find((a) => a.ttn) ??
                 L.activities[0] ??
                 null
@@ -941,7 +954,7 @@ const AnalyticsPageInner = () => {
                     <div className="mb-2 flex gap-4">
                       {[
                         { c: "#93c5fd", t: "Відправлено" },
-                        { c: C.blue, t: "Доставлено" },
+                        { c: C.green, t: "Доставлено" },
                       ].map((l) => (
                         <span key={l.t} className="flex items-center gap-1.5">
                           <span className="h-2.5 w-2.5 rounded-full" style={{ background: l.c }} />
@@ -988,6 +1001,23 @@ const AnalyticsPageInner = () => {
                         <Text size="small" weight="plus" className="mb-3">
                           Відстеження доставки
                         </Text>
+                        {L.activities.length > 0 && (
+                          <Select
+                            value={tracked ? trackKey(tracked) : undefined}
+                            onValueChange={(v) => setTrackedKey(v)}
+                          >
+                            <Select.Trigger className="mb-3">
+                              <Select.Value />
+                            </Select.Trigger>
+                            <Select.Content>
+                              {L.activities.map((a) => (
+                                <Select.Item key={trackKey(a)} value={trackKey(a)}>
+                                  #{a.order_display_id} — {a.ttn ? `ТТН ${a.ttn}` : "без ТТН"}
+                                </Select.Item>
+                              ))}
+                            </Select.Content>
+                          </Select>
+                        )}
                         <TrackingPanel activity={tracked} />
                       </div>
                     </div>
@@ -1071,7 +1101,7 @@ const AnalyticsPageInner = () => {
                           <Table.Row
                             key={`${a.order_display_id}-${a.ttn ?? "pending"}`}
                             className={`cursor-pointer ${tracked === a ? "bg-ui-bg-subtle" : ""}`}
-                            onClick={() => a.ttn && setTrackedTtn(a.ttn)}
+                            onClick={() => setTrackedKey(trackKey(a))}
                           >
                             <Table.Cell>#{a.order_display_id}</Table.Cell>
                             <Table.Cell className="font-mono">{a.ttn ?? "—"}</Table.Cell>
@@ -1083,10 +1113,7 @@ const AnalyticsPageInner = () => {
                             <Table.Cell className="max-w-48">
                               <Badge
                                 size="2xsmall"
-                                color={STATUS_COLORS[a.status_key] === C.grey ? "grey" :
-                                  a.status_key === "delivered" ? "green" :
-                                  a.status_key === "pending" ? "orange" :
-                                  a.status_key === "problem" ? "red" : "blue"}
+                                color={STATUS_BADGE_COLORS[a.status_key] ?? "grey"}
                                 className="inline-block max-w-full truncate align-bottom"
                                 title={a.status_label}
                               >
