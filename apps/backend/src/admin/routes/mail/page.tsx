@@ -45,6 +45,7 @@ const MailPageInner = () => {
   const [account, setAccount] = useState<string>("")
   const [openUid, setOpenUid] = useState<number | null>(null)
   const [composeOpen, setComposeOpen] = useState(false)
+  const [prefill, setPrefill] = useState<{ to: string; subject: string; text: string } | null>(null)
 
   const { data: accountsData } = useQuery({
     queryKey: ["mail-accounts"],
@@ -79,6 +80,31 @@ const MailPageInner = () => {
   })
   const open = openData?.message
 
+  const del = useMutation({
+    mutationFn: (uid: number) =>
+      sdk.client.fetch(`/admin/mail/messages/${uid}`, {
+        method: "DELETE",
+        query: { account },
+      }),
+    onSuccess: () => {
+      toast.success("Лист видалено")
+      setOpenUid(null)
+      qc.invalidateQueries({ queryKey: ["mail-messages"] })
+    },
+    onError: (e: any) =>
+      toast.error("Не вдалося видалити", { description: e?.message || "Unknown error" }),
+  })
+
+  const reply = () => {
+    if (!open) return
+    setPrefill({
+      to: open.from[0]?.address || "",
+      subject: open.subject.startsWith("Re:") ? open.subject : `Re: ${open.subject}`,
+      text: `\n\n--- ${fmtDate(open.date)}, ${fmtAddr(open.from)}:\n${open.text || ""}`,
+    })
+    setComposeOpen(true)
+  }
+
   return (
     <Container className="p-0 divide-y">
       <Toaster />
@@ -108,7 +134,25 @@ const MailPageInner = () => {
           <Button variant="secondary" onClick={() => refetch()} isLoading={isFetching}>
             Refresh
           </Button>
-          <Button onClick={() => setComposeOpen(true)}>Compose</Button>
+          <Button variant="secondary" onClick={reply} disabled={!open}>
+            Reply
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => openUid != null && del.mutate(openUid)}
+            disabled={openUid == null}
+            isLoading={del.isPending}
+          >
+            Delete
+          </Button>
+          <Button
+            onClick={() => {
+              setPrefill(null)
+              setComposeOpen(true)
+            }}
+          >
+            Compose
+          </Button>
         </div>
       </div>
 
@@ -179,6 +223,7 @@ const MailPageInner = () => {
         onOpenChange={setComposeOpen}
         from={account}
         accounts={accounts}
+        prefill={prefill}
         onSent={() => {
           setComposeOpen(false)
           qc.invalidateQueries({ queryKey: ["mail-messages"] })
@@ -193,12 +238,14 @@ const ComposeDrawer = ({
   onOpenChange,
   from,
   accounts,
+  prefill,
   onSent,
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
   from: string
   accounts: Account[]
+  prefill: { to: string; subject: string; text: string } | null
   onSent: () => void
 }) => {
   const [fromAddr, setFromAddr] = useState(from)
@@ -206,6 +253,14 @@ const ComposeDrawer = ({
   const [subject, setSubject] = useState("")
   const [text, setText] = useState("")
   useEffect(() => setFromAddr(from), [from])
+  // Apply reply prefill each time the drawer opens.
+  useEffect(() => {
+    if (open) {
+      setTo(prefill?.to ?? "")
+      setSubject(prefill?.subject ?? "")
+      setText(prefill?.text ?? "")
+    }
+  }, [open, prefill])
 
   const send = useMutation({
     mutationFn: () =>
