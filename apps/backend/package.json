@@ -19,6 +19,10 @@
     "test:server": "dotenv -e .env.test -- npx medusa develop"
   },
   "dependencies": {
+    "@deck.gl/core": "^9.3.6",
+    "@deck.gl/google-maps": "^9.3.6",
+    "@deck.gl/layers": "^9.3.6",
+    "@googlemaps/js-api-loader": "^2.1.1",
     "@hookform/resolvers": "^3.4.2",
     "@inquirer/checkbox": "^2.5.0",
     "@inquirer/confirm": "^2.0.17",

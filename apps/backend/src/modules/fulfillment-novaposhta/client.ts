@@ -474,6 +474,61 @@ export class NovaPoshtaClient {
     return this.saveOrUpdateDocument("update", { ...methodProperties, Ref: ref })
   }
 
+  /* ------------------------------ cabinet listing --------------------------- */
+
+  /**
+   * ALL waybills of the NP account for a date range (my.novaposhta cabinet
+   * view) — including parcels created outside the store. Read-only; the admin
+   * page shows these for reference next to store shipments.
+   * Dates in dd.mm.yyyy as NP expects.
+   */
+  async getDocumentList(input: {
+    dateFrom: string
+    dateTo: string
+    page?: number
+  }): Promise<
+    {
+      ref: string
+      ttn: string
+      createdAt: string
+      recipient: string
+      cityRecipient: string
+      status: string
+      statusCode: string | null
+      cost: string
+      weight: string
+    }[]
+  > {
+    const data = await this.request<{
+      Ref: string
+      IntDocNumber: string
+      DateTime?: string
+      RecipientContactPerson?: string
+      CityRecipientDescription?: string
+      StateName?: string
+      StateId?: string | number
+      CostOnSite?: string
+      Cost?: string
+      Weight?: string
+    }>("InternetDocument", "getDocumentList", {
+      DateTimeFrom: input.dateFrom,
+      DateTimeTo: input.dateTo,
+      GetFullList: "1",
+      Page: String(input.page ?? 1),
+    })
+    return data.map((d) => ({
+      ref: d.Ref,
+      ttn: d.IntDocNumber,
+      createdAt: d.DateTime ?? "",
+      recipient: d.RecipientContactPerson ?? "",
+      cityRecipient: d.CityRecipientDescription ?? "",
+      status: d.StateName ?? "",
+      statusCode: d.StateId != null ? String(d.StateId) : null,
+      cost: d.CostOnSite ?? d.Cost ?? "",
+      weight: d.Weight ?? "",
+    }))
+  }
+
   /* -------------------------------- tracking ------------------------------- */
 
   /**

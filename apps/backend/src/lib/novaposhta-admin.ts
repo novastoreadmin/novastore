@@ -198,7 +198,8 @@ export function statusTone(
   if (!code) return "grey"
   // Waybill created by the sender but not yet handed to NP — normal early
   // state, not a warning. Neutral blue instead of an alarming red/orange.
-  if (code === "1") return "blue"
+  // Code 100 = sender self-created waybill, not yet handed over.
+  if (code === "1" || code === "100") return "blue"
   if (["9", "10", "11", "106"].includes(code)) return "green" // received
   if (["2", "3", "102", "103", "105", "108"].includes(code)) return "red" // deleted / not found / refused / returned
   return "orange" // in transit / at warehouse
