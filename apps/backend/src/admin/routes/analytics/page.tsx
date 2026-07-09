@@ -15,6 +15,7 @@ import {
   Toaster,
   toast,
 } from "@medusajs/ui"
+import { NP_STATUS_HEX, NpStatusBadge, type NpStatusKey } from "../../lib/np-status-badge"
 import {
   QueryClient,
   QueryClientProvider,
@@ -135,25 +136,8 @@ const C = {
   purple: "#8b5cf6",
   grey: "#9ca3af",
 }
-const STATUS_COLORS: Record<string, string> = {
-  pending: C.grey,
-  created: C.orange,
-  in_transit: C.blue,
-  arrived: C.purple,
-  delivered: C.green,
-  problem: C.red,
-  unknown: C.grey,
-}
-// Same associations as STATUS_COLORS, as Medusa UI Badge color names.
-const STATUS_BADGE_COLORS: Record<string, "grey" | "blue" | "orange" | "purple" | "green" | "red"> = {
-  pending: "grey",
-  created: "orange",
-  in_transit: "blue",
-  arrived: "purple",
-  delivered: "green",
-  problem: "red",
-  unknown: "grey",
-}
+// Shared NP palette — identical colors in the Nova Poshta extension.
+const STATUS_COLORS: Record<string, string> = { ...NP_STATUS_HEX }
 
 const uah = (n: number) =>
   new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 0 }).format(n) + " ₴"
@@ -556,14 +540,11 @@ const TrackingPanel = ({
         <Text size="small" className="text-ui-fg-subtle">
           Замовлення #{activity.order_display_id}
         </Text>
-        <Badge
-          size="2xsmall"
-          color={stage === 3 ? "green" : stage >= 1 ? "orange" : "grey"}
-          className="w-fit max-w-full whitespace-normal text-left"
-          title={activity.status_label}
-        >
-          {activity.status_label}
-        </Badge>
+        <NpStatusBadge
+          statusKey={(activity.status_key in NP_STATUS_HEX ? activity.status_key : "unknown") as NpStatusKey}
+          label={activity.status_label}
+          className="w-fit"
+        />
       </div>
       {activity.ttn && (
         <a
@@ -1111,14 +1092,10 @@ const AnalyticsPageInner = () => {
                               {a.cost ? uah(a.cost) : "—"}
                             </Table.Cell>
                             <Table.Cell className="max-w-48">
-                              <Badge
-                                size="2xsmall"
-                                color={STATUS_BADGE_COLORS[a.status_key] ?? "grey"}
-                                className="inline-block max-w-full truncate align-bottom"
-                                title={a.status_label}
-                              >
-                                {a.status_label}
-                              </Badge>
+                              <NpStatusBadge
+                                statusKey={(a.status_key in NP_STATUS_HEX ? a.status_key : "unknown") as NpStatusKey}
+                                label={a.status_label}
+                              />
                             </Table.Cell>
                           </Table.Row>
                         ))}

@@ -114,6 +114,24 @@ export async function getMessage(
   }
 }
 
+export async function deleteMessage(
+  account: MailAccount,
+  mailbox = "INBOX",
+  uid: number
+): Promise<void> {
+  const client = imapClient(account)
+  await client.connect()
+  const lock = await client.getMailboxLock(mailbox)
+  try {
+    // \Deleted + expunge — Dovecot/GreenMail both honour this as a hard delete
+    // from the mailbox (no separate Trash handling on purpose: keep it simple).
+    await client.messageDelete(`${uid}`, { uid: true })
+  } finally {
+    lock.release()
+    await client.logout()
+  }
+}
+
 export async function sendMail(
   account: MailAccount,
   opts: { to: string; cc?: string; subject: string; text?: string; html?: string }

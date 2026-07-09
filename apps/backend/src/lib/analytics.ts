@@ -198,7 +198,8 @@ const NP_BUCKETS: { key: string; label: string; codes: string[] }[] = [
   { key: "in_transit", label: "У дорозі", codes: ["4", "41", "5", "6", "101"] },
   { key: "arrived", label: "У відділенні", codes: ["7", "8"] },
   { key: "delivered", label: "Доставлено", codes: ["9", "10", "11", "106"] },
-  { key: "problem", label: "Проблема/повернення", codes: ["2", "3", "102", "103", "104", "105", "108", "111", "112"] },
+  { key: "deleted", label: "Видалено", codes: ["2", "3"] },
+  { key: "refused", label: "Відмова / повернення", codes: ["102", "103", "104", "105", "108", "111", "112"] },
 ]
 
 export function logisticsMetrics(orders: AnalyticsOrder[], range: DateRange) {

@@ -23,6 +23,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
+import { NpStatusBadge, npStatusKey } from "../../lib/np-status-badge"
 import { sdk } from "../../lib/sdk"
 
 /**
@@ -74,16 +75,6 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: "2",   label: "Видалено" },
 ]
 
-// Mirrors src/lib/novaposhta-admin.ts#statusTone (that module is server-only
-// and can't be imported into the admin bundle).
-function statusColor(code: string | null): "green" | "red" | "orange" | "blue" | "grey" {
-  if (!code) return "grey"
-  // Waybill created but not yet handed to NP — normal, not a warning.
-  if (code === "1" || code === "100") return "blue"
-  if (["9", "10", "11", "106"].includes(code)) return "green"
-  if (["2", "3", "102", "103", "105", "108"].includes(code)) return "red"
-  return "orange"
-}
 
 const fmtDate = (d?: string | null) =>
   d ? new Date(d).toLocaleString("uk-UA", { dateStyle: "short", timeStyle: "short" }) : "—"
@@ -341,14 +332,7 @@ const NovaPoshtaPageInner = () => {
                     {d.cityRecipient || "—"}
                   </Table.Cell>
                   <Table.Cell className="max-w-48">
-                    <Badge
-                      size="2xsmall"
-                      color={statusColor(d.statusCode)}
-                      className="inline-block max-w-full truncate align-bottom"
-                      title={d.status || undefined}
-                    >
-                      {d.status || "невідомо"}
-                    </Badge>
+                    <NpStatusBadge statusKey={npStatusKey(d.statusCode)} label={d.status || "невідомо"} />
                   </Table.Cell>
                   <Table.Cell className="text-right">{d.cost ? `${d.cost} ₴` : "—"}</Table.Cell>
                   <Table.Cell>{d.createdAt || "—"}</Table.Cell>
@@ -442,18 +426,12 @@ const NovaPoshtaPageInner = () => {
                 </Table.Cell>
                 <Table.Cell className="max-w-48">
                   {row.canceled ? (
-                    <Badge size="2xsmall" color="red">
-                      Скасовано
-                    </Badge>
+                    <NpStatusBadge statusKey="deleted" label="Скасовано" />
                   ) : (
-                    <Badge
-                      size="2xsmall"
-                      color={statusColor(row.np_status_code)}
-                      className="inline-block max-w-full truncate align-bottom"
-                      title={row.np_status || undefined}
-                    >
-                      {row.np_status || "невідомо"}
-                    </Badge>
+                    <NpStatusBadge
+                      statusKey={npStatusKey(row.np_status_code)}
+                      label={row.np_status || "невідомо"}
+                    />
                   )}
                 </Table.Cell>
                 <Table.Cell>{fmtDate(row.created_at)}</Table.Cell>
