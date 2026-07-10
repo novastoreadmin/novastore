@@ -103,8 +103,14 @@ MAIL_IMAP_PORT=993
 MAIL_SMTP_PORT=465
 MAIL_SECURE=true
 MAIL_SMTP_AUTH=true
-MAIL_ACCOUNTS=[{"email":"admin@novastore.com.ua","login":"admin@novastore.com.ua","password":"THE_MAILBOX_PASSWORD","label":"Admin"},{"email":"sales@novastore.com.ua","login":"sales@novastore.com.ua","password":"THE_MAILBOX_PASSWORD","label":"Sales"}]
+MAIL_ACCOUNTS=[{"email":"admin@novastore.com.ua","login":"admin@novastore.com.ua","password":"THE_MAILBOX_PASSWORD","label":"Admin","name":"NOVA Store"},{"email":"sales@novastore.com.ua","login":"sales@novastore.com.ua","password":"THE_MAILBOX_PASSWORD","label":"Sales","name":"NOVA Store"}]
 ```
+
+> **Sender display name:** without `"name"`, mail clients show only the bare address
+> (`no-reply@novastore.com.ua`) in the inbox list, not a store name — that's the
+> `fromHeader()` fallback in `src/lib/mail-accounts.ts` (defaults to `"NOVA"` when
+> `name` is omitted). Set `"name": "NOVA Store"` (or whatever the storefront should
+> show) per mailbox to control it.
 
 On the droplet, after editing `.env`, remember to also copy it to
 `.medusa/server/.env.production` and restart pm2 **with `--update-env`** — a plain

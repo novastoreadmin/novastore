@@ -3,7 +3,7 @@ import { ImapFlow } from "imapflow"
 import { simpleParser } from "mailparser"
 import nodemailer from "nodemailer"
 import MailComposer from "nodemailer/lib/mail-composer"
-import { MAIL_SERVER, MailAccount } from "./mail-accounts"
+import { fromHeader, MAIL_SERVER, MailAccount } from "./mail-accounts"
 
 /**
  * Logical mailbox name accepted by the read/delete helpers: the UI sends
@@ -199,7 +199,7 @@ export async function sendMail(
   // what the recipient got (SMTP alone never populates the IMAP Sent folder -
   // the app must APPEND the copy itself, like every desktop mail client does).
   const node = new MailComposer({
-    from: account.email,
+    from: fromHeader(account),
     to: opts.to,
     cc: opts.cc,
     subject: opts.subject,
