@@ -204,6 +204,22 @@ export function statusTone(
   return "orange" // in transit / at warehouse
 }
 
+/** NP status codes that mean "the recipient has the parcel". */
+const DELIVERED_STATUS_CODES = ["9", "10", "11", "106"]
+
+/**
+ * Whether Sync should send the "delivered" email for a fulfillment: true
+ * only on the FIRST observed transition into a delivered status code, so a
+ * later re-sync of an already-delivered shipment never sends a duplicate.
+ */
+export function shouldSendDeliveredEmail(
+  prevMetadata: Record<string, unknown> | null | undefined,
+  newStatusCode: string | null | undefined
+): boolean {
+  if (!newStatusCode || !DELIVERED_STATUS_CODES.includes(newStatusCode)) return false
+  return !prevMetadata?.np_delivered_email_at
+}
+
 /* ------------------------------ edit validation ----------------------------- */
 
 export type ShipmentEdit = {

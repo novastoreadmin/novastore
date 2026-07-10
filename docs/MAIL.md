@@ -50,7 +50,29 @@ the public internet (by design, since `nova.local` is not a real domain).
 - **Client helpers:** `apps/backend/src/lib/mail-client.ts` (`listMessages`, `getMessage`,
   `deleteMessage`, `sendMail`), `mail-accounts.ts`.
 - **Admin UI:** `apps/backend/src/admin/routes/mail/page.tsx` (sidebar route) — message
-  list, reading pane, and Refresh / Reply / Delete / Compose buttons.
+  list, reading pane, a Вхідні/Надіслані (Inbox/Sent) folder switcher, and
+  Refresh / Reply / Delete / Compose buttons.
+
+### Sent folder (why no-reply@ shows what WE sent, not an empty inbox)
+
+SMTP delivery alone never populates IMAP's Sent folder - that's a client
+convention, not something the protocol does automatically. `sendMail()`
+builds the message once (via nodemailer's `MailComposer`, so the stored copy
+is byte-identical to what the recipient got), sends it, then IMAP-`APPEND`s
+that same buffer into Sent. A failed Sent copy never fails the send itself
+(the mail already left - only a `console.warn`).
+
+The real Sent folder name varies by server (`Sent` on GreenMail, typically
+`INBOX.Sent` on Dovecot/cPanel) - `resolveMailbox()` in `mail-client.ts`
+resolves the logical name `"SENT"` to whatever the server actually calls it
+(special-use `\Sent` flag first, then common names, creating `"Sent"` as a
+last resort). The admin UI never hardcodes a folder path; it sends the
+logical `mailbox=SENT` and the backend resolves it.
+
+`GET /admin/mail/accounts` includes `is_order_sender: true` for whichever
+mailbox matches `ORDER_EMAIL_FROM` - the Mail page uses that to default
+straight to Надіслані for that account (its inbox is empty by design; the
+useful view is what the store mailed out).
 
 ## Going live on a real domain (novastore.com.ua via cPanel)
 
@@ -110,7 +132,7 @@ also use cPanel webmail directly at `https://novastore.com.ua/webmail`.
 
 ## Transactional emails (auto-sent to customers)
 
-Three automatic emails go out through the same mail server/accounts above,
+Six automatic emails go out through the same mail server/accounts above,
 built from a shared table-based HTML layout so they render consistently
 across email clients (light-mode only, dark-mode auto-invert disabled):
 
@@ -119,6 +141,25 @@ across email clients (light-mode only, dark-mode auto-invert disabled):
 | `customer.created` (real registration only, `has_account === true` — guest checkout customer records are skipped) | "Вітаємо в NOVA" welcome email | `src/subscribers/customer-created.ts` → `src/lib/customer-email.ts` |
 | `order.placed` (fires after checkout/payment completes) | Order confirmation (order #, amount, items, address) | `src/subscribers/order-placed.ts` → `buildOrderConfirmationEmail` in `src/lib/order-email.ts` |
 | `shipment.created` | Shipment notification (order #, Nova Poshta ТТН + tracking link when present, amount paid) | `src/subscribers/shipment-created-email.ts` → `buildShipmentEmail` in `src/lib/order-email.ts` |
+| Sync in the Nova Poshta admin extension, first transition into a delivered status code (9/10/11/106) | "Delivered" email — sent at most once per fulfillment, guarded by `fulfillment.metadata.np_delivered_email_at` | `src/api/admin/novaposhta/shipments/sync/route.ts` → `buildDeliveredEmail` in `src/lib/order-email.ts`; the "should we send" decision is the pure `shouldSendDeliveredEmail` in `src/lib/novaposhta-admin.ts` |
+| `payment.refunded` (`PaymentEvents.REFUNDED`, emitted by `refundPaymentWorkflow`) | Refund confirmation with the ACTUAL refunded amount (may be less than `order.total` for a partial refund) | `src/subscribers/payment-refunded.ts` → `buildRefundEmail` in `src/lib/order-email.ts` |
+| Hourly cron (`abandoned-cart-email`) | Abandoned-cart nudge — cart has email + shipping address but never paid, 3h–7d old, one email per cart (`cart.metadata.abandoned_email_at`) | `src/jobs/abandoned-cart-email.ts` → `buildAbandonedCartEmail` in `src/lib/cart-email.ts`; candidate logic is the pure `isAbandonedCandidate` in the same file |
+
+The refund and delivered subscribers each needed a `query.graph` path that
+isn't obvious - both were verified live against the local dev DB before
+shipping, not assumed from docs:
+- **Refund → order**: `payment.refunded` only gives `{ id: <payment_id> }`.
+  Filtering `order` by the NESTED relation
+  `payment_collections.payments.id` silently matches **every** order
+  (confirmed live: returned all 27 local orders for one payment id) instead
+  of narrowing - it's not a valid filter shape here. The working path is the
+  other direction: query entity `"payment"` filtered by its own `id`, then
+  read `payment_collection.order.*` (confirmed live: resolves the correct
+  single order).
+- **Delivered dedupe**: `shouldSendDeliveredEmail` only fires on the FIRST
+  observed transition into a delivered status code - re-syncing an
+  already-delivered shipment is a no-op, so Sync can be clicked repeatedly
+  without spamming the customer.
 
 Shared layout: `src/lib/email-template.ts` → `renderEmail()` — a single
 600px desktop / ≤480px mobile HTML shell (logo tile, heading, key/value

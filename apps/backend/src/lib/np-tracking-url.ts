@@ -11,12 +11,12 @@
 // reflects the searched number back into the URL, so there is no
 // shareable/deep-linkable result URL to give a customer either.
 //
-// This helper still points customers/admins at NP's own page (useful even
-// unfilled, and free if NP ever fixes prefill support) - but for the
-// CUSTOMER-FACING shipment/delivered emails, use the storefront's own
-// `/track?ttn=&lang=` redirect page instead (see apps/storefront/src/app/track/),
-// which copies the ttn to the clipboard and opens this URL, so the customer
-// only has to paste + click instead of re-typing a 14-digit number.
+// This is the single source of truth for the tracking link used EVERYWHERE
+// - customer emails and the admin extensions alike - even though the
+// customer still has to paste the number in manually on NP's page. (An
+// earlier version routed customer emails through a storefront /track page
+// that copied the ttn to the clipboard before opening this URL; that page
+// was removed by request in favor of linking straight to Nova Poshta.)
 export function npDirectTrackingUrl(ttn: string): string {
   return `https://novaposhta.ua/tracking/?cargo_number=${encodeURIComponent(ttn)}`
 }

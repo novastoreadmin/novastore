@@ -13,6 +13,7 @@
 // value, so there is NO /100 division here.
 import type { EmailLang } from "./email-i18n"
 import { renderEmail, type EmailKv, type EmailProductRow } from "./email-template"
+import { npDirectTrackingUrl } from "./np-tracking-url"
 
 export type OrderEmailItem = {
   title?: string | null
@@ -52,6 +53,12 @@ export type ShipmentEmailInput = OrderEmailInput & {
   ttn?: string | null
 }
 
+export type RefundEmailInput = {
+  order: OrderEmailInput
+  /** Amount actually refunded (whole hryvnias) - may differ from order.total for a partial refund. */
+  refundAmount: number
+}
+
 const DEFAULT_STOREFRONT_URL = process.env.STOREFRONT_URL || "http://localhost:3000"
 
 const STRINGS: Record<
@@ -87,6 +94,24 @@ const STRINGS: Record<
     ctaNoteWithTtn: string
     ctaNoteNoTtn: string
     textTrackLabel: string
+    deliveredSubject: (orderNo: string | number) => string
+    deliveredHeading: (name: string) => string
+    deliveredHeadingNoName: string
+    deliveredTextGreeting: (name: string) => string
+    deliveredTextGreetingNoName: string
+    deliveredIntro: string
+    deliveredTextIntro: string[]
+    refundSubject: (orderNo: string | number) => string
+    refundHeading: (name: string) => string
+    refundHeadingNoName: string
+    refundTextGreeting: (name: string) => string
+    refundTextGreetingNoName: string
+    refundIntro: string
+    refundTextIntro: string[]
+    labelRefundAmount: string
+    labelRefundMethod: string
+    refundMethod: string
+    ctaSupport: string
   }
 > = {
   uk: {
@@ -128,6 +153,32 @@ const STRINGS: Record<
     ctaNoteWithTtn: "Натисніть кнопку нижче, щоб перевірити статус доставки.",
     ctaNoteNoTtn: "Натисніть кнопку нижче, щоб перейти до магазину.",
     textTrackLabel: "Відстежити:",
+    deliveredSubject: (n) => `NOVA - замовлення #${n} доставлено`,
+    deliveredHeading: (name) => `${name}, ваше замовлення доставлено.`,
+    deliveredHeadingNoName: "Ваше замовлення доставлено.",
+    deliveredTextGreeting: (name) => `${name}, ваше замовлення доставлено!`,
+    deliveredTextGreetingNoName: "Ваше замовлення доставлено!",
+    deliveredIntro:
+      "Посилку отримано у відділенні Нової Пошти. Дякуємо за покупку! Якщо щось не так із замовленням — просто дайте нам знати.",
+    deliveredTextIntro: [
+      "Посилку отримано у відділенні Нової Пошти. Дякуємо за покупку! Якщо",
+      "щось не так із замовленням — просто дайте нам знати.",
+    ],
+    refundSubject: (n) => `NOVA - повернення коштів за замовленням #${n}`,
+    refundHeading: (name) => `${name}, ми повернули кошти.`,
+    refundHeadingNoName: "Ми повернули кошти.",
+    refundTextGreeting: (name) => `${name}, ми повернули кошти!`,
+    refundTextGreetingNoName: "Ми повернули кошти!",
+    refundIntro:
+      "Повернення за вашим замовленням оброблено. Кошти надійдуть на вашу картку протягом 1–3 банківських днів залежно від банку.",
+    refundTextIntro: [
+      "Повернення за вашим замовленням оброблено. Кошти надійдуть на вашу",
+      "картку протягом 1–3 банківських днів залежно від банку.",
+    ],
+    labelRefundAmount: "Сума повернення",
+    labelRefundMethod: "Спосіб повернення",
+    refundMethod: "На картку (Monobank)",
+    ctaSupport: "Звʼязатися з підтримкою",
   },
   en: {
     orderSubject: (n) => `NOVA - order #${n} confirmed`,
@@ -167,6 +218,32 @@ const STRINGS: Record<
     ctaNoteWithTtn: "Click the button below to check the delivery status.",
     ctaNoteNoTtn: "Click the button below to go to the store.",
     textTrackLabel: "Track:",
+    deliveredSubject: (n) => `NOVA - order #${n} delivered`,
+    deliveredHeading: (name) => `${name}, your order has been delivered.`,
+    deliveredHeadingNoName: "Your order has been delivered.",
+    deliveredTextGreeting: (name) => `${name}, your order has been delivered!`,
+    deliveredTextGreetingNoName: "Your order has been delivered!",
+    deliveredIntro:
+      "Your parcel was picked up at the Nova Poshta branch. Thanks for shopping with us! If anything is wrong with your order, just let us know.",
+    deliveredTextIntro: [
+      "Your parcel was picked up at the Nova Poshta branch. Thanks for shopping",
+      "with us! If anything is wrong with your order, just let us know.",
+    ],
+    refundSubject: (n) => `NOVA - refund for order #${n}`,
+    refundHeading: (name) => `${name}, we've refunded your payment.`,
+    refundHeadingNoName: "We've refunded your payment.",
+    refundTextGreeting: (name) => `${name}, we've refunded your payment!`,
+    refundTextGreetingNoName: "We've refunded your payment!",
+    refundIntro:
+      "The refund for your order has been processed. The money will arrive on your card within 1-3 business days, depending on your bank.",
+    refundTextIntro: [
+      "The refund for your order has been processed. The money will arrive on",
+      "your card within 1-3 business days, depending on your bank.",
+    ],
+    labelRefundAmount: "Refund amount",
+    labelRefundMethod: "Refund method",
+    refundMethod: "To card (Monobank)",
+    ctaSupport: "Contact support",
   },
 }
 
@@ -306,13 +383,11 @@ export function buildShipmentEmail(
   const firstName = order.shipping_address?.first_name
   const storefrontUrl = DEFAULT_STOREFRONT_URL
   const ttn = order.ttn || null
-  // Nova Poshta's own tracking page doesn't pre-fill from a URL param (see
-  // np-tracking-url.ts) - route through our own /track page instead, which
-  // copies the ttn to the clipboard and opens NP's page, so the customer
-  // only has to paste instead of re-typing a 14-digit number.
-  const trackingUrl = ttn
-    ? `${storefrontUrl}/track?ttn=${encodeURIComponent(ttn)}&lang=${lang}`
-    : storefrontUrl
+  // Links straight to Nova Poshta's own tracking page with the ttn in the
+  // URL - it doesn't pre-fill NP's search box (see np-tracking-url.ts), but
+  // the customer at least lands on the right page with the number visible
+  // to copy in. Falls back to the storefront when there's no ttn yet.
+  const trackingUrl = ttn ? npDirectTrackingUrl(ttn) : storefrontUrl
 
   const subject = s.shipmentSubject(orderNo, ttn)
 
@@ -355,6 +430,114 @@ export function buildShipmentEmail(
     products: emailProducts(items),
     ctaNote: ttn ? s.ctaNoteWithTtn : s.ctaNoteNoTtn,
     cta: { label: s.ctaTrack, url: trackingUrl },
+    storefrontUrl,
+  })
+
+  return { subject, text, html }
+}
+
+export function buildDeliveredEmail(
+  order: ShipmentEmailInput,
+  lang: EmailLang = "uk"
+): {
+  subject: string
+  text: string
+  html: string
+} {
+  const s = STRINGS[lang]
+  const orderNo = order.display_id ?? order.id
+  const currency = order.currency_code
+  const items = order.items ?? []
+  const addressLines = formatAddress(order.shipping_address)
+  const firstName = order.shipping_address?.first_name
+  const storefrontUrl = DEFAULT_STOREFRONT_URL
+  const ttn = order.ttn || null
+
+  const subject = s.deliveredSubject(orderNo)
+
+  const text = [
+    firstName ? s.deliveredTextGreeting(firstName) : s.deliveredTextGreetingNoName,
+    ``,
+    `${s.labelOrderNumber} #${orderNo}`,
+    ...(ttn ? [`${s.labelTtn}: ${ttn}`] : []),
+    `${s.labelAmount}: ${formatOrderAmount(order.total, currency)}`,
+    ...(addressLines.length
+      ? [``, s.textAddressLabel, ...addressLines.map((l) => `  ${l}`)]
+      : []),
+    ``,
+    ...s.deliveredTextIntro,
+    ``,
+    `NOVA`,
+  ].join("\n")
+
+  const kv: EmailKv[] = [
+    { label: s.labelOrderNumber, value: `#${escapeHtml(orderNo)}` },
+    ...(ttn ? [{ label: s.labelTtn, value: escapeHtml(ttn) }] : []),
+    { label: s.labelAmount, value: escapeHtml(formatOrderAmount(order.total, currency)) },
+    ...(addressLines.length
+      ? [{ label: s.labelAddress, value: addressLines.map((l) => escapeHtml(l)).join("<br/>") }]
+      : []),
+  ]
+
+  const html = renderEmail({
+    lang,
+    preheader: `${s.labelOrderNumber} #${orderNo}.`,
+    heading: firstName ? s.deliveredHeading(escapeHtml(firstName)) : s.deliveredHeadingNoName,
+    intro: s.deliveredIntro,
+    kv,
+    products: emailProducts(items),
+    cta: { label: s.ctaShop, url: storefrontUrl },
+    storefrontUrl,
+  })
+
+  return { subject, text, html }
+}
+
+export function buildRefundEmail(
+  input: RefundEmailInput,
+  lang: EmailLang = "uk"
+): {
+  subject: string
+  text: string
+  html: string
+} {
+  const s = STRINGS[lang]
+  const { order, refundAmount } = input
+  const orderNo = order.display_id ?? order.id
+  const currency = order.currency_code
+  const firstName = order.shipping_address?.first_name
+  const storefrontUrl = DEFAULT_STOREFRONT_URL
+  const amountText = formatOrderAmount(refundAmount, currency)
+
+  const subject = s.refundSubject(orderNo)
+
+  const text = [
+    firstName ? s.refundTextGreeting(firstName) : s.refundTextGreetingNoName,
+    ``,
+    `${s.labelOrderNumber} #${orderNo}`,
+    `${s.labelRefundAmount}: ${amountText}`,
+    `${s.labelRefundMethod}: ${s.refundMethod}`,
+    ``,
+    ...s.refundTextIntro,
+    ``,
+    `NOVA`,
+  ].join("\n")
+
+  // No product list here on purpose - a partial refund covering only some
+  // items would be misleading if we showed the full order's contents.
+  const kv: EmailKv[] = [
+    { label: s.labelOrderNumber, value: `#${escapeHtml(orderNo)}` },
+    { label: s.labelRefundAmount, value: escapeHtml(amountText) },
+    { label: s.labelRefundMethod, value: escapeHtml(s.refundMethod) },
+  ]
+
+  const html = renderEmail({
+    lang,
+    preheader: `${s.labelOrderNumber} #${orderNo}. ${s.labelRefundAmount} ${escapeHtml(amountText)}.`,
+    heading: firstName ? s.refundHeading(escapeHtml(firstName)) : s.refundHeadingNoName,
+    intro: s.refundIntro,
+    kv,
+    cta: { label: s.ctaSupport, url: "mailto:support@novastore.com.ua" },
     storefrontUrl,
   })
 

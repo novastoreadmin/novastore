@@ -13,7 +13,13 @@
 // snapshots are stable across runs and machines.
 import { describe, expect, it } from "vitest"
 import { buildWelcomeEmail } from "../../src/lib/customer-email"
-import { buildOrderConfirmationEmail, buildShipmentEmail } from "../../src/lib/order-email"
+import { buildAbandonedCartEmail } from "../../src/lib/cart-email"
+import {
+  buildDeliveredEmail,
+  buildOrderConfirmationEmail,
+  buildRefundEmail,
+  buildShipmentEmail,
+} from "../../src/lib/order-email"
 
 const order = {
   id: "order_snap_1",
@@ -73,6 +79,42 @@ describe("email snapshots", () => {
 
     it(`buildShipmentEmail without ttn (${lang})`, () => {
       const { subject, text, html } = buildShipmentEmail({ ...order, ttn: null }, lang)
+      expect(subject).toMatchSnapshot("subject")
+      expect(text).toMatchSnapshot("text")
+      expect(html).toMatchSnapshot("html")
+    })
+
+    it(`buildDeliveredEmail with ttn (${lang})`, () => {
+      const { subject, text, html } = buildDeliveredEmail(
+        { ...order, ttn: "20451483622811" },
+        lang
+      )
+      expect(subject).toMatchSnapshot("subject")
+      expect(text).toMatchSnapshot("text")
+      expect(html).toMatchSnapshot("html")
+    })
+
+    it(`buildRefundEmail (${lang})`, () => {
+      const { subject, text, html } = buildRefundEmail({ order, refundAmount: 2523 }, lang)
+      expect(subject).toMatchSnapshot("subject")
+      expect(text).toMatchSnapshot("text")
+      expect(html).toMatchSnapshot("html")
+    })
+
+    it(`buildAbandonedCartEmail (${lang})`, () => {
+      const { subject, text, html } = buildAbandonedCartEmail(
+        {
+          first_name: "Макс",
+          items: [
+            {
+              title: "Flash Smart Watch",
+              quantity: 1,
+              thumbnail: "https://novastore.com.ua/static/products/flash-smart-watch/1.jpg",
+            },
+          ],
+        },
+        lang
+      )
       expect(subject).toMatchSnapshot("subject")
       expect(text).toMatchSnapshot("text")
       expect(html).toMatchSnapshot("html")

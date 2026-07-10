@@ -2,7 +2,15 @@
 import { ImapFlow } from "imapflow"
 import { simpleParser } from "mailparser"
 import nodemailer from "nodemailer"
+import MailComposer from "nodemailer/lib/mail-composer"
 import { MAIL_SERVER, MailAccount } from "./mail-accounts"
+
+/**
+ * Logical mailbox name accepted by the read/delete helpers: the UI sends
+ * "SENT" and the real folder name is resolved per server (Dovecot/cPanel
+ * uses "INBOX.Sent", GreenMail plain "Sent") - never hardcode it client-side.
+ */
+export const SENT_MAILBOX = "SENT"
 
 export type Addr = { name?: string; address?: string }
 export type MessageSummary = {
@@ -37,6 +45,26 @@ const addrs = (a: any): Addr[] =>
 
 const toIso = (d: any): string | null => (d ? new Date(d).toISOString() : null)
 
+/**
+ * Resolves the logical "SENT" name to the server's real Sent folder:
+ * special-use \Sent first, then common names, creating "Sent" as a last
+ * resort (GreenMail starts with INBOX only). Any other value passes through.
+ */
+async function resolveMailbox(client: ImapFlow, mailbox: string): Promise<string> {
+  if (mailbox !== SENT_MAILBOX) return mailbox
+  const boxes = await client.list()
+  const bySpecialUse = boxes.find((b) => b.specialUse === "\\Sent")
+  if (bySpecialUse) return bySpecialUse.path
+  const byName = boxes.find((b) => /^(INBOX[./])?Sent( (Items|Messages))?$/i.test(b.path))
+  if (byName) return byName.path
+  try {
+    await client.mailboxCreate("Sent")
+  } catch {
+    /* already exists / not permitted - the open below reports the real error */
+  }
+  return "Sent"
+}
+
 export async function listMessages(
   account: MailAccount,
   mailbox = "INBOX",
@@ -44,7 +72,15 @@ export async function listMessages(
 ): Promise<MessageSummary[]> {
   const client = imapClient(account)
   await client.connect()
-  const lock = await client.getMailboxLock(mailbox)
+  let lock
+  try {
+    lock = await client.getMailboxLock(await resolveMailbox(client, mailbox))
+  } catch {
+    // Missing folder (e.g. Sent before the first ever send) is an empty
+    // list, not a 502 - the folder appears with the first stored copy.
+    await client.logout()
+    return []
+  }
   const out: MessageSummary[] = []
   try {
     const total = client.mailbox && typeof client.mailbox !== "boolean" ? client.mailbox.exists : 0
@@ -82,7 +118,7 @@ export async function getMessage(
 ): Promise<MessageFull | null> {
   const client = imapClient(account)
   await client.connect()
-  const lock = await client.getMailboxLock(mailbox)
+  const lock = await client.getMailboxLock(await resolveMailbox(client, mailbox))
   try {
     const msg = await client.fetchOne(
       `${uid}`,
@@ -121,13 +157,25 @@ export async function deleteMessage(
 ): Promise<void> {
   const client = imapClient(account)
   await client.connect()
-  const lock = await client.getMailboxLock(mailbox)
+  const lock = await client.getMailboxLock(await resolveMailbox(client, mailbox))
   try {
     // \Deleted + expunge — Dovecot/GreenMail both honour this as a hard delete
     // from the mailbox (no separate Trash handling on purpose: keep it simple).
     await client.messageDelete(`${uid}`, { uid: true })
   } finally {
     lock.release()
+    await client.logout()
+  }
+}
+
+/** Stores an already-built RFC822 message in the account's Sent folder. */
+async function appendToSent(account: MailAccount, raw: Buffer): Promise<void> {
+  const client = imapClient(account)
+  await client.connect()
+  try {
+    const sent = await resolveMailbox(client, SENT_MAILBOX)
+    await client.append(sent, raw, ["\\Seen"])
+  } finally {
     await client.logout()
   }
 }
@@ -146,13 +194,42 @@ export async function sendMail(
     greetingTimeout: 10_000,
     socketTimeout: 60_000,
   })
-  const info = await transport.sendMail({
+
+  // Build the RFC822 message ONCE so the copy stored in Sent is byte-for-byte
+  // what the recipient got (SMTP alone never populates the IMAP Sent folder -
+  // the app must APPEND the copy itself, like every desktop mail client does).
+  const node = new MailComposer({
     from: account.email,
     to: opts.to,
     cc: opts.cc,
     subject: opts.subject,
     text: opts.text,
     html: opts.html,
+  }).compile()
+  const messageId = node.messageId()
+  const raw: Buffer = await new Promise((resolve, reject) =>
+    node.build((err, message) => (err ? reject(err) : resolve(message)))
+  )
+
+  await transport.sendMail({
+    envelope: {
+      from: account.email,
+      to: [opts.to, ...(opts.cc ? [opts.cc] : [])],
+    },
+    raw,
   })
-  return { messageId: info.messageId }
+
+  try {
+    await appendToSent(account, raw)
+  } catch (err) {
+    // The mail already left - a failed Sent copy must not fail the send.
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[mail] Could not store a copy in Sent for ${account.email}: ${
+        err instanceof Error ? err.message : err
+      }`
+    )
+  }
+
+  return { messageId }
 }
