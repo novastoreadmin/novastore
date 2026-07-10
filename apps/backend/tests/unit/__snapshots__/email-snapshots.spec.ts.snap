@@ -16,8 +16,21 @@ exports[`email snapshots > buildAbandonedCartEmail (en) > html 1`] = `
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
@@ -63,10 +76,10 @@ exports[`email snapshots > buildAbandonedCartEmail (en) > html 1`] = `
     </table></td></tr>
           <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
       
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000/checkout?cart_id=cart_snap_1" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Finish checkout</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000/checkout?cart_id=cart_snap_1" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Finish checkout</a>
           </td>
         </tr>
       </table></td></tr>
@@ -123,8 +136,21 @@ exports[`email snapshots > buildAbandonedCartEmail (uk) > html 1`] = `
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
@@ -170,10 +196,10 @@ exports[`email snapshots > buildAbandonedCartEmail (uk) > html 1`] = `
     </table></td></tr>
           <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
       
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000/checkout?cart_id=cart_snap_1" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Завершити оформлення</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000/checkout?cart_id=cart_snap_1" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Завершити оформлення</a>
           </td>
         </tr>
       </table></td></tr>
@@ -230,8 +256,21 @@ exports[`email snapshots > buildDeliveredEmail with ttn (en) > html 1`] = `
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
@@ -301,10 +340,10 @@ exports[`email snapshots > buildDeliveredEmail with ttn (en) > html 1`] = `
     </table></td></tr>
           <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
       
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Go to store</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Go to store</a>
           </td>
         </tr>
       </table></td></tr>
@@ -371,8 +410,21 @@ exports[`email snapshots > buildDeliveredEmail with ttn (uk) > html 1`] = `
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
@@ -442,10 +494,10 @@ exports[`email snapshots > buildDeliveredEmail with ttn (uk) > html 1`] = `
     </table></td></tr>
           <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
       
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Перейти до магазину</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Перейти до магазину</a>
           </td>
         </tr>
       </table></td></tr>
@@ -512,8 +564,21 @@ exports[`email snapshots > buildOrderConfirmationEmail (en) > html 1`] = `
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
@@ -577,10 +642,10 @@ exports[`email snapshots > buildOrderConfirmationEmail (en) > html 1`] = `
     </table></td></tr>
           <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
       
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Go to store</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Go to store</a>
           </td>
         </tr>
       </table></td></tr>
@@ -652,8 +717,21 @@ exports[`email snapshots > buildOrderConfirmationEmail (uk) > html 1`] = `
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
@@ -717,10 +795,10 @@ exports[`email snapshots > buildOrderConfirmationEmail (uk) > html 1`] = `
     </table></td></tr>
           <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
       
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Перейти до магазину</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Перейти до магазину</a>
           </td>
         </tr>
       </table></td></tr>
@@ -792,8 +870,21 @@ exports[`email snapshots > buildRefundEmail (en) > html 1`] = `
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
@@ -843,10 +934,10 @@ exports[`email snapshots > buildRefundEmail (en) > html 1`] = `
           
           <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
       
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="mailto:support@novastore.com.ua" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Contact support</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="mailto:support@novastore.com.ua" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Contact support</a>
           </td>
         </tr>
       </table></td></tr>
@@ -906,8 +997,21 @@ exports[`email snapshots > buildRefundEmail (uk) > html 1`] = `
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
@@ -957,10 +1061,10 @@ exports[`email snapshots > buildRefundEmail (uk) > html 1`] = `
           
           <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
       
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="mailto:support@novastore.com.ua" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Звʼязатися з підтримкою</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="mailto:support@novastore.com.ua" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Звʼязатися з підтримкою</a>
           </td>
         </tr>
       </table></td></tr>
@@ -1020,8 +1124,21 @@ exports[`email snapshots > buildShipmentEmail with ttn (en) > html 1`] = `
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
@@ -1091,10 +1208,10 @@ exports[`email snapshots > buildShipmentEmail with ttn (en) > html 1`] = `
     </table></td></tr>
           <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
       <p style="margin:0 0 20px;font-size:14px;color:#52525b;line-height:1.6;">Click the button below to check the delivery status.</p>
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="https://novaposhta.ua/tracking/?cargo_number=20451483622811" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Track order</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="https://novaposhta.ua/tracking/?cargo_number=20451483622811" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Track order</a>
           </td>
         </tr>
       </table></td></tr>
@@ -1163,8 +1280,21 @@ exports[`email snapshots > buildShipmentEmail with ttn (uk) > html 1`] = `
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
@@ -1234,10 +1364,10 @@ exports[`email snapshots > buildShipmentEmail with ttn (uk) > html 1`] = `
     </table></td></tr>
           <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
       <p style="margin:0 0 20px;font-size:14px;color:#52525b;line-height:1.6;">Натисніть кнопку нижче, щоб перевірити статус доставки.</p>
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="https://novaposhta.ua/tracking/?cargo_number=20451483622811" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Відстежити замовлення</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="https://novaposhta.ua/tracking/?cargo_number=20451483622811" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Відстежити замовлення</a>
           </td>
         </tr>
       </table></td></tr>
@@ -1306,8 +1436,21 @@ exports[`email snapshots > buildShipmentEmail without ttn (en) > html 1`] = `
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
@@ -1371,10 +1514,10 @@ exports[`email snapshots > buildShipmentEmail without ttn (en) > html 1`] = `
     </table></td></tr>
           <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
       <p style="margin:0 0 20px;font-size:14px;color:#52525b;line-height:1.6;">Click the button below to go to the store.</p>
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Track order</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Track order</a>
           </td>
         </tr>
       </table></td></tr>
@@ -1440,8 +1583,21 @@ exports[`email snapshots > buildShipmentEmail without ttn (uk) > html 1`] = `
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
@@ -1505,10 +1661,10 @@ exports[`email snapshots > buildShipmentEmail without ttn (uk) > html 1`] = `
     </table></td></tr>
           <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
       <p style="margin:0 0 20px;font-size:14px;color:#52525b;line-height:1.6;">Натисніть кнопку нижче, щоб перейти до магазину.</p>
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Відстежити замовлення</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Відстежити замовлення</a>
           </td>
         </tr>
       </table></td></tr>
@@ -1574,8 +1730,21 @@ exports[`email snapshots > buildWelcomeEmail (en) > html 1`] = `
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
@@ -1607,10 +1776,10 @@ exports[`email snapshots > buildWelcomeEmail (en) > html 1`] = `
           
           <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
       
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Browse the catalog</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Browse the catalog</a>
           </td>
         </tr>
       </table></td></tr>
@@ -1667,8 +1836,21 @@ exports[`email snapshots > buildWelcomeEmail (uk) > html 1`] = `
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
@@ -1700,10 +1882,10 @@ exports[`email snapshots > buildWelcomeEmail (uk) > html 1`] = `
           
           <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
       
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">До каталогу</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">До каталогу</a>
           </td>
         </tr>
       </table></td></tr>

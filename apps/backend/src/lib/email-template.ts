@@ -128,10 +128,10 @@ export function renderEmail(opts: RenderEmailOptions): string {
   const cta = opts.cta
     ? `
       ${opts.ctaNote ? `<p style="margin:0 0 20px;font-size:14px;color:${TEXT_MUTED};line-height:1.6;">${opts.ctaNote}</p>` : ""}
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
         <tr>
-          <td style="border-radius:999px;background:${BLACK};">
-            <a href="${opts.cta.url}" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:${WHITE};text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">${opts.cta.label}</a>
+          <td class="nova-cta-cell" style="border-radius:999px;background:${BLACK};">
+            <a href="${opts.cta.url}" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:${WHITE};text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">${opts.cta.label}</a>
           </td>
         </tr>
       </table>`
@@ -152,8 +152,21 @@ export function renderEmail(opts: RenderEmailOptions): string {
   @media (max-width: 480px) {
     .nova-container { width: 100% !important; }
     .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
     .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
-    .nova-cta-link { display:block !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
     .nova-product-title { max-width: 160px !important; }
   }
 </style>
