@@ -16,6 +16,7 @@ import {
   toast,
 } from "@medusajs/ui"
 import { NP_STATUS_HEX, NpStatusBadge, type NpStatusKey } from "../../lib/np-status-badge"
+import { npDirectTrackingUrl } from "../../lib/np-tracking-url"
 import {
   QueryClient,
   QueryClientProvider,
@@ -548,7 +549,7 @@ const TrackingPanel = ({
       </div>
       {activity.ttn && (
         <a
-          href={`https://novaposhta.ua/tracking/?cargo_number=${activity.ttn}`}
+          href={npDirectTrackingUrl(activity.ttn)}
           target="_blank"
           rel="noreferrer"
           className="text-ui-fg-interactive hover:underline font-mono text-sm"

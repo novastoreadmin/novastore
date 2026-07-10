@@ -17,6 +17,11 @@ export interface RegisterInput {
   first_name: string;
   last_name: string;
   phone?: string;
+  /** Storefront language ("uk" | "en") at signup time - stamped onto
+   * customer.metadata.locale so transactional emails (welcome, order
+   * confirmation, shipment) go out in the language the customer chose.
+   * See apps/backend/src/lib/email-i18n.ts for how the backend reads it. */
+  locale?: string;
 }
 
 /**
@@ -33,6 +38,7 @@ export async function registerCustomer(input: RegisterInput): Promise<Customer> 
     first_name: input.first_name,
     last_name: input.last_name,
     phone: input.phone || undefined,
+    metadata: input.locale ? { locale: input.locale } : undefined,
   });
   // The registration token is single-purpose; a login issues the session token.
   await sdk.auth.login("customer", "emailpass", {

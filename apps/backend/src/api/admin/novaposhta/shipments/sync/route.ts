@@ -4,9 +4,11 @@ import type { IFulfillmentModuleService } from "@medusajs/framework/types"
 import {
   appendAudit,
   isNpAdminEnabled,
+  shouldSendDeliveredEmail,
   withRetries,
 } from "../../../../../lib/novaposhta-admin"
 import { getNovaPoshtaClient } from "../../../../../lib/novaposhta"
+import { sendDeliveredEmailForFulfillments } from "../../../../../lib/send-delivered-email"
 
 /**
  * POST /admin/novaposhta/shipments/sync   { ids: string[] }
@@ -64,9 +66,13 @@ export async function POST(
     const actor = req.auth_context?.actor_id ?? "unknown-admin"
     const syncedAt = new Date().toISOString()
     const results: { fulfillment_id: string; ttn: string; np_status: string | null; np_status_code: string | null; synced_at: string }[] = []
+    const deliveredIds: string[] = []
 
     for (const f of withTtn) {
       const t = tracked.get(f.ttn)
+      if (shouldSendDeliveredEmail(f.metadata, t?.statusCode ?? null)) {
+        deliveredIds.push(f.id)
+      }
       const metadata = appendAudit(
         {
           ...(f.metadata ?? {}),
@@ -91,6 +97,20 @@ export async function POST(
         .join(", ")}`
     )
     res.json({ synced: results })
+
+    // Fire-and-forget: send "delivered" emails after responding to the admin
+    // UI - Sync must never be slowed down or failed by mail delivery.
+    // shouldSendDeliveredEmail() above already guarantees each id is a
+    // first-time transition, so this always sends.
+    if (deliveredIds.length) {
+      sendDeliveredEmailForFulfillments(req.scope, deliveredIds, logger).catch((err) => {
+        logger.error(
+          `[NovaPoshta admin] delivered-email batch failed: ${
+            err instanceof Error ? err.message : String(err)
+          }`
+        )
+      })
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     logger.error(`[NovaPoshta admin] sync failed: ${message}`)

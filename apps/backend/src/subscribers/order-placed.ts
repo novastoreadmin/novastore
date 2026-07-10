@@ -1,5 +1,6 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { resolveEmailLang } from "../lib/email-i18n"
 import { MAIL_ACCOUNTS, getAccount } from "../lib/mail-accounts"
 import { sendMail } from "../lib/mail-client"
 import { buildOrderConfirmationEmail, formatOrderAmount } from "../lib/order-email"
@@ -41,6 +42,7 @@ export default async function orderPlacedHandler({
         "items.variant.*",
         "items.variant.product.*",
         "shipping_address.*",
+        "metadata",
       ],
       filters: {
         id: orderId,
@@ -87,7 +89,8 @@ export default async function orderPlacedHandler({
     }
 
     try {
-      const email = buildOrderConfirmationEmail(order as any)
+      const lang = resolveEmailLang((order.metadata as Record<string, unknown> | null)?.locale)
+      const email = buildOrderConfirmationEmail(order as any, lang)
       const { messageId } = await sendMail(account, {
         to: order.email,
         subject: email.subject,

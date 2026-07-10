@@ -13,6 +13,7 @@
  */
 
 import type { NpTrackedDocument } from "../modules/fulfillment-novaposhta/client"
+import { npDirectTrackingUrl } from "./np-tracking-url"
 
 /* ------------------------------- feature flag ------------------------------ */
 
@@ -124,9 +125,7 @@ export function toShipmentRow(
     destination,
     created_at: fulfillment.created_at ? new Date(fulfillment.created_at).toISOString() : null,
     canceled: !!fulfillment.canceled_at,
-    tracking_url:
-      str(label?.tracking_url) ||
-      `https://novaposhta.ua/tracking/?cargo_number=${ttn}`,
+    tracking_url: str(label?.tracking_url) || npDirectTrackingUrl(ttn),
     label_url: str(label?.label_url) || null,
     np_status: str(meta.np_status) || null,
     np_status_code: str(meta.np_status_code) || null,
@@ -203,6 +202,22 @@ export function statusTone(
   if (["9", "10", "11", "106"].includes(code)) return "green" // received
   if (["2", "3", "102", "103", "105", "108"].includes(code)) return "red" // deleted / not found / refused / returned
   return "orange" // in transit / at warehouse
+}
+
+/** NP status codes that mean "the recipient has the parcel". */
+const DELIVERED_STATUS_CODES = ["9", "10", "11", "106"]
+
+/**
+ * Whether Sync should send the "delivered" email for a fulfillment: true
+ * only on the FIRST observed transition into a delivered status code, so a
+ * later re-sync of an already-delivered shipment never sends a duplicate.
+ */
+export function shouldSendDeliveredEmail(
+  prevMetadata: Record<string, unknown> | null | undefined,
+  newStatusCode: string | null | undefined
+): boolean {
+  if (!newStatusCode || !DELIVERED_STATUS_CODES.includes(newStatusCode)) return false
+  return !prevMetadata?.np_delivered_email_at
 }
 
 /* ------------------------------ edit validation ----------------------------- */

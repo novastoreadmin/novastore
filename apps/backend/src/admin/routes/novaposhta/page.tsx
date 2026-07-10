@@ -24,6 +24,7 @@ import {
 } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
 import { NpStatusBadge, npStatusKey } from "../../lib/np-status-badge"
+import { npDirectTrackingUrl } from "../../lib/np-tracking-url"
 import { sdk } from "../../lib/sdk"
 
 /**
@@ -319,7 +320,7 @@ const NovaPoshtaPageInner = () => {
                 <Table.Row key={d.ref}>
                   <Table.Cell>
                     <a
-                      href={`https://novaposhta.ua/tracking/?cargo_number=${d.ttn}`}
+                      href={npDirectTrackingUrl(d.ttn)}
                       target="_blank"
                       rel="noreferrer"
                       className="text-ui-fg-interactive hover:underline font-mono"
