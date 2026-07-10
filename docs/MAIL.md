@@ -151,6 +151,14 @@ throws) — a down mail server must never look like a failed checkout or
 registration. Unit tests: `tests/unit/order-email.test.ts`,
 `tests/unit/customer-email.test.ts`, `tests/unit/email-template.spec.ts`.
 
+**Layout is frozen by snapshot tests** (`tests/unit/email-snapshots.spec.ts`,
+committed under `tests/unit/__snapshots__/`) — every email builder × language
+renders to a fixed HTML/text snapshot, so any unintended layout change shows
+up as a test failure instead of a surprise in production. When you
+deliberately change the layout, run
+`npx vitest run tests/unit/email-snapshots.spec.ts -u` and review the diff
+by eye before committing the updated snapshot.
+
 To preview locally: trigger the event (register an account, complete
 checkout, or run `npx medusa exec ./np-test-shipments.ts` for a fake
 shipment), then open admin → **Mail** and read the message — the HTML

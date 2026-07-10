@@ -31,6 +31,7 @@ only briefly in this README.
 - [docs/NOVAPOSHTA-ADMIN.md](docs/NOVAPOSHTA-ADMIN.md) — Nova Poshta admin extension (shipments, sync, editing)
 - [docs/UX-PARITY-REPORT.md](docs/UX-PARITY-REPORT.md) — historical snapshot: UX-parity audit vs. eightsleep.com
 - [docs/EMAIL-NOTIFICATIONS-PLAN.md](docs/EMAIL-NOTIFICATIONS-PLAN.md) — implementation plan: transactional emails (welcome, order paid, order shipped)
+- [docs/EMAIL-FOLLOWUPS-PLAN.md](docs/EMAIL-FOLLOWUPS-PLAN.md) — implementation plan: email follow-ups (snapshots, Sent folder, delivered/refund/abandoned-cart emails, tracking deep-link)
 
 ## Project Structure
 

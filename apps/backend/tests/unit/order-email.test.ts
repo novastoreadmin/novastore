@@ -189,11 +189,14 @@ describe("buildShipmentEmail", () => {
     expect(subject).toContain("20451483622811")
   })
 
-  it("includes the tracking number and a Nova Poshta tracking link", () => {
+  it("includes the tracking number and routes the CTA through our /track redirect page", () => {
+    // Nova Poshta's own tracking page doesn't accept the ttn via URL param
+    // (see src/lib/np-tracking-url.ts) - the email links to our own /track
+    // page instead, which copies the ttn and opens NP for the customer.
     const { text, html } = buildShipmentEmail(shippedOrder)
     expect(text).toContain("20451483622811")
     expect(html).toContain("20451483622811")
-    expect(html).toContain("novaposhta.ua/tracking/?cargo_number=20451483622811")
+    expect(html).toContain("http://localhost:3000/track?ttn=20451483622811&lang=uk")
   })
 
   it("shows the amount as paid", () => {

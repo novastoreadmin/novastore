@@ -13,6 +13,7 @@
  */
 
 import type { NpTrackedDocument } from "../modules/fulfillment-novaposhta/client"
+import { npDirectTrackingUrl } from "./np-tracking-url"
 
 /* ------------------------------- feature flag ------------------------------ */
 
@@ -124,9 +125,7 @@ export function toShipmentRow(
     destination,
     created_at: fulfillment.created_at ? new Date(fulfillment.created_at).toISOString() : null,
     canceled: !!fulfillment.canceled_at,
-    tracking_url:
-      str(label?.tracking_url) ||
-      `https://novaposhta.ua/tracking/?cargo_number=${ttn}`,
+    tracking_url: str(label?.tracking_url) || npDirectTrackingUrl(ttn),
     label_url: str(label?.label_url) || null,
     np_status: str(meta.np_status) || null,
     np_status_code: str(meta.np_status_code) || null,

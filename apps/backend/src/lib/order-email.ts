@@ -306,7 +306,13 @@ export function buildShipmentEmail(
   const firstName = order.shipping_address?.first_name
   const storefrontUrl = DEFAULT_STOREFRONT_URL
   const ttn = order.ttn || null
-  const trackingUrl = ttn ? `https://novaposhta.ua/tracking/?cargo_number=${encodeURIComponent(ttn)}` : storefrontUrl
+  // Nova Poshta's own tracking page doesn't pre-fill from a URL param (see
+  // np-tracking-url.ts) - route through our own /track page instead, which
+  // copies the ttn to the clipboard and opens NP's page, so the customer
+  // only has to paste instead of re-typing a 14-digit number.
+  const trackingUrl = ttn
+    ? `${storefrontUrl}/track?ttn=${encodeURIComponent(ttn)}&lang=${lang}`
+    : storefrontUrl
 
   const subject = s.shipmentSubject(orderNo, ttn)
 
