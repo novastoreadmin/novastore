@@ -15,6 +15,22 @@ Premium electronics ecommerce platform built with Medusa v2 + Next.js 15.
 | State | Zustand (cart, UI), React Query |
 | Monorepo | Turborepo + npm workspaces |
 
+## Documentation
+
+In-depth docs live under `docs/` — including the Nova Poshta delivery integration,
+Monobank payments, i18n, and the Mail/Analytics/Nova Poshta admin extensions summarized
+only briefly in this README.
+
+- [docs/.instructions.md](docs/.instructions.md) — local dev startup guide (install, migrate, seed, run)
+- [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md) — comprehensive architecture/design/feature reference
+- [docs/DEPLOY.md](docs/DEPLOY.md) — production deploy guide for the droplet
+- [docs/DATABASE.md](docs/DATABASE.md) — production database connection & query reference
+- [docs/MAIL.md](docs/MAIL.md) — corporate mail admin feature (local GreenMail + production cPanel setup)
+- [docs/TESTING.md](docs/TESTING.md) — unit/integration/E2E test suite guide
+- [docs/ANALYTICS-ADMIN.md](docs/ANALYTICS-ADMIN.md) — Analytics admin extension (e-commerce, logistics, behavior, customers)
+- [docs/NOVAPOSHTA-ADMIN.md](docs/NOVAPOSHTA-ADMIN.md) — Nova Poshta admin extension (shipments, sync, editing)
+- [docs/UX-PARITY-REPORT.md](docs/UX-PARITY-REPORT.md) — historical snapshot: UX-parity audit vs. eightsleep.com
+
 ## Project Structure
 
 ```

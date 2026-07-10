@@ -5,11 +5,16 @@ storefront (`apps/storefront`). Three tiers, run bottom-up in CI or locally:
 
 | Tier | Tool | Needs | Files | Count |
 |---|---|---|---|---|
-| Unit | Vitest | nothing (pure functions) | `apps/backend/tests/unit/*.test.ts` | 37 |
+| Unit | Vitest | nothing (pure functions) | `apps/backend/tests/unit/*.test.ts` | 106 |
 | Integration | Vitest + `fetch` | isolated test backend (`:9002`) + Postgres (+ GreenMail for the email test) | `apps/backend/tests/integration/*.test.ts` | 15 |
 | E2E | Playwright | isolated test backend (`:9002`) + storefront (`:3002`) + Postgres | `apps/storefront/tests/e2e/*.spec.ts` | 15 |
 
-**Total: 67 tests, all passing as of this writing.**
+**Total: 136 tests (106 unit + 15 integration + 15 E2E), unit tier verified passing as of
+this writing (`npx vitest run tests/unit` from `apps/backend` → 8 files, 106 passed). The
+unit count grew from the original 37 as Nova Poshta admin/tracking/transliteration and
+Analytics coverage (`analytics.spec.ts`, `novaposhta-admin.spec.ts`,
+`novaposhta-tracking.spec.ts`, `novaposhta-transliterate.spec.ts`, `medusa-config.test.ts`)
+were added.
 
 ## The isolated test stack — read this first
 
@@ -80,8 +85,8 @@ Unit tests don't need any of this — they're pure functions, no server, no DB.
 
 ```bash
 cd apps/backend
-npm run test:unit                                          # no servers needed — 25 tests, ~1s
-npm run test:integration                                   # needs test backend :9002 up — 9 tests, ~3s
+npm run test:unit                                          # no servers needed — 106 tests, ~6s
+npm run test:integration                                   # needs test backend :9002 up — 15 tests, ~3s
 # or override the target explicitly:
 TEST_BACKEND_URL=http://localhost:9002 npm run test:integration
 
@@ -196,6 +201,14 @@ apps/backend/
     catalog.test.ts                   toStoreMinor pricing math
     runtime-config.test.ts            payment-provider gating + secret fallback logic
     order-email.test.ts               email builder: totals (no /100), items, escaping
+    medusa-config.test.ts             module/config wiring sanity checks
+    analytics.spec.ts                 e-commerce/logistics/behavior/customers aggregations,
+                                       Plan-vs-Fact, ramp-up (src/lib/analytics.ts)
+    novaposhta-admin.spec.ts          NP admin extension: row mapping, filters, edit
+                                       validation, audit trail, feature flag, retries
+    novaposhta-tracking.spec.ts       trackDocuments vs. mocked NP API: batching >100,
+                                       dedup, mapping, error handling
+    novaposhta-transliterate.spec.ts  Cyrillic → Latin transliteration for NP payloads
   tests/integration/
     helpers.ts                        BASE_URL (:9002) + admin login + publishable-key fetch
     products.test.ts                  store product listing/detail
@@ -234,8 +247,9 @@ What this suite gives you:
   minute combined — cheap enough to run before every push.
 - Full isolation from the real `nova_store` database — running the suite can never again
   leave test orders/customers in the data the admin panel shows you.
-- 46/46 passing on a clean run of the actual current codebase, verified independently (not
-  just trusted from the agents' own reports).
+- 106/106 unit tests passing on a clean run of the actual current codebase (`npx vitest run
+  tests/unit` from `apps/backend`), verified independently (not just trusted from the
+  agents' own reports).
 
 **A note on `npm install` in this monorepo:** getting the isolated test stack running
 surfaced a real, separate bug — `@medusajs/medusa` wasn't hoisted to the root

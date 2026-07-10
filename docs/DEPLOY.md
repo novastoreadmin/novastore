@@ -35,6 +35,20 @@ git pull
 (`MEDUSA_BACKEND_URL` — він вшивається в збірку адмінки).
 
 ```bash
+# 2.0. ОБОВ'ЯЗКОВО: залежності в КОРЕНІ монорепо перед білдом
+#      (Rollup резолвить імпорти адмін-розширень типу @deck.gl/*,
+#      @googlemaps/js-api-loader з КОРЕНЕВОГО node_modules, не з
+#      apps/backend/node_modules — пропуск цього кроку одного разу викликав
+#      реальний прод-даунтайм 502, бо адмін-білд падав на резолві цих пакетів)
+cd ~/novastore
+npm ci --legacy-peer-deps
+
+# ^ саме `npm ci`, а не `npm install` — install може дописати/змінити
+#   package-lock.json, і наступний `git pull`/`git switch` на сервері
+#   впирається в "брудний" lock-файл (це вже траплялось повторно). `ci`
+#   встановлює строго за lock-файлом і нічого в ньому не змінює.
+#   `--legacy-peer-deps` потрібен через react-dom@^19 vs @medusajs/ui peer на React 18.
+
 cd ~/novastore/apps/backend
 
 # 2.1. Збірка (створює .medusa/server заново, стирає стару)
@@ -54,8 +68,9 @@ ln -sfn /home/nova/novastore/apps/backend/static /home/nova/novastore/apps/backe
 #      виконувати безпечно завжди — no-op, коли міграцій немає)
 NODE_ENV=production npx medusa db:migrate
 
-# 2.6. Рестарт
-pm2 restart medusa
+# 2.6. Рестарт (--update-env ОБОВ'ЯЗКОВО, якщо .env міняли — звичайний
+#      `pm2 restart` НЕ перечитує змінні середовища, лишає старі в пам'яті процесу)
+pm2 restart medusa --update-env
 
 # 2.7. Перевірка
 curl -s http://127.0.0.1:9000/health        # → OK
@@ -111,8 +126,14 @@ Runtime-змінні бекенда читаються при старті — �
 ```bash
 nano ~/novastore/apps/backend/.env
 cp ~/novastore/apps/backend/.env ~/novastore/apps/backend/.medusa/server/.env.production
-pm2 restart medusa
+pm2 restart medusa --update-env
 ```
+
+Той самий патерн (copy до `.medusa/server/.env.production` + `pm2 restart medusa
+--update-env`) застосовується до `GOOGLE_MAPS_API_KEY` / `GOOGLE_MAPS_MAP_ID` (карта
+логістики в Analytics — опційно, без ключа рендериться SVG-фолбек, rebuild не потрібен,
+див. §5б-подібний випадок нижче), `NOVAPOSHTA_API_KEY` (розділ 5б) і всіх `MAIL_*`
+змінних (див. `MAIL.md`).
 
 Для сторфронта runtime-змінна лише `REVALIDATE_SECRET` — редагуєте
 `.env.local` + `pm2 restart storefront`. Усе з префіксом `NEXT_PUBLIC_` — через build (розділ 3).
@@ -138,6 +159,60 @@ NP_AUTO_TTN=true                  # false = створювати ТТН вруч
 ТТН створюється при створенні fulfillment (автоматично після оплати замовлення,
 якщо NP_AUTO_TTN не false) і з'являється в кабінеті new.novaposhta.ua. Скасування
 fulfillment в адмінці видаляє ТТН у НП.
+
+## 5в. Monobank (оплата)
+
+Env бекенда (runtime — `cp` + `pm2 restart medusa`):
+
+```bash
+MONO_TOKEN=...                 # токен еквайрингу з web.monobank.ua
+MONO_PAYMENT_TYPE=hold         # hold = блокування коштів до 9 днів, списання при відправці
+                               # debit = миттєве списання (дефолт, якщо не задано)
+MONO_AUTO_FINALIZE=true        # false = знімати кошти вручну з адмінки (Order → Payments → Capture)
+```
+
+Як працює:
+- Вебхуки приходять на `https://api.novastore.com.ua/mono/webhook` (синхронний роут:
+  перевіряє ECDSA-підпис X-Sign по raw body, статус звіряє з API, при помилці
+  відповідає не-200 — Monobank ретраїть до 3 разів). Всі доставки логуються
+  (`pm2 logs medusa | grep Monobank`).
+- `hold`: кошти блокуються при оплаті; **списання відбувається автоматично, коли
+  замовлення позначене відправленим** (shipment.created → finalize). Скасування до
+  відправки — нічого не робимо, банк сам знімає холд; після списання — повернення
+  через refund в адмінці.
+- Збережені картки: покупець ставить галочку на чекауті → картка токенізується в
+  Monobank (walletId = customer id, на нашому боці нічого не зберігається). Керування:
+  `GET/DELETE /store/monobank/cards` (тільки власник, через сесію покупця).
+- `expired` вебхуком не приходить — його добирає полінг сторінки payment-return.
+
+### Кнопка monoPay (JS-віджет із QR)
+
+Опційна. Без цих змінних чекаут автоматично використовує hosted-сторінку оплати.
+
+```bash
+MONOPAY_KEY_ID=...          # keyId зареєстрованого ключа (GET /api/merchant/monopay/pubkey-list)
+MONOPAY_PRIVATE_KEY=...     # приватний ключ ECDSA P-256 у PEM, закодований base64 одним рядком
+```
+
+Як отримати ключі (один раз):
+
+```bash
+# 1. Згенерувати пару ключів P-256
+openssl ecparam -genkey -name prime256v1 -noout -out monopay-priv.pem
+openssl ec -in monopay-priv.pem -pubout -out monopay-pub.pem
+
+# 2. Зареєструвати ПУБЛІЧНИЙ ключ (monopay-pub.pem) у Monobank —
+#    кабінет web.monobank.ua / підтримка еквайрингу (кнопка monopay у беті).
+
+# 3. Отримати keyId зареєстрованого ключа:
+curl -H "X-Token: $MONO_TOKEN" https://api.monobank.ua/api/merchant/monopay/pubkey-list
+
+# 4. Приватний ключ в env одним рядком:
+base64 -w0 monopay-priv.pem   # → значення MONOPAY_PRIVATE_KEY
+```
+
+Самоперевірка після деплою: `OPTIONS /store/monobank/widget-params` (з publishable
+key) → `{"configured":true,...}` означає, що keyId знайдений у списку Monobank.
 
 ## 6. Управління товарами
 
