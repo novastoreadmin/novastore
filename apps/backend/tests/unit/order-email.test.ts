@@ -1,4 +1,4 @@
-// Unit tests for the order-confirmation email builder (src/lib/order-email.ts).
+// Unit tests for the order-related email builders (src/lib/order-email.ts).
 //
 // Guards two specifics of this store:
 //  1. Money is stored in WHOLE hryvnias (see toStoreMinor in src/data/catalog.ts) -
@@ -9,6 +9,7 @@
 import { describe, expect, it } from "vitest"
 import {
   buildOrderConfirmationEmail,
+  buildShipmentEmail,
   escapeHtml,
   formatOrderAmount,
 } from "../../src/lib/order-email"
@@ -70,7 +71,7 @@ describe("escapeHtml", () => {
 describe("buildOrderConfirmationEmail", () => {
   it("puts the order number in the subject", () => {
     const { subject } = buildOrderConfirmationEmail(baseOrder)
-    expect(subject).toContain("Order #42")
+    expect(subject).toContain("#42")
   })
 
   it("falls back to the order id when display_id is missing", () => {
@@ -86,8 +87,7 @@ describe("buildOrderConfirmationEmail", () => {
     expect(text).toContain("Hagibis USB-C Hub x2")
     expect(text).toContain("1900.00 UAH") // 950 * 2, no /100
     expect(html).toContain("Hagibis USB-C Hub")
-    expect(html).toContain("x2")
-    expect(html).toContain("1900.00 UAH")
+    expect(html).toContain("Кількість: 2")
   })
 
   it("hides meaningless 'Default variant' suffixes but keeps real ones", () => {
@@ -110,9 +110,9 @@ describe("buildOrderConfirmationEmail", () => {
 
   it("renders totals in whole hryvnias (regression: no /100 division)", () => {
     const { text, html } = buildOrderConfirmationEmail(baseOrder)
-    expect(text).toContain("Total: 2050.00 UAH")
-    expect(text).toContain("Subtotal: 1900.00 UAH")
-    expect(text).toContain("Shipping: 150.00 UAH")
+    expect(text).toContain("Разом: 2050.00 UAH")
+    expect(text).toContain("Проміжна сума: 1900.00 UAH")
+    expect(text).toContain("Доставка: 150.00 UAH")
     expect(html).toContain("2050.00 UAH")
     // A /100 regression would produce 20.50 UAH.
     expect(text).not.toContain("20.50 UAH")
@@ -124,14 +124,14 @@ describe("buildOrderConfirmationEmail", () => {
     expect(text).toContain("Taras Shevchenko")
     expect(text).toContain("vul. Khreshchatyk 1")
     expect(text).toContain("01001 Kyiv")
-    expect(html).toContain("Shipping to")
+    expect(html).toContain("Адреса доставки")
 
     const noAddress = buildOrderConfirmationEmail({
       ...baseOrder,
       shipping_address: null,
     })
-    expect(noAddress.text).not.toContain("Shipping to")
-    expect(noAddress.html).not.toContain("Shipping to")
+    expect(noAddress.text).not.toContain("Адреса доставки")
+    expect(noAddress.html).not.toContain("Адреса доставки")
   })
 
   it("escapes customer-controlled values in the html body", () => {
@@ -151,13 +151,80 @@ describe("buildOrderConfirmationEmail", () => {
       },
     })
     expect(html).not.toContain("<script>")
-    expect(html).not.toContain("<img src=x")
+    expect(html).not.toContain("<img src=x onerror")
     expect(html).toContain("&lt;script&gt;")
   })
 
-  it("points the customer at the personal cabinet for status tracking", () => {
-    const { text, html } = buildOrderConfirmationEmail(baseOrder)
-    expect(text.toLowerCase()).toContain("delivery status")
-    expect(html).toContain("My Account")
+  it("greets the customer by first name in the heading, with a fallback", () => {
+    const { html } = buildOrderConfirmationEmail(baseOrder)
+    expect(html).toContain("Taras, дякуємо за замовлення.")
+
+    const noName = buildOrderConfirmationEmail({ ...baseOrder, shipping_address: null })
+    expect(noName.html).toContain("Дякуємо за замовлення.")
+  })
+
+  it("renders fully in English when lang is 'en' (customer's storefront language)", () => {
+    const { subject, text, html } = buildOrderConfirmationEmail(baseOrder, "en")
+    expect(subject).toBe("Your order #42 confirmed")
+    expect(html).toContain("Taras, thank you for your order.")
+    expect(html).toContain("Order number")
+    expect(html).toContain("Amount")
+    expect(html).toContain("Shipping address")
+    expect(html).toContain("Go to store")
+    expect(text).toContain("Taras, thank you for your order!")
+    expect(text).toContain("Subtotal: 1900.00 UAH")
+    expect(text).toContain("Total: 2050.00 UAH")
+    // No Ukrainian leaking into the English version.
+    expect(html).not.toContain("Дякуємо")
+    expect(text).not.toContain("Разом")
+  })
+})
+
+const shippedOrder = { ...baseOrder, ttn: "20451483622811" }
+
+describe("buildShipmentEmail", () => {
+  it("puts the order number and ttn in the subject", () => {
+    const { subject } = buildShipmentEmail(shippedOrder)
+    expect(subject).toContain("#42")
+    expect(subject).toContain("20451483622811")
+  })
+
+  it("includes the tracking number and links the CTA straight to Nova Poshta", () => {
+    const { text, html } = buildShipmentEmail(shippedOrder)
+    expect(text).toContain("20451483622811")
+    expect(html).toContain("20451483622811")
+    expect(html).toContain("https://novaposhta.ua/tracking/?cargo_number=20451483622811")
+  })
+
+  it("shows the amount as paid", () => {
+    const { text, html } = buildShipmentEmail(shippedOrder)
+    expect(text).toContain("2050.00 UAH")
+    expect(text).toContain("оплачено")
+    expect(html).toContain("2050.00 UAH")
+    expect(html).toContain("оплачено")
+  })
+
+  it("still sends without a tracking number (non-NP fulfillment)", () => {
+    const { subject, text, html } = buildShipmentEmail({ ...baseOrder, ttn: null })
+    expect(subject).not.toContain("ТТН")
+    expect(text).not.toContain("Трекінг-номер")
+    expect(html).not.toContain("Трекінг-номер")
+  })
+
+  it("escapes the ttn in the html body", () => {
+    const { html } = buildShipmentEmail({ ...baseOrder, ttn: `<script>alert(1)</script>` })
+    expect(html).not.toContain("<script>alert(1)</script>")
+  })
+
+  it("renders fully in English when lang is 'en'", () => {
+    const { subject, text, html } = buildShipmentEmail(shippedOrder, "en")
+    expect(subject).toBe("Your order #42 shipped (tracking 20451483622811)")
+    expect(html).toContain("Taras, your order is on its way.")
+    expect(html).toContain("Tracking number")
+    expect(html).toContain("Track order")
+    expect(text).toContain("Taras, your order is on its way!")
+    expect(text).toContain("20451483622811")
+    expect(html).not.toContain("Трекінг-номер")
+    expect(text).not.toContain("Відправлено")
   })
 })

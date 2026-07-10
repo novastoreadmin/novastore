@@ -12,14 +12,31 @@
 //   MAIL_SMTP_PORT=465
 //   MAIL_SECURE=true            # implicit TLS (IMAPS 993 / SMTPS 465)
 //   MAIL_SMTP_AUTH=true         # cPanel requires SMTP auth (GreenMail does not)
-//   MAIL_ACCOUNTS=[{"email":"admin@novastore.com.ua","login":"admin@novastore.com.ua","password":"THE_MAILBOX_PASSWORD","label":"Admin"}]
+//   MAIL_ACCOUNTS=[{"email":"admin@novastore.com.ua","login":"admin@novastore.com.ua","password":"THE_MAILBOX_PASSWORD","label":"Admin","name":"NOVA Store"}]
 //   # MAIL_TLS_REJECT_UNAUTHORIZED=false   # only if the server cert is self-signed/mismatched
+//
+//   "name" is the display name shown next to the address in the recipient's
+//   inbox (e.g. the "NOVA Store" in "NOVA Store <no-reply@novastore.com.ua>").
+//   Without it, mail clients show the bare address, which is why the store
+//   name wasn't appearing (see DEFAULT_SENDER_NAME below for the fallback).
 
 export type MailAccount = {
   email: string // address used as From / To
   login: string // auth username: GreenMail = local part ("admin"); cPanel = full email
   password: string
   label?: string
+  /** Display name for the From header (see fromHeader()). Falls back to
+   * DEFAULT_SENDER_NAME when not set per-account. */
+  name?: string
+}
+
+export const DEFAULT_SENDER_NAME = "NOVA"
+
+/** The {name, address} pair nodemailer/MailComposer expects for the From
+ * header, so recipients see "NOVA <no-reply@novastore.com.ua>" instead of
+ * the bare address. */
+export function fromHeader(account: MailAccount): { name: string; address: string } {
+  return { name: account.name || DEFAULT_SENDER_NAME, address: account.email }
 }
 
 const bool = (v: string | undefined, d: boolean) =>
@@ -39,9 +56,9 @@ export const MAIL_SERVER = {
 }
 
 const DEFAULT_ACCOUNTS: MailAccount[] = [
-  { email: "admin@nova.local", login: "admin", password: "admin123", label: "Admin" },
-  { email: "sales@nova.local", login: "sales", password: "sales123", label: "Sales" },
-  { email: "support@nova.local", login: "support", password: "support123", label: "Support" },
+  { email: "admin@nova.local", login: "admin", password: "admin123", label: "Admin", name: DEFAULT_SENDER_NAME },
+  { email: "sales@nova.local", login: "sales", password: "sales123", label: "Sales", name: DEFAULT_SENDER_NAME },
+  { email: "support@nova.local", login: "support", password: "support123", label: "Support", name: DEFAULT_SENDER_NAME },
 ]
 
 function loadAccounts(): MailAccount[] {
@@ -55,6 +72,7 @@ function loadAccounts(): MailAccount[] {
         login: String(a.login || a.email), // real servers authenticate with the full email
         password: String(a.password || ""),
         label: a.label ? String(a.label) : undefined,
+        name: a.name ? String(a.name) : undefined,
       }))
     }
   } catch {

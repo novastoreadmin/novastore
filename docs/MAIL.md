@@ -50,7 +50,29 @@ the public internet (by design, since `nova.local` is not a real domain).
 - **Client helpers:** `apps/backend/src/lib/mail-client.ts` (`listMessages`, `getMessage`,
   `deleteMessage`, `sendMail`), `mail-accounts.ts`.
 - **Admin UI:** `apps/backend/src/admin/routes/mail/page.tsx` (sidebar route) — message
-  list, reading pane, and Refresh / Reply / Delete / Compose buttons.
+  list, reading pane, a Вхідні/Надіслані (Inbox/Sent) folder switcher, and
+  Refresh / Reply / Delete / Compose buttons.
+
+### Sent folder (why no-reply@ shows what WE sent, not an empty inbox)
+
+SMTP delivery alone never populates IMAP's Sent folder - that's a client
+convention, not something the protocol does automatically. `sendMail()`
+builds the message once (via nodemailer's `MailComposer`, so the stored copy
+is byte-identical to what the recipient got), sends it, then IMAP-`APPEND`s
+that same buffer into Sent. A failed Sent copy never fails the send itself
+(the mail already left - only a `console.warn`).
+
+The real Sent folder name varies by server (`Sent` on GreenMail, typically
+`INBOX.Sent` on Dovecot/cPanel) - `resolveMailbox()` in `mail-client.ts`
+resolves the logical name `"SENT"` to whatever the server actually calls it
+(special-use `\Sent` flag first, then common names, creating `"Sent"` as a
+last resort). The admin UI never hardcodes a folder path; it sends the
+logical `mailbox=SENT` and the backend resolves it.
+
+`GET /admin/mail/accounts` includes `is_order_sender: true` for whichever
+mailbox matches `ORDER_EMAIL_FROM` - the Mail page uses that to default
+straight to Надіслані for that account (its inbox is empty by design; the
+useful view is what the store mailed out).
 
 ## Going live on a real domain (novastore.com.ua via cPanel)
 
@@ -81,8 +103,14 @@ MAIL_IMAP_PORT=993
 MAIL_SMTP_PORT=465
 MAIL_SECURE=true
 MAIL_SMTP_AUTH=true
-MAIL_ACCOUNTS=[{"email":"admin@novastore.com.ua","login":"admin@novastore.com.ua","password":"THE_MAILBOX_PASSWORD","label":"Admin"},{"email":"sales@novastore.com.ua","login":"sales@novastore.com.ua","password":"THE_MAILBOX_PASSWORD","label":"Sales"}]
+MAIL_ACCOUNTS=[{"email":"admin@novastore.com.ua","login":"admin@novastore.com.ua","password":"THE_MAILBOX_PASSWORD","label":"Admin","name":"NOVA Store"},{"email":"sales@novastore.com.ua","login":"sales@novastore.com.ua","password":"THE_MAILBOX_PASSWORD","label":"Sales","name":"NOVA Store"}]
 ```
+
+> **Sender display name:** without `"name"`, mail clients show only the bare address
+> (`no-reply@novastore.com.ua`) in the inbox list, not a store name — that's the
+> `fromHeader()` fallback in `src/lib/mail-accounts.ts` (defaults to `"NOVA"` when
+> `name` is omitted). Set `"name": "NOVA Store"` (or whatever the storefront should
+> show) per mailbox to control it.
 
 On the droplet, after editing `.env`, remember to also copy it to
 `.medusa/server/.env.production` and restart pm2 **with `--update-env`** — a plain
@@ -107,6 +135,90 @@ also use cPanel webmail directly at `https://novastore.com.ua/webmail`.
 > password in `MAIL_ACCOUNTS` (or vice versa) fails IMAP/SMTP auth with no obvious error —
 > always re-copy the password from cPanel → Email Accounts → Connect Devices, don't assume
 > it matches the admin login.
+
+## Transactional emails (auto-sent to customers)
+
+Six automatic emails go out through the same mail server/accounts above,
+built from a shared table-based HTML layout so they render consistently
+across email clients (light-mode only, dark-mode auto-invert disabled):
+
+| Event | Email | Sent from |
+|---|---|---|
+| `customer.created` (real registration only, `has_account === true` — guest checkout customer records are skipped) | "Вітаємо в NOVA" welcome email | `src/subscribers/customer-created.ts` → `src/lib/customer-email.ts` |
+| `order.placed` (fires after checkout/payment completes) | Order confirmation (order #, amount, items, address) | `src/subscribers/order-placed.ts` → `buildOrderConfirmationEmail` in `src/lib/order-email.ts` |
+| `shipment.created` | Shipment notification (order #, Nova Poshta ТТН + tracking link when present, amount paid) | `src/subscribers/shipment-created-email.ts` → `buildShipmentEmail` in `src/lib/order-email.ts` |
+| **Either**: (a) Sync in the Nova Poshta admin extension, first transition into a delivered status code (9/10/11/106), or (b) Medusa's own "Mark as delivered" order action (`delivery.created`) — any carrier, no NP tracking required | "Delivered" email — sent at most once per fulfillment no matter which trigger fires first, guarded by `fulfillment.metadata.np_delivered_email_at` | Shared sender: `sendDeliveredEmailForFulfillments` in `src/lib/send-delivered-email.ts` → `buildDeliveredEmail` in `src/lib/order-email.ts`. Trigger (a): `src/api/admin/novaposhta/shipments/sync/route.ts`, pre-filtered by the pure `shouldSendDeliveredEmail` in `src/lib/novaposhta-admin.ts` (requires a real delivered status code). Trigger (b): `src/subscribers/delivery-created.ts`, which respects `no_notification` and only checks the dedupe flag (no status-code requirement, since a manual admin confirmation has no NP data to check) |
+| `payment.refunded` (`PaymentEvents.REFUNDED`, emitted by `refundPaymentWorkflow`) | Refund confirmation with the ACTUAL refunded amount (may be less than `order.total` for a partial refund) | `src/subscribers/payment-refunded.ts` → `buildRefundEmail` in `src/lib/order-email.ts` |
+| Hourly cron (`abandoned-cart-email`) | Abandoned-cart nudge — cart has items and never paid, 3h–7d old, one email per cart (`cart.metadata.abandoned_email_at`). Fires for guests who reached checkout (cart has its own `email`) **and** for logged-in customers who added to cart and left without ever reaching checkout (recipient resolved from `customer_id` → account email). A fully anonymous cart (no email, not logged in) can't be reached and is skipped. | `src/jobs/abandoned-cart-email.ts` → `buildAbandonedCartEmail` in `src/lib/cart-email.ts`; candidate logic is the pure `isAbandonedCandidate` in the same file |
+
+The refund and delivered subscribers each needed a `query.graph` path that
+isn't obvious - both were verified live against the local dev DB before
+shipping, not assumed from docs:
+- **Refund → order**: `payment.refunded` only gives `{ id: <payment_id> }`.
+  Filtering `order` by the NESTED relation
+  `payment_collections.payments.id` silently matches **every** order
+  (confirmed live: returned all 27 local orders for one payment id) instead
+  of narrowing - it's not a valid filter shape here. The working path is the
+  other direction: query entity `"payment"` filtered by its own `id`, then
+  read `payment_collection.order.*` (confirmed live: resolves the correct
+  single order).
+- **Delivered dedupe across two triggers**: `shouldSendDeliveredEmail` only
+  fires on the FIRST observed transition into a delivered status code, so
+  Sync can be clicked repeatedly without spamming the customer. Because an
+  order can ALSO be marked delivered manually (independent of NP tracking -
+  confirmed live: Medusa emits `delivery.created` even for a fulfillment
+  with no shipping/tracking data at all), both triggers write the same
+  `metadata.np_delivered_email_at` flag and `delivery-created.ts` checks it
+  before sending - whichever trigger fires first "wins" and the other is a
+  no-op, verified live end-to-end (event dispatch → order/email lookup →
+  send → flag stamped → re-trigger correctly blocked) via the real
+  `POST /admin/orders/:id/fulfillments/:fulfillment_id/mark-as-delivered`
+  API against a running dev server (not just `medusa exec`, which exits
+  before the async subscriber finishes and gives a false negative).
+
+Shared layout: `src/lib/email-template.ts` → `renderEmail()` — a single
+600px desktop / ≤480px mobile HTML shell (logo tile, heading, key/value
+rows, product cards, black pill CTA button, footer with unsubscribe/privacy/
+support links) reused by all three builders. The logo is a bulletproof text
+monogram ("N" on a black tile), not an image — email clients strip SVGs and
+Gmail blocks `data:` URIs, and this avoids depending on an image-conversion
+tool that isn't available in this environment.
+
+Env: `ORDER_EMAIL_FROM` (sender mailbox, must exist in `MAIL_ACCOUNTS`) and
+`STOREFRONT_URL` (used for CTA links and the footer domain) — both already
+in `.env.template`.
+
+**Language**: each email is sent entirely in ONE language — the customer's
+storefront preference (uk/en, `apps/storefront/src/lib/i18n.tsx`), not both
+at once. The storefront's language switcher is a client-only `localStorage`
+value with no backend record by default, so it's stamped onto
+`metadata.locale` at the two points the storefront talks to the backend
+about something we later email: `customer.metadata.locale` at registration
+(`apps/storefront/src/lib/auth.ts` → `registerCustomer`) and
+`cart.metadata.locale` at the checkout Information step
+(`apps/storefront/src/lib/medusa.ts` → `updateCartDetails`), which Medusa's
+`completeCartWorkflow` copies onto `order.metadata` unchanged. Subscribers
+read it back and resolve it via `src/lib/email-i18n.ts` → `resolveEmailLang`,
+defaulting to `uk` for anything missing/invalid (orders/customers created
+before this existed, guest checkouts, direct API usage).
+
+All three subscribers treat mail failure as non-fatal (`logger.warn`, never
+throws) — a down mail server must never look like a failed checkout or
+registration. Unit tests: `tests/unit/order-email.test.ts`,
+`tests/unit/customer-email.test.ts`, `tests/unit/email-template.spec.ts`.
+
+**Layout is frozen by snapshot tests** (`tests/unit/email-snapshots.spec.ts`,
+committed under `tests/unit/__snapshots__/`) — every email builder × language
+renders to a fixed HTML/text snapshot, so any unintended layout change shows
+up as a test failure instead of a surprise in production. When you
+deliberately change the layout, run
+`npx vitest run tests/unit/email-snapshots.spec.ts -u` and review the diff
+by eye before committing the updated snapshot.
+
+To preview locally: trigger the event (register an account, complete
+checkout, or run `npx medusa exec ./np-test-shipments.ts` for a fake
+shipment), then open admin → **Mail** and read the message — the HTML
+renders in an iframe so you can eyeball the layout.
 
 ## Limitations
 - **Internal only.** No mail leaves your machine. To go real (send/receive to the internet)

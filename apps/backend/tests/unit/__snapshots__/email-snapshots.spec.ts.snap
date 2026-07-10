@@ -1,0 +1,1927 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`email snapshots > buildAbandonedCartEmail (en) > html 1`] = `
+"<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>NOVA</title>
+<style>
+  body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color: inherit; }
+  @media (max-width: 480px) {
+    .nova-container { width: 100% !important; }
+    .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
+    .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
+    .nova-product-title { max-width: 160px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">Your cart is waiting</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" class="nova-container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td class="nova-pad" style="padding:32px 40px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="72" height="72" style="background:#0a0a0a;border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;color:#ffffff;line-height:72px;">N</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="nova-pad" style="padding:24px 40px 0;">
+              <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.3;color:#0a0a0a;">Макс, you left something in your cart.</h1>
+              <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#52525b;">Your order is almost complete — just a few more steps. The items are still in stock, so hurry to get what you were looking for.</p>
+            </td>
+          </tr>
+          
+          <tr><td class="nova-pad" style="padding:0 40px;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;margin:0 0 28px;">
+      
+        <tr>
+          <td width="64" style="padding:12px 12px 12px 12px;vertical-align:middle;text-align:center;">
+                   <img src="https://novastore.com.ua/static/products/flash-smart-watch/1.jpg" width="64" alt="" style="display:block;margin:0 auto;width:64px;height:auto;max-height:120px;border-radius:8px;border:1px solid #e4e4e7;" />
+                 </td>
+          <td style="padding:12px 12px 12px 0;vertical-align:middle;">
+            <p style="margin:0;font-size:13px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.02em;">Flash Smart Watch</p>
+          </td>
+          <td style="padding:12px 16px 12px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
+            <p style="margin:0;font-size:12px;color:#52525b;text-transform:uppercase;letter-spacing:0.05em;">Quantity: 1</p>
+          </td>
+        </tr>
+    </table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+      
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
+        <tr>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000/checkout?cart_id=cart_snap_1" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Finish checkout</a>
+          </td>
+        </tr>
+      </table></td></tr>
+          <tr>
+            <td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;padding-top:16px;border-top:1px solid #e4e4e7;font-size:11px;line-height:1.6;color:#52525b;">
+                This is an automated email, please do not reply. If you have any questions, contact support: <a href="mailto:support@novastore.com.ua" style="color:#52525b;text-decoration:underline;">support@novastore.com.ua</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0a0a0a;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">NOVA · localhost:3000</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">
+                <a href="http://localhost:3000/privacy" style="color:#a1a1aa;text-decoration:underline;">Privacy policy</a>
+                &nbsp;·&nbsp;
+                <a href="http://localhost:3000/support" style="color:#a1a1aa;text-decoration:underline;">Contact us</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`email snapshots > buildAbandonedCartEmail (en) > subject 1`] = `"Your cart is waiting"`;
+
+exports[`email snapshots > buildAbandonedCartEmail (en) > text 1`] = `
+"Макс, you left something in your cart!
+
+Your order is almost complete — just a few more steps. The items are still in stock, so hurry to get what you were looking for.
+
+http://localhost:3000/checkout?cart_id=cart_snap_1
+
+NOVA"
+`;
+
+exports[`email snapshots > buildAbandonedCartEmail (uk) > html 1`] = `
+"<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>NOVA</title>
+<style>
+  body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color: inherit; }
+  @media (max-width: 480px) {
+    .nova-container { width: 100% !important; }
+    .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
+    .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
+    .nova-product-title { max-width: 160px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">Ваш кошик чекає</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" class="nova-container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td class="nova-pad" style="padding:32px 40px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="72" height="72" style="background:#0a0a0a;border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;color:#ffffff;line-height:72px;">N</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="nova-pad" style="padding:24px 40px 0;">
+              <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.3;color:#0a0a0a;">Макс, ви щось залишили в кошику.</h1>
+              <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#52525b;">Ваше замовлення майже оформлене — залишилось зовсім трішки. Товари ще в наявності, встигай отримати те що шукав.</p>
+            </td>
+          </tr>
+          
+          <tr><td class="nova-pad" style="padding:0 40px;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;margin:0 0 28px;">
+      
+        <tr>
+          <td width="64" style="padding:12px 12px 12px 12px;vertical-align:middle;text-align:center;">
+                   <img src="https://novastore.com.ua/static/products/flash-smart-watch/1.jpg" width="64" alt="" style="display:block;margin:0 auto;width:64px;height:auto;max-height:120px;border-radius:8px;border:1px solid #e4e4e7;" />
+                 </td>
+          <td style="padding:12px 12px 12px 0;vertical-align:middle;">
+            <p style="margin:0;font-size:13px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.02em;">Flash Smart Watch</p>
+          </td>
+          <td style="padding:12px 16px 12px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
+            <p style="margin:0;font-size:12px;color:#52525b;text-transform:uppercase;letter-spacing:0.05em;">Кількість: 1</p>
+          </td>
+        </tr>
+    </table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+      
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
+        <tr>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000/checkout?cart_id=cart_snap_1" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Завершити оформлення</a>
+          </td>
+        </tr>
+      </table></td></tr>
+          <tr>
+            <td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;padding-top:16px;border-top:1px solid #e4e4e7;font-size:11px;line-height:1.6;color:#52525b;">
+                Цей лист надіслано автоматично, відповідати на нього не потрібно. Якщо у вас виникли запитання — зверніться у підтримку: <a href="mailto:support@novastore.com.ua" style="color:#52525b;text-decoration:underline;">support@novastore.com.ua</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0a0a0a;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">NOVA · localhost:3000</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">
+                <a href="http://localhost:3000/privacy" style="color:#a1a1aa;text-decoration:underline;">Політика конфіденційності</a>
+                &nbsp;·&nbsp;
+                <a href="http://localhost:3000/support" style="color:#a1a1aa;text-decoration:underline;">Контакти</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`email snapshots > buildAbandonedCartEmail (uk) > subject 1`] = `"Ваш кошик чекає"`;
+
+exports[`email snapshots > buildAbandonedCartEmail (uk) > text 1`] = `
+"Макс, ви щось залишили в кошику!
+
+Ваше замовлення майже оформлене — залишилось зовсім трішки. Товари ще в наявності, встигай отримати те що шукав.
+
+http://localhost:3000/checkout?cart_id=cart_snap_1
+
+NOVA"
+`;
+
+exports[`email snapshots > buildDeliveredEmail with ttn (en) > html 1`] = `
+"<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>NOVA</title>
+<style>
+  body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color: inherit; }
+  @media (max-width: 480px) {
+    .nova-container { width: 100% !important; }
+    .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
+    .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
+    .nova-product-title { max-width: 160px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">Order number #142.</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" class="nova-container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td class="nova-pad" style="padding:32px 40px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="72" height="72" style="background:#0a0a0a;border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;color:#ffffff;line-height:72px;">N</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="nova-pad" style="padding:24px 40px 0;">
+              <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.3;color:#0a0a0a;">Макс, your order has been delivered.</h1>
+              <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#52525b;">Your parcel was picked up at the Nova Poshta branch. Thanks for shopping with us! If anything is wrong with your order, just let us know.</p>
+            </td>
+          </tr>
+          <tr><td class="nova-pad" style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;">
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Order number</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">#142</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Tracking number</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">20451483622811</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Amount</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">2523.00 UAH</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Shipping address</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">Макс Коваленко<br/>вул. Хрещатик 1<br/>01001 Київ<br/>UA<br/>+380501234567</p>
+          </td>
+        </tr></table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;margin:0 0 28px;">
+      
+        <tr>
+          <td width="64" style="padding:12px 12px 12px 12px;vertical-align:middle;text-align:center;">
+                   <img src="https://novastore.com.ua/static/products/flash-smart-watch/1.jpg" width="64" alt="" style="display:block;margin:0 auto;width:64px;height:auto;max-height:120px;border-radius:8px;border:1px solid #e4e4e7;" />
+                 </td>
+          <td style="padding:12px 12px 12px 0;vertical-align:middle;">
+            <p style="margin:0;font-size:13px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.02em;">Flash Smart Watch (Series 2)</p>
+          </td>
+          <td style="padding:12px 16px 12px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
+            <p style="margin:0;font-size:12px;color:#52525b;text-transform:uppercase;letter-spacing:0.05em;">Quantity: 1</p>
+          </td>
+        </tr>
+    </table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+      
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
+        <tr>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Go to store</a>
+          </td>
+        </tr>
+      </table></td></tr>
+          <tr>
+            <td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;padding-top:16px;border-top:1px solid #e4e4e7;font-size:11px;line-height:1.6;color:#52525b;">
+                This is an automated email, please do not reply. If you have any questions, contact support: <a href="mailto:support@novastore.com.ua" style="color:#52525b;text-decoration:underline;">support@novastore.com.ua</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0a0a0a;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">NOVA · localhost:3000</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">
+                <a href="http://localhost:3000/privacy" style="color:#a1a1aa;text-decoration:underline;">Privacy policy</a>
+                &nbsp;·&nbsp;
+                <a href="http://localhost:3000/support" style="color:#a1a1aa;text-decoration:underline;">Contact us</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`email snapshots > buildDeliveredEmail with ttn (en) > subject 1`] = `"Your order #142 delivered"`;
+
+exports[`email snapshots > buildDeliveredEmail with ttn (en) > text 1`] = `
+"Макс, your order has been delivered!
+
+Order number #142
+Tracking number: 20451483622811
+Amount: 2523.00 UAH
+
+Shipping address:
+  Макс Коваленко
+  вул. Хрещатик 1
+  01001 Київ
+  UA
+  +380501234567
+
+Your parcel was picked up at the Nova Poshta branch. Thanks for shopping
+with us! If anything is wrong with your order, just let us know.
+
+NOVA"
+`;
+
+exports[`email snapshots > buildDeliveredEmail with ttn (uk) > html 1`] = `
+"<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>NOVA</title>
+<style>
+  body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color: inherit; }
+  @media (max-width: 480px) {
+    .nova-container { width: 100% !important; }
+    .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
+    .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
+    .nova-product-title { max-width: 160px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">Номер замовлення #142.</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" class="nova-container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td class="nova-pad" style="padding:32px 40px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="72" height="72" style="background:#0a0a0a;border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;color:#ffffff;line-height:72px;">N</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="nova-pad" style="padding:24px 40px 0;">
+              <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.3;color:#0a0a0a;">Макс, ваше замовлення доставлено.</h1>
+              <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#52525b;">Посилку отримано у відділенні Нової Пошти. Дякуємо за покупку! Якщо щось не так із замовленням — просто дайте нам знати.</p>
+            </td>
+          </tr>
+          <tr><td class="nova-pad" style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;">
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Номер замовлення</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">#142</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Трекінг-номер (ТТН)</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">20451483622811</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Сума</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">2523.00 UAH</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Адреса доставки</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">Макс Коваленко<br/>вул. Хрещатик 1<br/>01001 Київ<br/>UA<br/>+380501234567</p>
+          </td>
+        </tr></table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;margin:0 0 28px;">
+      
+        <tr>
+          <td width="64" style="padding:12px 12px 12px 12px;vertical-align:middle;text-align:center;">
+                   <img src="https://novastore.com.ua/static/products/flash-smart-watch/1.jpg" width="64" alt="" style="display:block;margin:0 auto;width:64px;height:auto;max-height:120px;border-radius:8px;border:1px solid #e4e4e7;" />
+                 </td>
+          <td style="padding:12px 12px 12px 0;vertical-align:middle;">
+            <p style="margin:0;font-size:13px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.02em;">Flash Smart Watch (Series 2)</p>
+          </td>
+          <td style="padding:12px 16px 12px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
+            <p style="margin:0;font-size:12px;color:#52525b;text-transform:uppercase;letter-spacing:0.05em;">Кількість: 1</p>
+          </td>
+        </tr>
+    </table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+      
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
+        <tr>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Перейти до магазину</a>
+          </td>
+        </tr>
+      </table></td></tr>
+          <tr>
+            <td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;padding-top:16px;border-top:1px solid #e4e4e7;font-size:11px;line-height:1.6;color:#52525b;">
+                Цей лист надіслано автоматично, відповідати на нього не потрібно. Якщо у вас виникли запитання — зверніться у підтримку: <a href="mailto:support@novastore.com.ua" style="color:#52525b;text-decoration:underline;">support@novastore.com.ua</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0a0a0a;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">NOVA · localhost:3000</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">
+                <a href="http://localhost:3000/privacy" style="color:#a1a1aa;text-decoration:underline;">Політика конфіденційності</a>
+                &nbsp;·&nbsp;
+                <a href="http://localhost:3000/support" style="color:#a1a1aa;text-decoration:underline;">Контакти</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`email snapshots > buildDeliveredEmail with ttn (uk) > subject 1`] = `"Замовлення #142 доставлено"`;
+
+exports[`email snapshots > buildDeliveredEmail with ttn (uk) > text 1`] = `
+"Макс, ваше замовлення доставлено!
+
+Номер замовлення #142
+Трекінг-номер (ТТН): 20451483622811
+Сума: 2523.00 UAH
+
+Адреса доставки:
+  Макс Коваленко
+  вул. Хрещатик 1
+  01001 Київ
+  UA
+  +380501234567
+
+Посилку отримано у відділенні Нової Пошти. Дякуємо за покупку! Якщо
+щось не так із замовленням — просто дайте нам знати.
+
+NOVA"
+`;
+
+exports[`email snapshots > buildOrderConfirmationEmail (en) > html 1`] = `
+"<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>NOVA</title>
+<style>
+  body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color: inherit; }
+  @media (max-width: 480px) {
+    .nova-container { width: 100% !important; }
+    .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
+    .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
+    .nova-product-title { max-width: 160px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">Order number #142.</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" class="nova-container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td class="nova-pad" style="padding:32px 40px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="72" height="72" style="background:#0a0a0a;border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;color:#ffffff;line-height:72px;">N</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="nova-pad" style="padding:24px 40px 0;">
+              <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.3;color:#0a0a0a;">Макс, thank you for your order.</h1>
+              <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#52525b;">Your order has been received and paid. We'll let you know as soon as it ships with Nova Poshta.</p>
+            </td>
+          </tr>
+          <tr><td class="nova-pad" style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;">
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Order number</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">#142</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Amount</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">2523.00 UAH</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Shipping address</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">Макс Коваленко<br/>вул. Хрещатик 1<br/>01001 Київ<br/>UA<br/>+380501234567</p>
+          </td>
+        </tr></table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;margin:0 0 28px;">
+      
+        <tr>
+          <td width="64" style="padding:12px 12px 12px 12px;vertical-align:middle;text-align:center;">
+                   <img src="https://novastore.com.ua/static/products/flash-smart-watch/1.jpg" width="64" alt="" style="display:block;margin:0 auto;width:64px;height:auto;max-height:120px;border-radius:8px;border:1px solid #e4e4e7;" />
+                 </td>
+          <td style="padding:12px 12px 12px 0;vertical-align:middle;">
+            <p style="margin:0;font-size:13px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.02em;">Flash Smart Watch (Series 2)</p>
+          </td>
+          <td style="padding:12px 16px 12px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
+            <p style="margin:0;font-size:12px;color:#52525b;text-transform:uppercase;letter-spacing:0.05em;">Quantity: 1</p>
+          </td>
+        </tr>
+    </table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+      
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
+        <tr>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Go to store</a>
+          </td>
+        </tr>
+      </table></td></tr>
+          <tr>
+            <td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;padding-top:16px;border-top:1px solid #e4e4e7;font-size:11px;line-height:1.6;color:#52525b;">
+                This is an automated email, please do not reply. If you have any questions, contact support: <a href="mailto:support@novastore.com.ua" style="color:#52525b;text-decoration:underline;">support@novastore.com.ua</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0a0a0a;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">NOVA · localhost:3000</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">
+                <a href="http://localhost:3000/privacy" style="color:#a1a1aa;text-decoration:underline;">Privacy policy</a>
+                &nbsp;·&nbsp;
+                <a href="http://localhost:3000/support" style="color:#a1a1aa;text-decoration:underline;">Contact us</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`email snapshots > buildOrderConfirmationEmail (en) > subject 1`] = `"Your order #142 confirmed"`;
+
+exports[`email snapshots > buildOrderConfirmationEmail (en) > text 1`] = `
+"Макс, thank you for your order!
+
+Order number #142
+
+Items:
+  - Flash Smart Watch (Series 2) x1 - 2373.00 UAH
+
+Subtotal: 2373.00 UAH
+Shipping: 150.00 UAH
+Total: 2523.00 UAH
+
+Shipping address:
+  Макс Коваленко
+  вул. Хрещатик 1
+  01001 Київ
+  UA
+  +380501234567
+
+Your order has been received and paid. We'll let you know as soon as it
+ships with Nova Poshta.
+
+NOVA"
+`;
+
+exports[`email snapshots > buildOrderConfirmationEmail (uk) > html 1`] = `
+"<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>NOVA</title>
+<style>
+  body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color: inherit; }
+  @media (max-width: 480px) {
+    .nova-container { width: 100% !important; }
+    .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
+    .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
+    .nova-product-title { max-width: 160px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">Номер замовлення #142.</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" class="nova-container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td class="nova-pad" style="padding:32px 40px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="72" height="72" style="background:#0a0a0a;border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;color:#ffffff;line-height:72px;">N</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="nova-pad" style="padding:24px 40px 0;">
+              <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.3;color:#0a0a0a;">Макс, дякуємо за замовлення.</h1>
+              <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#52525b;">Ваше замовлення прийнято й оплачено. Ми повідомимо, щойно передамо його Новій Пошті.</p>
+            </td>
+          </tr>
+          <tr><td class="nova-pad" style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;">
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Номер замовлення</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">#142</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Сума</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">2523.00 UAH</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Адреса доставки</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">Макс Коваленко<br/>вул. Хрещатик 1<br/>01001 Київ<br/>UA<br/>+380501234567</p>
+          </td>
+        </tr></table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;margin:0 0 28px;">
+      
+        <tr>
+          <td width="64" style="padding:12px 12px 12px 12px;vertical-align:middle;text-align:center;">
+                   <img src="https://novastore.com.ua/static/products/flash-smart-watch/1.jpg" width="64" alt="" style="display:block;margin:0 auto;width:64px;height:auto;max-height:120px;border-radius:8px;border:1px solid #e4e4e7;" />
+                 </td>
+          <td style="padding:12px 12px 12px 0;vertical-align:middle;">
+            <p style="margin:0;font-size:13px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.02em;">Flash Smart Watch (Series 2)</p>
+          </td>
+          <td style="padding:12px 16px 12px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
+            <p style="margin:0;font-size:12px;color:#52525b;text-transform:uppercase;letter-spacing:0.05em;">Кількість: 1</p>
+          </td>
+        </tr>
+    </table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+      
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
+        <tr>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Перейти до магазину</a>
+          </td>
+        </tr>
+      </table></td></tr>
+          <tr>
+            <td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;padding-top:16px;border-top:1px solid #e4e4e7;font-size:11px;line-height:1.6;color:#52525b;">
+                Цей лист надіслано автоматично, відповідати на нього не потрібно. Якщо у вас виникли запитання — зверніться у підтримку: <a href="mailto:support@novastore.com.ua" style="color:#52525b;text-decoration:underline;">support@novastore.com.ua</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0a0a0a;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">NOVA · localhost:3000</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">
+                <a href="http://localhost:3000/privacy" style="color:#a1a1aa;text-decoration:underline;">Політика конфіденційності</a>
+                &nbsp;·&nbsp;
+                <a href="http://localhost:3000/support" style="color:#a1a1aa;text-decoration:underline;">Контакти</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`email snapshots > buildOrderConfirmationEmail (uk) > subject 1`] = `"Замовлення #142 прийнято"`;
+
+exports[`email snapshots > buildOrderConfirmationEmail (uk) > text 1`] = `
+"Макс, дякуємо за замовлення!
+
+Номер замовлення #142
+
+Товари:
+  - Flash Smart Watch (Series 2) x1 - 2373.00 UAH
+
+Проміжна сума: 2373.00 UAH
+Доставка: 150.00 UAH
+Разом: 2523.00 UAH
+
+Адреса доставки:
+  Макс Коваленко
+  вул. Хрещатик 1
+  01001 Київ
+  UA
+  +380501234567
+
+Ваше замовлення прийнято й оплачено. Ми повідомимо, щойно передамо його
+Новій Пошті.
+
+NOVA"
+`;
+
+exports[`email snapshots > buildRefundEmail (en) > html 1`] = `
+"<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>NOVA</title>
+<style>
+  body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color: inherit; }
+  @media (max-width: 480px) {
+    .nova-container { width: 100% !important; }
+    .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
+    .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
+    .nova-product-title { max-width: 160px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">Order number #142. Refund amount 2523.00 UAH.</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" class="nova-container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td class="nova-pad" style="padding:32px 40px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="72" height="72" style="background:#0a0a0a;border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;color:#ffffff;line-height:72px;">N</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="nova-pad" style="padding:24px 40px 0;">
+              <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.3;color:#0a0a0a;">Макс, we've refunded your payment.</h1>
+              <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#52525b;">The refund for your order has been processed. The money will arrive on your card within 1-3 business days, depending on your bank.</p>
+            </td>
+          </tr>
+          <tr><td class="nova-pad" style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;">
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Order number</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">#142</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Refund amount</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">2523.00 UAH</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Refund method</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">To card (Monobank)</p>
+          </td>
+        </tr></table></td></tr>
+          
+          <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+      
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
+        <tr>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="mailto:support@novastore.com.ua" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Contact support</a>
+          </td>
+        </tr>
+      </table></td></tr>
+          <tr>
+            <td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;padding-top:16px;border-top:1px solid #e4e4e7;font-size:11px;line-height:1.6;color:#52525b;">
+                This is an automated email, please do not reply. If you have any questions, contact support: <a href="mailto:support@novastore.com.ua" style="color:#52525b;text-decoration:underline;">support@novastore.com.ua</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0a0a0a;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">NOVA · localhost:3000</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">
+                <a href="http://localhost:3000/privacy" style="color:#a1a1aa;text-decoration:underline;">Privacy policy</a>
+                &nbsp;·&nbsp;
+                <a href="http://localhost:3000/support" style="color:#a1a1aa;text-decoration:underline;">Contact us</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`email snapshots > buildRefundEmail (en) > subject 1`] = `"Refund for order #142"`;
+
+exports[`email snapshots > buildRefundEmail (en) > text 1`] = `
+"Макс, we've refunded your payment!
+
+Order number #142
+Refund amount: 2523.00 UAH
+Refund method: To card (Monobank)
+
+The refund for your order has been processed. The money will arrive on
+your card within 1-3 business days, depending on your bank.
+
+NOVA"
+`;
+
+exports[`email snapshots > buildRefundEmail (uk) > html 1`] = `
+"<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>NOVA</title>
+<style>
+  body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color: inherit; }
+  @media (max-width: 480px) {
+    .nova-container { width: 100% !important; }
+    .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
+    .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
+    .nova-product-title { max-width: 160px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">Номер замовлення #142. Сума повернення 2523.00 UAH.</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" class="nova-container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td class="nova-pad" style="padding:32px 40px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="72" height="72" style="background:#0a0a0a;border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;color:#ffffff;line-height:72px;">N</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="nova-pad" style="padding:24px 40px 0;">
+              <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.3;color:#0a0a0a;">Макс, ми повернули кошти.</h1>
+              <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#52525b;">Повернення за вашим замовленням оброблено. Кошти надійдуть на вашу картку протягом 1–3 банківських днів залежно від банку.</p>
+            </td>
+          </tr>
+          <tr><td class="nova-pad" style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;">
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Номер замовлення</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">#142</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Сума повернення</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">2523.00 UAH</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Спосіб повернення</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">На картку (Monobank)</p>
+          </td>
+        </tr></table></td></tr>
+          
+          <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+      
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
+        <tr>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="mailto:support@novastore.com.ua" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Звʼязатися з підтримкою</a>
+          </td>
+        </tr>
+      </table></td></tr>
+          <tr>
+            <td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;padding-top:16px;border-top:1px solid #e4e4e7;font-size:11px;line-height:1.6;color:#52525b;">
+                Цей лист надіслано автоматично, відповідати на нього не потрібно. Якщо у вас виникли запитання — зверніться у підтримку: <a href="mailto:support@novastore.com.ua" style="color:#52525b;text-decoration:underline;">support@novastore.com.ua</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0a0a0a;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">NOVA · localhost:3000</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">
+                <a href="http://localhost:3000/privacy" style="color:#a1a1aa;text-decoration:underline;">Політика конфіденційності</a>
+                &nbsp;·&nbsp;
+                <a href="http://localhost:3000/support" style="color:#a1a1aa;text-decoration:underline;">Контакти</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`email snapshots > buildRefundEmail (uk) > subject 1`] = `"Повернення коштів за замовленням #142"`;
+
+exports[`email snapshots > buildRefundEmail (uk) > text 1`] = `
+"Макс, ми повернули кошти!
+
+Номер замовлення #142
+Сума повернення: 2523.00 UAH
+Спосіб повернення: На картку (Monobank)
+
+Повернення за вашим замовленням оброблено. Кошти надійдуть на вашу
+картку протягом 1–3 банківських днів залежно від банку.
+
+NOVA"
+`;
+
+exports[`email snapshots > buildShipmentEmail with ttn (en) > html 1`] = `
+"<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>NOVA</title>
+<style>
+  body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color: inherit; }
+  @media (max-width: 480px) {
+    .nova-container { width: 100% !important; }
+    .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
+    .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
+    .nova-product-title { max-width: 160px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">Order number #142. Tracking number 20451483622811.</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" class="nova-container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td class="nova-pad" style="padding:32px 40px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="72" height="72" style="background:#0a0a0a;border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;color:#ffffff;line-height:72px;">N</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="nova-pad" style="padding:24px 40px 0;">
+              <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.3;color:#0a0a0a;">Макс, your order is on its way.</h1>
+              <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#52525b;">Your order has been handed to Nova Poshta and is heading your way. Track its status with the number below.</p>
+            </td>
+          </tr>
+          <tr><td class="nova-pad" style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;">
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Order number</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">#142</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Tracking number</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">20451483622811</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Payment</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">2523.00 UAH (paid)</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Shipping address</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">Макс Коваленко<br/>вул. Хрещатик 1<br/>01001 Київ<br/>UA<br/>+380501234567</p>
+          </td>
+        </tr></table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;margin:0 0 28px;">
+      
+        <tr>
+          <td width="64" style="padding:12px 12px 12px 12px;vertical-align:middle;text-align:center;">
+                   <img src="https://novastore.com.ua/static/products/flash-smart-watch/1.jpg" width="64" alt="" style="display:block;margin:0 auto;width:64px;height:auto;max-height:120px;border-radius:8px;border:1px solid #e4e4e7;" />
+                 </td>
+          <td style="padding:12px 12px 12px 0;vertical-align:middle;">
+            <p style="margin:0;font-size:13px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.02em;">Flash Smart Watch (Series 2)</p>
+          </td>
+          <td style="padding:12px 16px 12px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
+            <p style="margin:0;font-size:12px;color:#52525b;text-transform:uppercase;letter-spacing:0.05em;">Quantity: 1</p>
+          </td>
+        </tr>
+    </table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+      <p style="margin:0 0 20px;font-size:14px;color:#52525b;line-height:1.6;">Click the button below to check the delivery status.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
+        <tr>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="https://novaposhta.ua/tracking/?cargo_number=20451483622811" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Track order</a>
+          </td>
+        </tr>
+      </table></td></tr>
+          <tr>
+            <td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;padding-top:16px;border-top:1px solid #e4e4e7;font-size:11px;line-height:1.6;color:#52525b;">
+                This is an automated email, please do not reply. If you have any questions, contact support: <a href="mailto:support@novastore.com.ua" style="color:#52525b;text-decoration:underline;">support@novastore.com.ua</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0a0a0a;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">NOVA · localhost:3000</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">
+                <a href="http://localhost:3000/privacy" style="color:#a1a1aa;text-decoration:underline;">Privacy policy</a>
+                &nbsp;·&nbsp;
+                <a href="http://localhost:3000/support" style="color:#a1a1aa;text-decoration:underline;">Contact us</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`email snapshots > buildShipmentEmail with ttn (en) > subject 1`] = `"Your order #142 shipped (tracking 20451483622811)"`;
+
+exports[`email snapshots > buildShipmentEmail with ttn (en) > text 1`] = `
+"Макс, your order is on its way!
+
+Order number #142
+Tracking number: 20451483622811
+Payment: 2523.00 UAH (paid)
+
+Shipping address:
+  Макс Коваленко
+  вул. Хрещатик 1
+  01001 Київ
+  UA
+  +380501234567
+
+Your order has been handed to Nova Poshta and is heading your way. Track
+its status with the number above.
+
+Track: https://novaposhta.ua/tracking/?cargo_number=20451483622811
+
+NOVA"
+`;
+
+exports[`email snapshots > buildShipmentEmail with ttn (uk) > html 1`] = `
+"<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>NOVA</title>
+<style>
+  body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color: inherit; }
+  @media (max-width: 480px) {
+    .nova-container { width: 100% !important; }
+    .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
+    .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
+    .nova-product-title { max-width: 160px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">Номер замовлення #142. Трекінг-номер (ТТН) 20451483622811.</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" class="nova-container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td class="nova-pad" style="padding:32px 40px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="72" height="72" style="background:#0a0a0a;border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;color:#ffffff;line-height:72px;">N</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="nova-pad" style="padding:24px 40px 0;">
+              <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.3;color:#0a0a0a;">Макс, ваше замовлення в дорозі.</h1>
+              <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#52525b;">Ваше замовлення передано Новій Пошті та прямує до вас. Статус можна відстежити за трекінг-номером нижче.</p>
+            </td>
+          </tr>
+          <tr><td class="nova-pad" style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;">
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Номер замовлення</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">#142</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Трекінг-номер (ТТН)</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">20451483622811</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Оплата</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">2523.00 UAH (оплачено)</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Адреса доставки</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">Макс Коваленко<br/>вул. Хрещатик 1<br/>01001 Київ<br/>UA<br/>+380501234567</p>
+          </td>
+        </tr></table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;margin:0 0 28px;">
+      
+        <tr>
+          <td width="64" style="padding:12px 12px 12px 12px;vertical-align:middle;text-align:center;">
+                   <img src="https://novastore.com.ua/static/products/flash-smart-watch/1.jpg" width="64" alt="" style="display:block;margin:0 auto;width:64px;height:auto;max-height:120px;border-radius:8px;border:1px solid #e4e4e7;" />
+                 </td>
+          <td style="padding:12px 12px 12px 0;vertical-align:middle;">
+            <p style="margin:0;font-size:13px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.02em;">Flash Smart Watch (Series 2)</p>
+          </td>
+          <td style="padding:12px 16px 12px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
+            <p style="margin:0;font-size:12px;color:#52525b;text-transform:uppercase;letter-spacing:0.05em;">Кількість: 1</p>
+          </td>
+        </tr>
+    </table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+      <p style="margin:0 0 20px;font-size:14px;color:#52525b;line-height:1.6;">Натисніть кнопку нижче, щоб перевірити статус доставки.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
+        <tr>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="https://novaposhta.ua/tracking/?cargo_number=20451483622811" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Відстежити замовлення</a>
+          </td>
+        </tr>
+      </table></td></tr>
+          <tr>
+            <td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;padding-top:16px;border-top:1px solid #e4e4e7;font-size:11px;line-height:1.6;color:#52525b;">
+                Цей лист надіслано автоматично, відповідати на нього не потрібно. Якщо у вас виникли запитання — зверніться у підтримку: <a href="mailto:support@novastore.com.ua" style="color:#52525b;text-decoration:underline;">support@novastore.com.ua</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0a0a0a;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">NOVA · localhost:3000</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">
+                <a href="http://localhost:3000/privacy" style="color:#a1a1aa;text-decoration:underline;">Політика конфіденційності</a>
+                &nbsp;·&nbsp;
+                <a href="http://localhost:3000/support" style="color:#a1a1aa;text-decoration:underline;">Контакти</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`email snapshots > buildShipmentEmail with ttn (uk) > subject 1`] = `"Замовлення #142 відправлено (ТТН 20451483622811)"`;
+
+exports[`email snapshots > buildShipmentEmail with ttn (uk) > text 1`] = `
+"Макс, ваше замовлення в дорозі!
+
+Номер замовлення #142
+Трекінг-номер (ТТН): 20451483622811
+Оплата: 2523.00 UAH (оплачено)
+
+Адреса доставки:
+  Макс Коваленко
+  вул. Хрещатик 1
+  01001 Київ
+  UA
+  +380501234567
+
+Ваше замовлення передано Новій Пошті та прямує до вас. Статус можна
+відстежити за трекінг-номером вище.
+
+Відстежити: https://novaposhta.ua/tracking/?cargo_number=20451483622811
+
+NOVA"
+`;
+
+exports[`email snapshots > buildShipmentEmail without ttn (en) > html 1`] = `
+"<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>NOVA</title>
+<style>
+  body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color: inherit; }
+  @media (max-width: 480px) {
+    .nova-container { width: 100% !important; }
+    .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
+    .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
+    .nova-product-title { max-width: 160px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">Order number #142.</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" class="nova-container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td class="nova-pad" style="padding:32px 40px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="72" height="72" style="background:#0a0a0a;border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;color:#ffffff;line-height:72px;">N</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="nova-pad" style="padding:24px 40px 0;">
+              <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.3;color:#0a0a0a;">Макс, your order is on its way.</h1>
+              <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#52525b;">Your order has been handed to Nova Poshta and is heading your way. Track its status with the number below.</p>
+            </td>
+          </tr>
+          <tr><td class="nova-pad" style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;">
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Order number</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">#142</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Payment</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">2523.00 UAH (paid)</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Shipping address</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">Макс Коваленко<br/>вул. Хрещатик 1<br/>01001 Київ<br/>UA<br/>+380501234567</p>
+          </td>
+        </tr></table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;margin:0 0 28px;">
+      
+        <tr>
+          <td width="64" style="padding:12px 12px 12px 12px;vertical-align:middle;text-align:center;">
+                   <img src="https://novastore.com.ua/static/products/flash-smart-watch/1.jpg" width="64" alt="" style="display:block;margin:0 auto;width:64px;height:auto;max-height:120px;border-radius:8px;border:1px solid #e4e4e7;" />
+                 </td>
+          <td style="padding:12px 12px 12px 0;vertical-align:middle;">
+            <p style="margin:0;font-size:13px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.02em;">Flash Smart Watch (Series 2)</p>
+          </td>
+          <td style="padding:12px 16px 12px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
+            <p style="margin:0;font-size:12px;color:#52525b;text-transform:uppercase;letter-spacing:0.05em;">Quantity: 1</p>
+          </td>
+        </tr>
+    </table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+      <p style="margin:0 0 20px;font-size:14px;color:#52525b;line-height:1.6;">Click the button below to go to the store.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
+        <tr>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Track order</a>
+          </td>
+        </tr>
+      </table></td></tr>
+          <tr>
+            <td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;padding-top:16px;border-top:1px solid #e4e4e7;font-size:11px;line-height:1.6;color:#52525b;">
+                This is an automated email, please do not reply. If you have any questions, contact support: <a href="mailto:support@novastore.com.ua" style="color:#52525b;text-decoration:underline;">support@novastore.com.ua</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0a0a0a;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">NOVA · localhost:3000</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">
+                <a href="http://localhost:3000/privacy" style="color:#a1a1aa;text-decoration:underline;">Privacy policy</a>
+                &nbsp;·&nbsp;
+                <a href="http://localhost:3000/support" style="color:#a1a1aa;text-decoration:underline;">Contact us</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`email snapshots > buildShipmentEmail without ttn (en) > subject 1`] = `"Your order #142 shipped"`;
+
+exports[`email snapshots > buildShipmentEmail without ttn (en) > text 1`] = `
+"Макс, your order is on its way!
+
+Order number #142
+Payment: 2523.00 UAH (paid)
+
+Shipping address:
+  Макс Коваленко
+  вул. Хрещатик 1
+  01001 Київ
+  UA
+  +380501234567
+
+Your order has been handed to Nova Poshta and is heading your way. Track
+its status with the number above.
+
+NOVA"
+`;
+
+exports[`email snapshots > buildShipmentEmail without ttn (uk) > html 1`] = `
+"<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>NOVA</title>
+<style>
+  body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color: inherit; }
+  @media (max-width: 480px) {
+    .nova-container { width: 100% !important; }
+    .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
+    .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
+    .nova-product-title { max-width: 160px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">Номер замовлення #142.</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" class="nova-container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td class="nova-pad" style="padding:32px 40px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="72" height="72" style="background:#0a0a0a;border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;color:#ffffff;line-height:72px;">N</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="nova-pad" style="padding:24px 40px 0;">
+              <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.3;color:#0a0a0a;">Макс, ваше замовлення в дорозі.</h1>
+              <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#52525b;">Ваше замовлення передано Новій Пошті та прямує до вас. Статус можна відстежити за трекінг-номером нижче.</p>
+            </td>
+          </tr>
+          <tr><td class="nova-pad" style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;">
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Номер замовлення</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">#142</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Оплата</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">2523.00 UAH (оплачено)</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 0 16px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.05em;">Адреса доставки</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#52525b;">Макс Коваленко<br/>вул. Хрещатик 1<br/>01001 Київ<br/>UA<br/>+380501234567</p>
+          </td>
+        </tr></table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;margin:0 0 28px;">
+      
+        <tr>
+          <td width="64" style="padding:12px 12px 12px 12px;vertical-align:middle;text-align:center;">
+                   <img src="https://novastore.com.ua/static/products/flash-smart-watch/1.jpg" width="64" alt="" style="display:block;margin:0 auto;width:64px;height:auto;max-height:120px;border-radius:8px;border:1px solid #e4e4e7;" />
+                 </td>
+          <td style="padding:12px 12px 12px 0;vertical-align:middle;">
+            <p style="margin:0;font-size:13px;font-weight:700;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.02em;">Flash Smart Watch (Series 2)</p>
+          </td>
+          <td style="padding:12px 16px 12px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
+            <p style="margin:0;font-size:12px;color:#52525b;text-transform:uppercase;letter-spacing:0.05em;">Кількість: 1</p>
+          </td>
+        </tr>
+    </table></td></tr>
+          <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+      <p style="margin:0 0 20px;font-size:14px;color:#52525b;line-height:1.6;">Натисніть кнопку нижче, щоб перейти до магазину.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
+        <tr>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Відстежити замовлення</a>
+          </td>
+        </tr>
+      </table></td></tr>
+          <tr>
+            <td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;padding-top:16px;border-top:1px solid #e4e4e7;font-size:11px;line-height:1.6;color:#52525b;">
+                Цей лист надіслано автоматично, відповідати на нього не потрібно. Якщо у вас виникли запитання — зверніться у підтримку: <a href="mailto:support@novastore.com.ua" style="color:#52525b;text-decoration:underline;">support@novastore.com.ua</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0a0a0a;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">NOVA · localhost:3000</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">
+                <a href="http://localhost:3000/privacy" style="color:#a1a1aa;text-decoration:underline;">Політика конфіденційності</a>
+                &nbsp;·&nbsp;
+                <a href="http://localhost:3000/support" style="color:#a1a1aa;text-decoration:underline;">Контакти</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`email snapshots > buildShipmentEmail without ttn (uk) > subject 1`] = `"Замовлення #142 відправлено"`;
+
+exports[`email snapshots > buildShipmentEmail without ttn (uk) > text 1`] = `
+"Макс, ваше замовлення в дорозі!
+
+Номер замовлення #142
+Оплата: 2523.00 UAH (оплачено)
+
+Адреса доставки:
+  Макс Коваленко
+  вул. Хрещатик 1
+  01001 Київ
+  UA
+  +380501234567
+
+Ваше замовлення передано Новій Пошті та прямує до вас. Статус можна
+відстежити за трекінг-номером вище.
+
+NOVA"
+`;
+
+exports[`email snapshots > buildWelcomeEmail (en) > html 1`] = `
+"<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>NOVA</title>
+<style>
+  body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color: inherit; }
+  @media (max-width: 480px) {
+    .nova-container { width: 100% !important; }
+    .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
+    .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
+    .nova-product-title { max-width: 160px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">Welcome to NOVA</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" class="nova-container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td class="nova-pad" style="padding:32px 40px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="72" height="72" style="background:#0a0a0a;border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;color:#ffffff;line-height:72px;">N</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="nova-pad" style="padding:24px 40px 0;">
+              <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.3;color:#0a0a0a;">Welcome to NOVA, Макс.</h1>
+              <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#52525b;">Thanks for signing up. NOVA is a carefully curated selection of Hagibis accessories: SSD enclosures, card readers, hubs, and cables with aluminum bodies and honest speeds. We ship with Nova Poshta across Ukraine and accept Monobank payments.</p>
+            </td>
+          </tr>
+          
+          
+          <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+      
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
+        <tr>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">Browse the catalog</a>
+          </td>
+        </tr>
+      </table></td></tr>
+          <tr>
+            <td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;padding-top:16px;border-top:1px solid #e4e4e7;font-size:11px;line-height:1.6;color:#52525b;">
+                This is an automated email, please do not reply. If you have any questions, contact support: <a href="mailto:support@novastore.com.ua" style="color:#52525b;text-decoration:underline;">support@novastore.com.ua</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0a0a0a;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">NOVA · localhost:3000</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">
+                <a href="http://localhost:3000/privacy" style="color:#a1a1aa;text-decoration:underline;">Privacy policy</a>
+                &nbsp;·&nbsp;
+                <a href="http://localhost:3000/support" style="color:#a1a1aa;text-decoration:underline;">Contact us</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`email snapshots > buildWelcomeEmail (en) > subject 1`] = `"Welcome to NOVA"`;
+
+exports[`email snapshots > buildWelcomeEmail (en) > text 1`] = `
+"Макс, welcome to NOVA!
+
+Thanks for signing up. NOVA is a carefully curated selection of Hagibis accessories: SSD enclosures, card readers, hubs, and cables with aluminum bodies and honest speeds. We ship with Nova Poshta across Ukraine and accept Monobank payments.
+
+http://localhost:3000
+
+NOVA"
+`;
+
+exports[`email snapshots > buildWelcomeEmail (uk) > html 1`] = `
+"<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>NOVA</title>
+<style>
+  body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color: inherit; }
+  @media (max-width: 480px) {
+    .nova-container { width: 100% !important; }
+    .nova-pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .nova-cta-table { width:100% !important; }
+    .nova-cta-cell { display:block !important; width:100% !important; text-align:center !important; }
+    .nova-cta-link {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      padding:14px 16px !important;
+      /* Long UA labels ("Завершити оформлення", "Відстежити замовлення")
+         wrap on narrow phones (e.g. iPhone 12 Pro, 390px) at the desktop
+         0.2em letter-spacing - tighten it here so they fit on one line;
+         text-align:center above keeps it looking right even if it still
+         wraps on an especially narrow client. */
+      letter-spacing:0.05em !important;
+    }
+    .nova-product-title { max-width: 160px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">Вітаємо в NOVA</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" class="nova-container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td class="nova-pad" style="padding:32px 40px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="72" height="72" style="background:#0a0a0a;border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;color:#ffffff;line-height:72px;">N</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="nova-pad" style="padding:24px 40px 0;">
+              <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.3;color:#0a0a0a;">Вітаємо в NOVA, Макс.</h1>
+              <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#52525b;">Дякуємо за реєстрацію. NOVA — це акуратно відібрані аксесуари Hagibis: SSD-кишені, кардридери, хаби та кабелі з алюмінієвими корпусами й чесними швидкостями. Доставляємо Новою Поштою по всій Україні та приймаємо оплату Monobank.</p>
+            </td>
+          </tr>
+          
+          
+          <tr><td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+      
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="nova-cta-table">
+        <tr>
+          <td class="nova-cta-cell" style="border-radius:999px;background:#0a0a0a;">
+            <a href="http://localhost:3000" class="nova-cta-link" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;text-align:center;">До каталогу</a>
+          </td>
+        </tr>
+      </table></td></tr>
+          <tr>
+            <td class="nova-pad" style="padding:0 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;padding-top:16px;border-top:1px solid #e4e4e7;font-size:11px;line-height:1.6;color:#52525b;">
+                Цей лист надіслано автоматично, відповідати на нього не потрібно. Якщо у вас виникли запитання — зверніться у підтримку: <a href="mailto:support@novastore.com.ua" style="color:#52525b;text-decoration:underline;">support@novastore.com.ua</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0a0a0a;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">NOVA · localhost:3000</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;">
+                <a href="http://localhost:3000/privacy" style="color:#a1a1aa;text-decoration:underline;">Політика конфіденційності</a>
+                &nbsp;·&nbsp;
+                <a href="http://localhost:3000/support" style="color:#a1a1aa;text-decoration:underline;">Контакти</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`email snapshots > buildWelcomeEmail (uk) > subject 1`] = `"Вітаємо в NOVA"`;
+
+exports[`email snapshots > buildWelcomeEmail (uk) > text 1`] = `
+"Макс, вітаємо в NOVA!
+
+Дякуємо за реєстрацію. NOVA — це акуратно відібрані аксесуари Hagibis: SSD-кишені, кардридери, хаби та кабелі з алюмінієвими корпусами й чесними швидкостями. Доставляємо Новою Поштою по всій Україні та приймаємо оплату Monobank.
+
+http://localhost:3000
+
+NOVA"
+`;

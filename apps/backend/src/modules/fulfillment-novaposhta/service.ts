@@ -11,6 +11,7 @@ import {
   AbstractFulfillmentProviderService,
   MedusaError,
 } from "@medusajs/framework/utils"
+import { npDirectTrackingUrl } from "../../lib/np-tracking-url"
 import { NovaPoshtaClient, normalizeUaPhone } from "./client"
 
 export const NP_OPTION_WAREHOUSE = "novaposhta-warehouse"
@@ -200,7 +201,7 @@ export class NovaPoshtaFulfillmentProvider extends AbstractFulfillmentProviderSe
       labels: [
         {
           tracking_number: waybill.ttn,
-          tracking_url: `https://novaposhta.ua/tracking/?cargo_number=${waybill.ttn}`,
+          tracking_url: npDirectTrackingUrl(waybill.ttn),
           label_url: `https://my.novaposhta.ua/orders/printDocument/orders[]/${waybill.ref}/type/pdf`,
         },
       ],

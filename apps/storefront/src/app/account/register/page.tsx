@@ -12,7 +12,7 @@ import { useCustomer } from "@/hooks/use-customer";
 import { useI18n } from "@/lib/i18n";
 
 export default function RegisterPage() {
-  const { d } = useI18n();
+  const { d, lang } = useI18n();
   const router = useRouter();
   const { setCustomer } = useCustomer();
   const [firstName, setFirstName] = useState("");
@@ -49,6 +49,7 @@ export default function RegisterPage() {
         password,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
+        locale: lang,
       });
       setCustomer({
         id: customer.id,

@@ -24,7 +24,9 @@ import {
 import { useEffect, useState } from "react"
 import { sdk } from "../../lib/sdk"
 
-type Account = { email: string; login: string; label?: string }
+type Account = { email: string; login: string; label?: string; is_order_sender?: boolean }
+/** Logical folder names - the backend resolves "SENT" to the server's real path. */
+type Mailbox = "INBOX" | "SENT"
 type Addr = { name?: string; address?: string }
 type MsgSummary = {
   uid: number
@@ -43,6 +45,7 @@ const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleString() : "")
 const MailPageInner = () => {
   const qc = useQueryClient()
   const [account, setAccount] = useState<string>("")
+  const [mailbox, setMailbox] = useState<Mailbox>("INBOX")
   const [openUid, setOpenUid] = useState<number | null>(null)
   const [composeOpen, setComposeOpen] = useState(false)
   const [prefill, setPrefill] = useState<{ to: string; subject: string; text: string } | null>(null)
@@ -52,29 +55,48 @@ const MailPageInner = () => {
     queryFn: () => sdk.client.fetch<{ accounts: Account[] }>("/admin/mail/accounts"),
   })
   const accounts = accountsData?.accounts || []
+  // The transactional sender (no-reply@...) defaults to Sent - its inbox is
+  // empty by design, the interesting view is what the store mailed out.
+  const defaultMailboxFor = (email: string): Mailbox =>
+    accounts.find((a) => a.email === email)?.is_order_sender ? "SENT" : "INBOX"
   useEffect(() => {
-    if (!account && accounts.length) setAccount(accounts[0].email)
+    if (!account && accounts.length) {
+      setAccount(accounts[0].email)
+      setMailbox(defaultMailboxFor(accounts[0].email))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accounts, account])
+
+  const selectAccount = (email: string) => {
+    setAccount(email)
+    setMailbox(defaultMailboxFor(email))
+    setOpenUid(null)
+  }
+
+  const selectMailbox = (box: Mailbox) => {
+    setMailbox(box)
+    setOpenUid(null)
+  }
 
   const {
     data: listData,
     isFetching,
     refetch,
   } = useQuery({
-    queryKey: ["mail-messages", account],
+    queryKey: ["mail-messages", account, mailbox],
     queryFn: () =>
       sdk.client.fetch<{ messages: MsgSummary[] }>("/admin/mail/messages", {
-        query: { account },
+        query: { account, mailbox },
       }),
     enabled: !!account,
   })
   const messages = listData?.messages || []
 
   const { data: openData } = useQuery({
-    queryKey: ["mail-message", account, openUid],
+    queryKey: ["mail-message", account, mailbox, openUid],
     queryFn: () =>
       sdk.client.fetch<{ message: MsgFull }>(`/admin/mail/messages/${openUid}`, {
-        query: { account },
+        query: { account, mailbox },
       }),
     enabled: !!account && openUid != null,
   })
@@ -84,7 +106,7 @@ const MailPageInner = () => {
     mutationFn: (uid: number) =>
       sdk.client.fetch(`/admin/mail/messages/${uid}`, {
         method: "DELETE",
-        query: { account },
+        query: { account, mailbox },
       }),
     onSuccess: () => {
       toast.success("Лист видалено")
@@ -97,8 +119,10 @@ const MailPageInner = () => {
 
   const reply = () => {
     if (!open) return
+    // In Sent we ARE the sender - a reply/follow-up goes to the recipient.
+    const counterparty = mailbox === "SENT" ? open.to[0]?.address : open.from[0]?.address
     setPrefill({
-      to: open.from[0]?.address || "",
+      to: counterparty || "",
       subject: open.subject.startsWith("Re:") ? open.subject : `Re: ${open.subject}`,
       text: `\n\n--- ${fmtDate(open.date)}, ${fmtAddr(open.from)}:\n${open.text || ""}`,
     })
@@ -111,13 +135,7 @@ const MailPageInner = () => {
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-x-3">
           <Heading level="h2">Mail</Heading>
-          <Select
-            value={account}
-            onValueChange={(v) => {
-              setAccount(v)
-              setOpenUid(null)
-            }}
-          >
+          <Select value={account} onValueChange={selectAccount}>
             <Select.Trigger className="w-72">
               <Select.Value placeholder="Select a mailbox" />
             </Select.Trigger>
@@ -127,6 +145,15 @@ const MailPageInner = () => {
                   {a.label ? `${a.label} — ${a.email}` : a.email}
                 </Select.Item>
               ))}
+            </Select.Content>
+          </Select>
+          <Select value={mailbox} onValueChange={(v) => selectMailbox(v as Mailbox)}>
+            <Select.Trigger className="w-40">
+              <Select.Value />
+            </Select.Trigger>
+            <Select.Content>
+              <Select.Item value="INBOX">Вхідні</Select.Item>
+              <Select.Item value="SENT">Надіслані</Select.Item>
             </Select.Content>
           </Select>
         </div>
@@ -173,7 +200,9 @@ const MailPageInner = () => {
             >
               <div className="flex items-center justify-between gap-x-2">
                 <Text size="small" weight={m.seen ? "regular" : "plus"} className="truncate">
-                  {fmtAddr(m.from) || "(unknown sender)"}
+                  {mailbox === "SENT"
+                    ? `До: ${fmtAddr(m.to) || "(unknown recipient)"}`
+                    : fmtAddr(m.from) || "(unknown sender)"}
                 </Text>
                 {!m.seen && (
                   <Badge size="2xsmall" color="blue">

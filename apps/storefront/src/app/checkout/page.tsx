@@ -61,6 +61,16 @@ interface Cart {
   currency_code: string;
   region_id?: string;
   items?: CartLineItem[];
+  email?: string | null;
+  shipping_address?: {
+    first_name?: string | null;
+    last_name?: string | null;
+    address_1?: string | null;
+    address_2?: string | null;
+    city?: string | null;
+    postal_code?: string | null;
+    phone?: string | null;
+  } | null;
 }
 
 interface ShippingOption {
@@ -149,7 +159,7 @@ const EMPTY_CONTACT: ContactInfo = {
 const MONO_PROVIDER_ID = "pp_monobank_monobank";
 
 export default function CheckoutPage() {
-  const { d } = useI18n();
+  const { d, lang } = useI18n();
   const { cartId, setCartId, setItemCount } = useCartStore();
   const { customer, status: authStatus } = useCustomer();
   const [currentStep, setCurrentStep] = useState<Step>("information");
@@ -188,6 +198,19 @@ export default function CheckoutPage() {
   // hosted payment page button.
   const [monoSessionReady, setMonoSessionReady] = useState(false);
   const [widgetUnavailable, setWidgetUnavailable] = useState(false);
+
+  // Resume-checkout deep link (e.g. the abandoned-cart email's "Finish
+  // checkout" button): adopt ?cart_id= from the URL so opening the link on
+  // a device/browser that never had this cart in localStorage still loads
+  // it, instead of showing an empty cart. Plain window.location read (not
+  // useSearchParams) so this doesn't need a Suspense boundary.
+  useEffect(() => {
+    const cartIdFromLink = new URLSearchParams(window.location.search).get("cart_id");
+    if (cartIdFromLink && cartIdFromLink !== cartId) {
+      setCartId(cartIdFromLink);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (currentStep !== "payment") {
@@ -234,6 +257,26 @@ export default function CheckoutPage() {
         if (!active) return;
         setCart(fetchedCart as Cart);
         setShippingOptions(options as ShippingOption[]);
+        // Resume-checkout: the cart already has email/address saved (from
+        // an earlier Information-step save, e.g. before an abandoned-cart
+        // email was sent) - prefill so the customer isn't retyping what
+        // they already entered. Never overwrites anything already typed
+        // into the open form.
+        const savedCart = fetchedCart as Cart;
+        const savedAddress = savedCart.shipping_address;
+        if (savedCart.email || savedAddress) {
+          setContactInfo((prev) => ({
+            ...prev,
+            email: prev.email || savedCart.email || "",
+            firstName: prev.firstName || savedAddress?.first_name || "",
+            lastName: prev.lastName || savedAddress?.last_name || "",
+            address1: prev.address1 || savedAddress?.address_1 || "",
+            address2: prev.address2 || savedAddress?.address_2 || "",
+            city: prev.city || savedAddress?.city || "",
+            postalCode: prev.postalCode || savedAddress?.postal_code || "",
+            phone: prev.phone || savedAddress?.phone || "",
+          }));
+        }
       } catch {
         if (active) setCart(null);
       } finally {
@@ -371,6 +414,7 @@ export default function CheckoutPage() {
             postal_code: contactInfo.postalCode,
             phone: contactInfo.phone || undefined,
           },
+          locale: lang,
         });
         setCart(updated as Cart);
       } catch (err: unknown) {
