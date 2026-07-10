@@ -1,8 +1,15 @@
 # NOVA Store — Comprehensive Documentation
 
+> **Актуалізовано 2026-07-11.** Роль цього документа: канонічний опис **дизайн-системи,
+> анімаційної системи та UI-рішень storefront** (§3–§6, §11–§12). Архітектура
+> бекенда/інтеграцій описана в профільних доках — [BACKEND.md](BACKEND.md),
+> [STOREFRONT.md](STOREFRONT.md), [PAYMENTS-MONOBANK.md](PAYMENTS-MONOBANK.md),
+> [NOVAPOSHTA.md](NOVAPOSHTA.md), [CATALOG.md](CATALOG.md), [MAIL.md](MAIL.md).
+> Вхідна точка для нових сесій — `CLAUDE.md` у корені репо.
+
 ## For Future Sessions & Agents
 
-This document provides complete context for any AI agent or developer continuing work on this project. It covers architecture decisions, implementation details, what's built, what's pending, and how every piece connects.
+This document provides context for any AI agent or developer continuing work on this project — with a focus on the storefront's design system, animations, and page structure. For backend, payments, shipping, catalog data, and mail, use the dedicated docs listed in the banner above.
 
 ---
 
@@ -12,7 +19,13 @@ This document provides complete context for any AI agent or developer continuing
 
 **Design DNA**: Apple + Tesla + Eight Sleep. Not a marketplace. Not a generic Shopify. A single-brand, story-driven product experience.
 
-**Current state**: MVP complete. Storefront builds and runs with zero errors. Backend is configured but requires PostgreSQL + Redis to run. Storefront works standalone with static fallback data.
+**Current state (2026-07-11)**: LIVE in production at `novastore.com.ua` (storefront) /
+`api.novastore.com.ua` (Medusa API + admin `/app`) on a DigitalOcean droplet under pm2.
+Real catalog (Hagibis accessories, UAH pricing), Monobank payments (hold + saved cards +
+monoPay widget), Nova Poshta delivery (auto-TTN, status sync), full transactional email
+suite (confirmation / shipment / delivered / refund / abandoned cart / welcome, uk+en),
+customer accounts, UA/EN i18n, admin extensions (Mail, Nova Poshta, Analytics),
+179 unit + 15 integration + 15 E2E tests.
 
 ---
 
@@ -27,23 +40,19 @@ store/                          # Root — run `npm install` here
 └── packages/{ui,animations,hooks,lib}/  # Shared packages (scaffolded, not yet extracted)
 ```
 
-### Backend: Medusa v2 (2.17.0)
+### Backend: Medusa v2 (2.17.0) — деталі в [BACKEND.md](BACKEND.md)
 
-- **Database**: PostgreSQL (configured via `DATABASE_URL`)
-- **Cache/Events**: Redis (configured via `REDIS_URL`)
-- **Payments**: Stripe module
-- **Fulfillment**: Manual provider with 3 shipping options (Standard $9.99, Express $19.99, Next Day $29.99)
-- **File Storage**: Local filesystem
-- **Admin**: Enabled at `/app` when running
-- **Custom API**: `GET /store/custom` returns featured collection products
-- **Subscriber**: Listens to `order.placed` event, logs order details
+- **Database**: PostgreSQL (`DATABASE_URL`); **Cache/Events**: Redis on prod (`REDIS_URL`), in-memory fallback locally
+- **Payments**: Monobank provider (`pp_monobank_monobank`: hosted invoice / monoPay widget / saved cards, hold+finalize) + `system` test provider outside production — [PAYMENTS-MONOBANK.md](PAYMENTS-MONOBANK.md)
+- **Fulfillment**: `manual` + Nova Poshta provider (warehouse/courier, auto-TTN on paid order) — [NOVAPOSHTA.md](NOVAPOSHTA.md)
+- **File Storage**: `file-local` → `static/` (⚠️ prod symlink gotcha, DEPLOY.md §2.4)
+- **Admin**: `/app`, rebranded to NOVA; custom pages: Mail, Nova Poshta, Analytics (`src/admin/routes/*`)
+- **Events**: 8 subscribers (emails, auto-TTN, hold-finalize, cache revalidation) + abandoned-cart cron job — full table in [BACKEND.md](BACKEND.md)
 
 **Key file**: `apps/backend/medusa-config.ts` — all module registration happens here.
 
-**Seed script**: `apps/backend/seed.ts` — creates the full catalog:
-- 7 categories, 4 collections, 8 products with 25 total variants
-- Links inventory, sales channels, shipping, and pricing
-- Run with: `npx medusa exec ./seed.ts`
+**Catalog data & scripts** (`src/data/catalog.ts` + `seed.ts` / `import-products.ts` ⚠️ /
+`update-catalog-texts.ts` ✅): danger levels and safe workflows in [CATALOG.md](CATALOG.md).
 
 ### Frontend: Next.js 15 App Router
 
@@ -270,18 +279,17 @@ Server component that renders 8 client component sections in order:
   - Product grid (1/2/3 columns) with GSAP stagger entrance
   - Each card links to `/products/[handle]`
 
-### Checkout (`src/app/checkout/page.tsx`)
+### Checkout (`src/app/checkout/page.tsx`) — повний флоу в [STOREFRONT.md](STOREFRONT.md)
 
-- **Client component** (form state management)
-- **3-step flow**: Information → Shipping → Payment
-- **Step indicator**: Pill buttons with icons (MapPin, Truck, CreditCard), completed steps show Check icon
-- **Information step**: Email, First/Last Name, Address, Apartment, City, ZIP, Phone
-- **Shipping step**: 3 radio options (Standard/Express/Next Day) with pricing
-- **Payment step**: Card number, expiry, CVC, name on card with Lock icon
-- **Order summary sidebar**: Sticky on desktop, shows items + subtotal
-- **Navigation**: Back button + Continue/Place Order
-- **Animations**: Step content animates in with opacity + x translation
-- **Note**: Currently a UI shell — not wired to Medusa checkout API yet
+- **Client component**, повністю зв'язаний з Medusa store API (давно не UI shell)
+- **3-step flow**: Information → Shipping → Payment; step indicator з іконками, completed → Check
+- **Deep-link**: `?cart_id=` з листів (abandoned cart) всиновлює кошик на будь-якому пристрої; префіл контактів зі збереженого кошика та профілю залогіненого клієнта
+- **Information**: email + адреса → `updateCartDetails` (пише і `metadata.locale` для мови листів)
+- **Shipping**: опції з бекенда; Нова Пошта (відділення/кур'єр) → `NovaPoshtaPicker` (автокомпліт міст + відділень)
+- **Payment**: Monobank — monoPay-віджет / hosted-сторінка / one-click збереженою карткою / чекбокс «зберегти картку»; локально — тест-провайдер `pp_system_system`
+- **payment-return**: полінг `completeCart` (вебхук — джерело істини)
+- **Order summary sidebar**: sticky on desktop, items + totals
+- **Animations**: step content animates in with opacity + x translation
 
 ### Account / Personal Cabinet (`src/app/account/**`)
 
@@ -363,90 +371,69 @@ setNavVisible, setNavSolid, setMenuOpen, setSearchOpen
 
 ## 7. Medusa Client (`src/lib/medusa.ts`)
 
-Exports:
-- `sdk` — Medusa JS SDK instance (configured from `NEXT_PUBLIC_MEDUSA_BACKEND_URL`)
-- `getProducts(params)` — List products with pricing/inventory fields
-- `getProduct(handle)` — Get single product by handle
-- `getCategories()` — List all categories
-- `getCollections()` — List all collections
-- `getCart(cartId)` — Retrieve cart
-- `createCart()` — Create new cart
-- `addToCart(cartId, variantId, quantity)` — Add line item
-- `updateCartItem(cartId, lineItemId, quantity)` — Update quantity
-- `removeCartItem(cartId, lineItemId)` — Remove line item
+Exports `sdk` (from `NEXT_PUBLIC_MEDUSA_BACKEND_URL` + publishable key) and all store-API
+functions: catalog reads (`getProducts`/`getProduct`/`getCategories`/`getCollections` — with
+ISR tags), the full cart lifecycle (`getCart` with region self-heal, `createCart`,
+`addToCart`, `updateCartItem`, `removeCartItem`, `updateCartDetails`), shipping
+(`getShippingOptions`, `addShippingMethod`), payments (`getPaymentProviders`,
+`initiatePaymentSession` with Monobank extras, `completeCart`). Region is lazily resolved
+(prefers the `ua`-country region) and scopes all pricing.
 
-All functions include `next: { tags: [...] }` for ISR revalidation.
+Повна таблиця функцій та кеш-тегів — [STOREFRONT.md](STOREFRONT.md).
 
 ---
 
-## 8. What's Built vs. What's Pending
+## 8. What's Built vs. What's Pending (стан 2026-07-11)
 
-### COMPLETE
-- [x] Monorepo structure with Turborepo
-- [x] Medusa v2 backend configuration
-- [x] Seed script (8 products, 25 variants, categories, collections)
-- [x] Custom API route (featured products)
-- [x] Order placed subscriber
-- [x] Next.js 15 storefront with App Router
-- [x] Tailwind v4 design system (all tokens, utilities)
-- [x] GSAP animation system (5 custom hooks)
-- [x] Framer Motion variant library (13 variant sets)
-- [x] Homepage (8 animated sections)
-- [x] Product detail page (options, variants, add-to-cart, specs, features)
-- [x] Category listing page
-- [x] Cart drawer (CRUD operations)
-- [x] Checkout flow (3-step UI)
-- [x] Header (glass nav, scroll hide/show, mobile menu)
-- [x] Footer (4-column, animated)
-- [x] React Three Fiber scene (floating device)
-- [x] Zustand stores (cart persistence, UI state)
-- [x] Medusa SDK client (all storefront API functions)
-- [x] Static fallback data (storefront works without Medusa)
-- [x] TypeScript — zero type errors
-- [x] Production build — clean
-- [x] Customer accounts: registration, login, personal cabinet with order list +
-      payment/delivery status, order detail page (`/account/**`)
-- [x] Order confirmation email on `order.placed` (GreenMail dev / real SMTP prod)
-- [x] Owner-only access to `GET /store/orders/:id` (custom middleware)
+### COMPLETE (production)
+- [x] Дизайн-система Tailwind v4 + анімаційна система (GSAP hooks, Framer variants), головна з 8 секцій, PDP з галереєю/опціями, каталог з фільтрами, cart drawer, header/footer
+- [x] Повний чекаут: NP-доставка (відділення/кур'єр) + Monobank (hold, збережені картки, monoPay-віджет) + deep-link `?cart_id=` з листів
+- [x] Кабінет покупця: реєстрація/логін, список замовлень зі статусами, деталі замовлення; owner-only guard на `GET /store/orders/:id`
+- [x] Транзакційні листи (uk/en, снапшот-тести): welcome, підтвердження, відправлено, доставлено (2 тригери з дедупом), рефанд, покинутий кошик (cron); Sent-копії через IMAP; From «NOVA <no-reply@…>»
+- [x] Нова Пошта: авто-ТТН після оплати, синк статусів, адмін-сторінка відправлень + кабінет НП
+- [x] Monobank: ECDSA-вебхук, hold→finalize при відправці, wallet
+- [x] UA/EN i18n (UI-словники + каталог у metadata + мова листів), 12 інфо-сторінок
+- [x] Адмін-розширення: Mail (INBOX/SENT/reply), Nova Poshta, Analytics (4 дашборди, план-таргети, логістична карта)
+- [x] Реальний каталог (Hagibis, UAH) + безпечний скрипт синку текстів
+- [x] Кеш-інвалідація адмінка→storefront (subscriber → /api/revalidate)
+- [x] Тести: 179 unit + 15 integration + 15 E2E (ізольований тест-стек)
+- [x] Прод-деплой на дроплеті (pm2 + nginx + TLS), задокументований у DEPLOY.md
 
-### PENDING (Next Session)
-- [ ] **Eight Sleep UX Analysis**: User requested a section-by-section analysis of eightsleep.com to match every UX pattern, animation type, spacing rule, typography scale, scroll interaction, visual hierarchy, and conversion strategy — interrupted before starting
-- [ ] **Real product images**: Currently using gradient placeholders
-- [ ] **3D scene integration**: `floating-device.tsx` exists but isn't mounted in any page
-- [ ] **Checkout → Medusa API wiring**: Checkout is a UI shell, needs to call Medusa cart/payment/order APIs
-- [ ] **Search functionality**: Search icon exists in header, no search page/modal
-- [ ] **Image sequence animations**: Scroll-driven image frame playback (Eight Sleep style)
-- [ ] **Horizontal scroll sections**: Not yet implemented
-- [ ] **Page transitions**: `pageTransition` variant exists but not applied between routes
-- [ ] **Smooth scroll (Lenis)**: Could add for premium scroll feel
-- [ ] **Performance optimization**: Lazy loading 3D scene, dynamic imports for heavy components
-- [ ] **SEO**: Structured data (JSON-LD), sitemap, robots.txt
-- [ ] **Responsive polish**: Tablet breakpoints, mobile animation adaptation
-- [ ] **Deployment config**: Docker, Vercel config, environment setup docs
-- [ ] **Shared packages**: Extract UI components, hooks, animations into `packages/`
+### PENDING
+Актуальний беклог живе ПОЗА репо: `E:\Nova docs\TASKS-2026-07-11.md` (39 задач з
+пріоритетами) + готові інструкції для виконання у `E:\Nova docs\claude-tasks\`.
+Найважливіше з нього: пошук на сайті (немає взагалі), валідація форм, CI/CD,
+ротація секретів, галерея фото товарів (наповнення), редагування профілю в кабінеті.
 
 ---
 
 ## 9. Environment Variables
 
-### Backend (`apps/backend/.env.template`)
+Повний довідник env (усі групи: ядро, Monobank, Nova Poshta, пошта, аналітика) —
+[BACKEND.md](BACKEND.md) розділ «Довідник env». Що runtime, а що вимагає rebuild —
+[DEPLOY.md](DEPLOY.md) §5. Мінімум для локального старту:
+
+### Backend (`apps/backend/.env`)
 
 ```env
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/nova-store
-REDIS_URL=redis://localhost:6379
-JWT_SECRET=your-jwt-secret-change-me
-COOKIE_SECRET=your-cookie-secret-change-me
-STRIPE_API_KEY=sk_test_...
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/nova_store
+JWT_SECRET=dev-secret
+COOKIE_SECRET=dev-secret
 STORE_CORS=http://localhost:3000
 ADMIN_CORS=http://localhost:9000
 MEDUSA_BACKEND_URL=http://localhost:9000
+# Redis не обов'язковий локально (in-memory фолбеки); платежі локально — тест-провайдер
+# (ALLOW_TEST_PAYMENTS дефолтно true поза production). Monobank/NP/пошта — опційні блоки,
+# шаблони значень у DEPLOY.md §5б/§5в та MAIL.md.
 ```
 
 ### Storefront (`apps/storefront/.env.local`)
 
 ```env
 NEXT_PUBLIC_MEDUSA_BACKEND_URL=http://localhost:9000
+NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_...   # друкується seed-скриптом
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+REVALIDATE_SECRET=...                        # той самий, що в env бекенда
 ```
 
 ---
@@ -471,9 +458,14 @@ npm run lint                    # ESLint
 # Backend
 cd apps/backend
 npm run dev                     # Dev server on :9000
-npm run build                   # Build for production
-npm run seed                    # Seed database
+npm run build                   # Build for production (medusa build — компілює й адмінку)
+npm run seed                    # Seed database (ТІЛЬКИ порожня БД — див. CATALOG.md)
 npm run db:migrate              # Run migrations
+
+# Tests (детально — TESTING.md)
+npx vitest run tests/unit       # 179 юніт-тестів, без сервера/БД
+npm run test:integration        # потребує тест-стек :9002
+cd apps/storefront && npm run test:e2e   # Playwright, тест-стек :9002+:3002
 ```
 
 ---
@@ -529,28 +521,10 @@ checkout/page.tsx (client)
 
 ---
 
-## 13. Notes for Continuing the Eight Sleep Analysis
+## 13. Eight Sleep UX Analysis — виконано
 
-The user's last request before interruption was to:
-
-> "Analyze eightsleep.com section by section and recreate every UX pattern, animation type, spacing rule, typography scale, scroll interaction, visual hierarchy and conversion strategy, then adapt them for a premium electronics brand without copying branding or content."
-
-**Recommended approach**:
-1. Use `WebFetch` to pull eightsleep.com HTML/CSS and analyze structure
-2. Document each section's exact: layout grid, spacing values, font sizes, animation easing, scroll trigger points, CTA placement
-3. Compare against current NOVA implementation
-4. Rebuild each NOVA section to match the patterns (not the content)
-
-**Key Eight Sleep patterns to study** (from general knowledge):
-- Video/image hero with text overlay (not just text + orb)
-- Sticky product configurator that follows scroll
-- Before/after comparison sliders
-- Data visualization sections (temperature graphs, sleep metrics)
-- Horizontal scrolling product feature carousel
-- Scroll-triggered video playback
-- Pricing section with plan comparison cards
-- Sticky "Add to Cart" bar that appears on scroll
-- Trust badges row (press logos, awards)
-- FAQ accordion with smooth expand animation
-- Newsletter/email capture section
-- Very specific scroll-to-pin timing (enter at specific vh, exit at specific vh)
+Аналіз eightsleep.com проведено, порівняльний звіт написано, і хвиля UX-полішу
+реалізована (smooth scroll через Lenis, поведінка хедера, scroll-reveals,
+reduced-motion, мобільні pinned-секції). Історичний звіт `UX-PARITY-REPORT.md`
+видалено з репо після відпрацювання. Подальші UX-покращення — у беклозі
+(`E:\Nova docs\TASKS-2026-07-11.md`).

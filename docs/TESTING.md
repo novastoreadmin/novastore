@@ -5,16 +5,18 @@ storefront (`apps/storefront`). Three tiers, run bottom-up in CI or locally:
 
 | Tier | Tool | Needs | Files | Count |
 |---|---|---|---|---|
-| Unit | Vitest | nothing (pure functions) | `apps/backend/tests/unit/*.test.ts` | 106 |
+| Unit | Vitest | nothing (pure functions) | `apps/backend/tests/unit/*.{test,spec}.ts` | 179 |
 | Integration | Vitest + `fetch` | isolated test backend (`:9002`) + Postgres (+ GreenMail for the email test) | `apps/backend/tests/integration/*.test.ts` | 15 |
 | E2E | Playwright | isolated test backend (`:9002`) + storefront (`:3002`) + Postgres | `apps/storefront/tests/e2e/*.spec.ts` | 15 |
 
-**Total: 136 tests (106 unit + 15 integration + 15 E2E), unit tier verified passing as of
-this writing (`npx vitest run tests/unit` from `apps/backend` → 8 files, 106 passed). The
-unit count grew from the original 37 as Nova Poshta admin/tracking/transliteration and
-Analytics coverage (`analytics.spec.ts`, `novaposhta-admin.spec.ts`,
-`novaposhta-tracking.spec.ts`, `novaposhta-transliterate.spec.ts`, `medusa-config.test.ts`)
-were added.
+**Unit count as of 2026-07-11: 179 across 15 files** (`npx vitest run tests/unit` from
+`apps/backend`). Growth over the original 106 came from the transactional-email wave:
+`order-email.test.ts` (expanded), `customer-email.test.ts`, `cart-email.test.ts`,
+`refund-email.test.ts`, `shipping-delivered-email.spec.ts`, `email-template.spec.ts`,
+`mail-accounts.test.ts`, and **`email-snapshots.spec.ts`** — snapshot tests freezing the
+rendered HTML/text of every email in both languages. Snapshot policy: when a template
+change is intentional, review the diff by eye, then accept with
+`npx vitest run tests/unit/email-snapshots.spec.ts -u` — never run `-u` blind.
 
 ## The isolated test stack — read this first
 
