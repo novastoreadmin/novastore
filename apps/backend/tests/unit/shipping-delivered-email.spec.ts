@@ -58,7 +58,7 @@ const order = {
 describe("buildDeliveredEmail", () => {
   it("puts the order number in the subject and greets by name", () => {
     const { subject, html } = buildDeliveredEmail(order)
-    expect(subject).toBe("NOVA - замовлення #77 доставлено")
+    expect(subject).toBe("Замовлення #77 доставлено")
     expect(html).toContain("Олена, ваше замовлення доставлено.")
   })
 
@@ -72,7 +72,7 @@ describe("buildDeliveredEmail", () => {
 
   it("renders fully in English when lang is 'en'", () => {
     const { subject, html, text } = buildDeliveredEmail(order, "en")
-    expect(subject).toBe("NOVA - order #77 delivered")
+    expect(subject).toBe("Your order #77 delivered")
     expect(html).toContain("Olena, your order has been delivered.".replace("Olena", "Олена"))
     expect(text).toContain("delivered!")
     expect(html).not.toContain("Дякуємо")

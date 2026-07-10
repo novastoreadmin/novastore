@@ -17,7 +17,7 @@ const order = {
 describe("buildRefundEmail", () => {
   it("puts the order number in the subject and greets by name", () => {
     const { subject, html } = buildRefundEmail({ order, refundAmount: 2050 })
-    expect(subject).toBe("NOVA - повернення коштів за замовленням #88")
+    expect(subject).toBe("Повернення коштів за замовленням #88")
     expect(html).toContain("Ірина, ми повернули кошти.")
   })
 
@@ -62,7 +62,7 @@ describe("buildRefundEmail", () => {
 
   it("renders fully in English when lang is 'en'", () => {
     const { subject, html, text } = buildRefundEmail({ order, refundAmount: 2050 }, "en")
-    expect(subject).toBe("NOVA - refund for order #88")
+    expect(subject).toBe("Refund for order #88")
     expect(html).toContain("Ірина, we've refunded your payment.")
     expect(text).toContain("refunded your payment!")
     expect(html).not.toContain("Дякуємо")

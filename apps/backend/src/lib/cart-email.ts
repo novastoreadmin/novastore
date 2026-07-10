@@ -84,23 +84,23 @@ const STRINGS: Record<
   }
 > = {
   uk: {
-    subject: "NOVA - ваш кошик чекає",
+    subject: "Ваш кошик чекає",
     heading: (name) => `${name}, ви щось залишили в кошику.`,
     headingNoName: "Ви щось залишили в кошику.",
     textGreeting: (name) => `${name}, ви щось залишили в кошику!`,
     textGreetingNoName: "Ви щось залишили в кошику!",
     intro:
-      "Ви майже оформили замовлення — залишилось обрати оплату. Товари ще в наявності, але ми не можемо тримати їх вічно.",
+      "Ваше замовлення майже оформлене — залишилось зовсім трішки. Товари ще в наявності, встигай отримати те що шукав.",
     cta: "Завершити оформлення",
   },
   en: {
-    subject: "NOVA - your cart is waiting",
+    subject: "Your cart is waiting",
     heading: (name) => `${name}, you left something in your cart.`,
     headingNoName: "You left something in your cart.",
     textGreeting: (name) => `${name}, you left something in your cart!`,
     textGreetingNoName: "You left something in your cart!",
     intro:
-      "You're almost done - just checkout and payment left. Your items are still in stock, but we can't hold them forever.",
+      "Your order is almost complete — just a few more steps. The items are still in stock, so hurry to get what you were looking for.",
     cta: "Finish checkout",
   },
 }

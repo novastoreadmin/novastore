@@ -165,7 +165,7 @@ describe("buildOrderConfirmationEmail", () => {
 
   it("renders fully in English when lang is 'en' (customer's storefront language)", () => {
     const { subject, text, html } = buildOrderConfirmationEmail(baseOrder, "en")
-    expect(subject).toBe("NOVA - order #42 confirmed")
+    expect(subject).toBe("Your order #42 confirmed")
     expect(html).toContain("Taras, thank you for your order.")
     expect(html).toContain("Order number")
     expect(html).toContain("Amount")
@@ -218,7 +218,7 @@ describe("buildShipmentEmail", () => {
 
   it("renders fully in English when lang is 'en'", () => {
     const { subject, text, html } = buildShipmentEmail(shippedOrder, "en")
-    expect(subject).toBe("NOVA - order #42 shipped (tracking 20451483622811)")
+    expect(subject).toBe("Your order #42 shipped (tracking 20451483622811)")
     expect(html).toContain("Taras, your order is on its way.")
     expect(html).toContain("Tracking number")
     expect(html).toContain("Track order")

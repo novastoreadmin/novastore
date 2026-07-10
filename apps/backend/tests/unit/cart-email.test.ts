@@ -81,7 +81,7 @@ describe("buildAbandonedCartEmail", () => {
 
   it("greets by name and lists the cart items", () => {
     const { html, subject } = buildAbandonedCartEmail(cart)
-    expect(subject).toBe("NOVA - ваш кошик чекає")
+    expect(subject).toBe("Ваш кошик чекає")
     expect(html).toContain("Andriy, ви щось залишили в кошику.")
     expect(html).toContain("Hagibis Hub")
     expect(html).toContain("Кількість: 2")
@@ -99,7 +99,7 @@ describe("buildAbandonedCartEmail", () => {
 
   it("renders fully in English when lang is 'en'", () => {
     const { subject, html } = buildAbandonedCartEmail(cart, "en")
-    expect(subject).toBe("NOVA - your cart is waiting")
+    expect(subject).toBe("Your cart is waiting")
     expect(html).toContain("Andriy, you left something in your cart.")
     expect(html).not.toContain("Кількість")
   })
