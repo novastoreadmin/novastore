@@ -1,13 +1,18 @@
-// Pure builder for the order-confirmation email sent after checkout completes.
+// Pure builders for the two order-related transactional emails: order
+// confirmation (sent after checkout completes) and shipment notification
+// (sent when Nova Poshta hands over the waybill).
 //
 // Kept free of Medusa/nodemailer imports so it is unit-testable (same pattern
-// as src/config/runtime-config.ts). The subscriber (src/subscribers/
-// order-placed.ts) feeds it the order fetched via query.graph and passes the
-// result to the mail client.
+// as src/config/runtime-config.ts). Subscribers (src/subscribers/order-placed.ts,
+// src/subscribers/shipment-created-email.ts) fetch the order via query.graph,
+// resolve its language (see email-i18n.ts), and pass both here, then hand
+// {subject, text, html} to sendMail.
 //
 // NOTE on money: this store keeps UAH amounts in whole hryvnias (see
 // toStoreMinor in src/data/catalog.ts) - order.total is already the display
 // value, so there is NO /100 division here.
+import type { EmailLang } from "./email-i18n"
+import { renderEmail, type EmailKv, type EmailProductRow } from "./email-template"
 
 export type OrderEmailItem = {
   title?: string | null
@@ -15,7 +20,7 @@ export type OrderEmailItem = {
   unit_price?: number | null
   variant?: {
     title?: string | null
-    product?: { title?: string | null } | null
+    product?: { title?: string | null; thumbnail?: string | null } | null
   } | null
 }
 
@@ -40,6 +45,129 @@ export type OrderEmailInput = {
   shipping_total?: number | null
   items?: OrderEmailItem[] | null
   shipping_address?: OrderEmailAddress | null
+}
+
+export type ShipmentEmailInput = OrderEmailInput & {
+  /** Nova Poshta waybill number, or null for non-NP / manual fulfillments. */
+  ttn?: string | null
+}
+
+const DEFAULT_STOREFRONT_URL = process.env.STOREFRONT_URL || "http://localhost:3000"
+
+const STRINGS: Record<
+  EmailLang,
+  {
+    orderSubject: (orderNo: string | number) => string
+    orderHeading: (name: string) => string
+    orderHeadingNoName: string
+    orderTextGreeting: (name: string) => string
+    orderTextGreetingNoName: string
+    orderIntro: string
+    orderTextIntro: string[]
+    labelOrderNumber: string
+    labelAmount: string
+    labelAddress: string
+    ctaShop: string
+    textItemsLabel: string
+    textSubtotal: string
+    textShipping: string
+    textTotal: string
+    textAddressLabel: string
+    shipmentSubject: (orderNo: string | number, ttn: string | null) => string
+    shipmentHeading: (name: string) => string
+    shipmentHeadingNoName: string
+    shipmentTextGreeting: (name: string) => string
+    shipmentTextGreetingNoName: string
+    shipmentIntro: string
+    shipmentTextIntro: string[]
+    labelTtn: string
+    labelPayment: string
+    paidSuffix: string
+    ctaTrack: string
+    ctaNoteWithTtn: string
+    ctaNoteNoTtn: string
+    textTrackLabel: string
+  }
+> = {
+  uk: {
+    orderSubject: (n) => `NOVA - замовлення #${n} прийнято`,
+    orderHeading: (name) => `${name}, дякуємо за замовлення.`,
+    orderHeadingNoName: "Дякуємо за замовлення.",
+    orderTextGreeting: (name) => `${name}, дякуємо за замовлення!`,
+    orderTextGreetingNoName: "Дякуємо за замовлення!",
+    orderIntro:
+      "Ваше замовлення прийнято й оплачено. Ми повідомимо, щойно передамо його Новій Пошті.",
+    orderTextIntro: [
+      "Ваше замовлення прийнято й оплачено. Ми повідомимо, щойно передамо його",
+      "Новій Пошті.",
+    ],
+    labelOrderNumber: "Номер замовлення",
+    labelAmount: "Сума",
+    labelAddress: "Адреса доставки",
+    ctaShop: "Перейти до магазину",
+    textItemsLabel: "Товари:",
+    textSubtotal: "Проміжна сума",
+    textShipping: "Доставка",
+    textTotal: "Разом",
+    textAddressLabel: "Адреса доставки:",
+    shipmentSubject: (n, ttn) => (ttn ? `NOVA - замовлення #${n} відправлено (ТТН ${ttn})` : `NOVA - замовлення #${n} відправлено`),
+    shipmentHeading: (name) => `${name}, ваше замовлення в дорозі.`,
+    shipmentHeadingNoName: "Ваше замовлення в дорозі.",
+    shipmentTextGreeting: (name) => `${name}, ваше замовлення в дорозі!`,
+    shipmentTextGreetingNoName: "Ваше замовлення в дорозі!",
+    shipmentIntro:
+      "Ваше замовлення передано Новій Пошті та прямує до вас. Статус можна відстежити за трекінг-номером нижче.",
+    shipmentTextIntro: [
+      "Ваше замовлення передано Новій Пошті та прямує до вас. Статус можна",
+      "відстежити за трекінг-номером вище.",
+    ],
+    labelTtn: "Трекінг-номер (ТТН)",
+    labelPayment: "Оплата",
+    paidSuffix: "оплачено",
+    ctaTrack: "Відстежити замовлення",
+    ctaNoteWithTtn: "Натисніть кнопку нижче, щоб перевірити статус доставки.",
+    ctaNoteNoTtn: "Натисніть кнопку нижче, щоб перейти до магазину.",
+    textTrackLabel: "Відстежити:",
+  },
+  en: {
+    orderSubject: (n) => `NOVA - order #${n} confirmed`,
+    orderHeading: (name) => `${name}, thank you for your order.`,
+    orderHeadingNoName: "Thank you for your order.",
+    orderTextGreeting: (name) => `${name}, thank you for your order!`,
+    orderTextGreetingNoName: "Thank you for your order!",
+    orderIntro: "Your order has been received and paid. We'll let you know as soon as it ships with Nova Poshta.",
+    orderTextIntro: [
+      "Your order has been received and paid. We'll let you know as soon as it",
+      "ships with Nova Poshta.",
+    ],
+    labelOrderNumber: "Order number",
+    labelAmount: "Amount",
+    labelAddress: "Shipping address",
+    ctaShop: "Go to store",
+    textItemsLabel: "Items:",
+    textSubtotal: "Subtotal",
+    textShipping: "Shipping",
+    textTotal: "Total",
+    textAddressLabel: "Shipping address:",
+    shipmentSubject: (n, ttn) => (ttn ? `NOVA - order #${n} shipped (tracking ${ttn})` : `NOVA - order #${n} shipped`),
+    shipmentHeading: (name) => `${name}, your order is on its way.`,
+    shipmentHeadingNoName: "Your order is on its way.",
+    shipmentTextGreeting: (name) => `${name}, your order is on its way!`,
+    shipmentTextGreetingNoName: "Your order is on its way!",
+    shipmentIntro:
+      "Your order has been handed to Nova Poshta and is heading your way. Track its status with the number below.",
+    shipmentTextIntro: [
+      "Your order has been handed to Nova Poshta and is heading your way. Track",
+      "its status with the number above.",
+    ],
+    labelTtn: "Tracking number",
+    labelPayment: "Payment",
+    paidSuffix: "paid",
+    ctaTrack: "Track order",
+    ctaNoteWithTtn: "Click the button below to check the delivery status.",
+    ctaNoteNoTtn: "Click the button below to go to the store.",
+    textTrackLabel: "Track:",
+  },
 }
 
 export function formatOrderAmount(
@@ -86,17 +214,31 @@ function formatAddress(addr: OrderEmailAddress | null | undefined): string[] {
   ].filter((line): line is string => Boolean(line && line.trim()))
 }
 
-export function buildOrderConfirmationEmail(order: OrderEmailInput): {
+function emailProducts(items: OrderEmailItem[]): EmailProductRow[] {
+  return items.map((item) => ({
+    title: escapeHtml(itemName(item)),
+    qty: item.quantity,
+    imageUrl: item.variant?.product?.thumbnail || null,
+  }))
+}
+
+export function buildOrderConfirmationEmail(
+  order: OrderEmailInput,
+  lang: EmailLang = "uk"
+): {
   subject: string
   text: string
   html: string
 } {
+  const s = STRINGS[lang]
   const orderNo = order.display_id ?? order.id
   const currency = order.currency_code
   const items = order.items ?? []
   const addressLines = formatAddress(order.shipping_address)
+  const firstName = order.shipping_address?.first_name
+  const storefrontUrl = DEFAULT_STOREFRONT_URL
 
-  const subject = `NOVA Store - Order #${orderNo} confirmed`
+  const subject = s.orderSubject(orderNo)
 
   const textItems = items.map(
     (item) =>
@@ -107,85 +249,108 @@ export function buildOrderConfirmationEmail(order: OrderEmailInput): {
   )
 
   const text = [
-    `Thank you for your order!`,
+    firstName ? s.orderTextGreeting(firstName) : s.orderTextGreetingNoName,
     ``,
-    `Order #${orderNo}`,
+    `${s.labelOrderNumber} #${orderNo}`,
     ``,
-    `Items:`,
+    s.textItemsLabel,
     ...textItems,
     ``,
-    `Subtotal: ${formatOrderAmount(order.subtotal, currency)}`,
-    `Shipping: ${formatOrderAmount(order.shipping_total, currency)}`,
-    `Total: ${formatOrderAmount(order.total, currency)}`,
+    `${s.textSubtotal}: ${formatOrderAmount(order.subtotal, currency)}`,
+    `${s.textShipping}: ${formatOrderAmount(order.shipping_total, currency)}`,
+    `${s.textTotal}: ${formatOrderAmount(order.total, currency)}`,
     ...(addressLines.length
-      ? [``, `Shipping to:`, ...addressLines.map((l) => `  ${l}`)]
+      ? [``, s.textAddressLabel, ...addressLines.map((l) => `  ${l}`)]
       : []),
     ``,
-    `You can track payment and delivery status any time in your account:`,
-    `sign in and open "My Account" -> your order.`,
+    ...s.orderTextIntro,
     ``,
-    `NOVA Electronics Store`,
+    `NOVA`,
   ].join("\n")
 
-  const htmlRows = items
-    .map(
-      (item) => `
-        <tr>
-          <td style="padding:8px 0;border-bottom:1px solid #eee;">${escapeHtml(
-            itemName(item)
-          )}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center;">x${escapeHtml(
-            item.quantity
-          )}</td>
-          <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">${escapeHtml(
-            formatOrderAmount((item.unit_price ?? 0) * item.quantity, currency)
-          )}</td>
-        </tr>`
-    )
-    .join("")
+  const kv: EmailKv[] = [
+    { label: s.labelOrderNumber, value: `#${escapeHtml(orderNo)}` },
+    { label: s.labelAmount, value: escapeHtml(formatOrderAmount(order.total, currency)) },
+    ...(addressLines.length
+      ? [{ label: s.labelAddress, value: addressLines.map((l) => escapeHtml(l)).join("<br/>") }]
+      : []),
+  ]
 
-  const htmlAddress = addressLines.length
-    ? `<h3 style="margin:24px 0 8px;font-size:14px;">Shipping to</h3>
-       <p style="margin:0;color:#444;line-height:1.5;">${addressLines
-         .map((l) => escapeHtml(l))
-         .join("<br/>")}</p>`
-    : ""
+  const html = renderEmail({
+    lang,
+    preheader: `${s.labelOrderNumber} #${orderNo}.`,
+    heading: firstName ? s.orderHeading(escapeHtml(firstName)) : s.orderHeadingNoName,
+    intro: s.orderIntro,
+    kv,
+    products: emailProducts(items),
+    cta: { label: s.ctaShop, url: storefrontUrl },
+    storefrontUrl,
+  })
 
-  const html = `
-  <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#111;">
-    <h1 style="font-size:20px;letter-spacing:0.15em;">NOVA</h1>
-    <h2 style="font-size:16px;margin:16px 0 4px;">Thank you for your order!</h2>
-    <p style="margin:0 0 16px;color:#444;">Order <strong>#${escapeHtml(
-      orderNo
-    )}</strong> has been placed successfully.</p>
-    <table style="width:100%;border-collapse:collapse;font-size:14px;">
-      ${htmlRows}
-      <tr>
-        <td colspan="2" style="padding:8px 0;color:#444;">Subtotal</td>
-        <td style="padding:8px 0;text-align:right;">${escapeHtml(
-          formatOrderAmount(order.subtotal, currency)
-        )}</td>
-      </tr>
-      <tr>
-        <td colspan="2" style="padding:4px 0;color:#444;">Shipping</td>
-        <td style="padding:4px 0;text-align:right;">${escapeHtml(
-          formatOrderAmount(order.shipping_total, currency)
-        )}</td>
-      </tr>
-      <tr>
-        <td colspan="2" style="padding:8px 0;font-weight:bold;border-top:1px solid #111;">Total</td>
-        <td style="padding:8px 0;font-weight:bold;text-align:right;border-top:1px solid #111;">${escapeHtml(
-          formatOrderAmount(order.total, currency)
-        )}</td>
-      </tr>
-    </table>
-    ${htmlAddress}
-    <p style="margin:24px 0 0;color:#444;font-size:13px;line-height:1.5;">
-      You can track payment and delivery status any time in your personal
-      account: sign in and open <strong>My Account</strong>.
-    </p>
-    <p style="margin:16px 0 0;color:#888;font-size:12px;">NOVA Electronics Store</p>
-  </div>`
+  return { subject, text, html }
+}
+
+export function buildShipmentEmail(
+  order: ShipmentEmailInput,
+  lang: EmailLang = "uk"
+): {
+  subject: string
+  text: string
+  html: string
+} {
+  const s = STRINGS[lang]
+  const orderNo = order.display_id ?? order.id
+  const currency = order.currency_code
+  const items = order.items ?? []
+  const addressLines = formatAddress(order.shipping_address)
+  const firstName = order.shipping_address?.first_name
+  const storefrontUrl = DEFAULT_STOREFRONT_URL
+  const ttn = order.ttn || null
+  const trackingUrl = ttn ? `https://novaposhta.ua/tracking/?cargo_number=${encodeURIComponent(ttn)}` : storefrontUrl
+
+  const subject = s.shipmentSubject(orderNo, ttn)
+
+  const text = [
+    firstName ? s.shipmentTextGreeting(firstName) : s.shipmentTextGreetingNoName,
+    ``,
+    `${s.labelOrderNumber} #${orderNo}`,
+    ...(ttn ? [`${s.labelTtn}: ${ttn}`] : []),
+    `${s.labelPayment}: ${formatOrderAmount(order.total, currency)} (${s.paidSuffix})`,
+    ...(addressLines.length
+      ? [``, s.textAddressLabel, ...addressLines.map((l) => `  ${l}`)]
+      : []),
+    ``,
+    ...s.shipmentTextIntro,
+    ...(ttn ? [``, `${s.textTrackLabel} ${trackingUrl}`] : []),
+    ``,
+    `NOVA`,
+  ].join("\n")
+
+  const kv: EmailKv[] = [
+    { label: s.labelOrderNumber, value: `#${escapeHtml(orderNo)}` },
+    ...(ttn ? [{ label: s.labelTtn, value: escapeHtml(ttn) }] : []),
+    {
+      label: s.labelPayment,
+      value: `${escapeHtml(formatOrderAmount(order.total, currency))} (${s.paidSuffix})`,
+    },
+    ...(addressLines.length
+      ? [{ label: s.labelAddress, value: addressLines.map((l) => escapeHtml(l)).join("<br/>") }]
+      : []),
+  ]
+
+  const html = renderEmail({
+    lang,
+    preheader: ttn
+      ? `${s.labelOrderNumber} #${orderNo}. ${s.labelTtn} ${escapeHtml(ttn)}.`
+      : `${s.labelOrderNumber} #${orderNo}.`,
+    heading: firstName ? s.shipmentHeading(escapeHtml(firstName)) : s.shipmentHeadingNoName,
+    intro: s.shipmentIntro,
+    kv,
+    products: emailProducts(items),
+    ctaNote: ttn ? s.ctaNoteWithTtn : s.ctaNoteNoTtn,
+    cta: { label: s.ctaTrack, url: trackingUrl },
+    storefrontUrl,
+  })
 
   return { subject, text, html }
 }

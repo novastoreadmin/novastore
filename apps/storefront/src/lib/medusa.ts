@@ -226,9 +226,15 @@ export interface ShippingAddressInput {
 // Persists the checkout Information step (email + shipping address) to the
 // cart. Must run before completeCart, otherwise orders are created with no
 // customer email or shipping address attached.
+//
+// `locale` (the storefront language, "uk" | "en") is stamped onto
+// cart.metadata.locale - Medusa's completeCartWorkflow copies cart.metadata
+// onto the created order as-is, so the backend's order-confirmation and
+// shipment emails (src/lib/email-i18n.ts) go out in the language the
+// customer had selected at checkout.
 export async function updateCartDetails(
   cartId: string,
-  data: { email: string; shipping_address: ShippingAddressInput }
+  data: { email: string; shipping_address: ShippingAddressInput; locale?: string }
 ) {
   const { cart } = await sdk.store.cart.update(cartId, {
     email: data.email,
@@ -236,6 +242,7 @@ export async function updateCartDetails(
       ...data.shipping_address,
       country_code: data.shipping_address.country_code ?? DEFAULT_COUNTRY,
     },
+    metadata: data.locale ? { locale: data.locale } : undefined,
   });
   return cart;
 }

@@ -149,7 +149,7 @@ const EMPTY_CONTACT: ContactInfo = {
 const MONO_PROVIDER_ID = "pp_monobank_monobank";
 
 export default function CheckoutPage() {
-  const { d } = useI18n();
+  const { d, lang } = useI18n();
   const { cartId, setCartId, setItemCount } = useCartStore();
   const { customer, status: authStatus } = useCustomer();
   const [currentStep, setCurrentStep] = useState<Step>("information");
@@ -371,6 +371,7 @@ export default function CheckoutPage() {
             postal_code: contactInfo.postalCode,
             phone: contactInfo.phone || undefined,
           },
+          locale: lang,
         });
         setCart(updated as Cart);
       } catch (err: unknown) {

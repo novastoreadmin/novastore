@@ -108,6 +108,54 @@ also use cPanel webmail directly at `https://novastore.com.ua/webmail`.
 > always re-copy the password from cPanel → Email Accounts → Connect Devices, don't assume
 > it matches the admin login.
 
+## Transactional emails (auto-sent to customers)
+
+Three automatic emails go out through the same mail server/accounts above,
+built from a shared table-based HTML layout so they render consistently
+across email clients (light-mode only, dark-mode auto-invert disabled):
+
+| Event | Email | Sent from |
+|---|---|---|
+| `customer.created` (real registration only, `has_account === true` — guest checkout customer records are skipped) | "Вітаємо в NOVA" welcome email | `src/subscribers/customer-created.ts` → `src/lib/customer-email.ts` |
+| `order.placed` (fires after checkout/payment completes) | Order confirmation (order #, amount, items, address) | `src/subscribers/order-placed.ts` → `buildOrderConfirmationEmail` in `src/lib/order-email.ts` |
+| `shipment.created` | Shipment notification (order #, Nova Poshta ТТН + tracking link when present, amount paid) | `src/subscribers/shipment-created-email.ts` → `buildShipmentEmail` in `src/lib/order-email.ts` |
+
+Shared layout: `src/lib/email-template.ts` → `renderEmail()` — a single
+600px desktop / ≤480px mobile HTML shell (logo tile, heading, key/value
+rows, product cards, black pill CTA button, footer with unsubscribe/privacy/
+support links) reused by all three builders. The logo is a bulletproof text
+monogram ("N" on a black tile), not an image — email clients strip SVGs and
+Gmail blocks `data:` URIs, and this avoids depending on an image-conversion
+tool that isn't available in this environment.
+
+Env: `ORDER_EMAIL_FROM` (sender mailbox, must exist in `MAIL_ACCOUNTS`) and
+`STOREFRONT_URL` (used for CTA links and the footer domain) — both already
+in `.env.template`.
+
+**Language**: each email is sent entirely in ONE language — the customer's
+storefront preference (uk/en, `apps/storefront/src/lib/i18n.tsx`), not both
+at once. The storefront's language switcher is a client-only `localStorage`
+value with no backend record by default, so it's stamped onto
+`metadata.locale` at the two points the storefront talks to the backend
+about something we later email: `customer.metadata.locale` at registration
+(`apps/storefront/src/lib/auth.ts` → `registerCustomer`) and
+`cart.metadata.locale` at the checkout Information step
+(`apps/storefront/src/lib/medusa.ts` → `updateCartDetails`), which Medusa's
+`completeCartWorkflow` copies onto `order.metadata` unchanged. Subscribers
+read it back and resolve it via `src/lib/email-i18n.ts` → `resolveEmailLang`,
+defaulting to `uk` for anything missing/invalid (orders/customers created
+before this existed, guest checkouts, direct API usage).
+
+All three subscribers treat mail failure as non-fatal (`logger.warn`, never
+throws) — a down mail server must never look like a failed checkout or
+registration. Unit tests: `tests/unit/order-email.test.ts`,
+`tests/unit/customer-email.test.ts`, `tests/unit/email-template.spec.ts`.
+
+To preview locally: trigger the event (register an account, complete
+checkout, or run `npx medusa exec ./np-test-shipments.ts` for a fake
+shipment), then open admin → **Mail** and read the message — the HTML
+renders in an iframe so you can eyeball the layout.
+
 ## Limitations
 - **Internal only.** No mail leaves your machine. To go real (send/receive to the internet)
   you need a real domain + DNS (MX/SPF/DKIM/DMARC); swap GreenMail for docker-mailserver and
