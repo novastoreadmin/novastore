@@ -12,6 +12,13 @@
 //    email clients ignore) - this scales the image without cropping or
 //    stretching, so its real aspect ratio is preserved regardless of
 //    whether the source photo is square, portrait, or landscape.
+//  - CTA link has NO target="_blank" (confirmed live): some webmail clients
+//    render the message body inside a sandboxed iframe without the
+//    allow-popups permission, and a target="_blank" link inside it is
+//    silently blocked by the browser ("Blocked opening ... in a new window
+//    because the request was made in a sandboxed frame..."), not by the
+//    reader's own browser mode (incognito is unrelated). Plain same-context
+//    navigation (no target attribute) works everywhere.
 //
 // Language: every email is sent in ONE language - the customer's storefront
 // preference (see email-i18n.ts for how that's captured and resolved).
@@ -126,7 +133,7 @@ export function renderEmail(opts: RenderEmailOptions): string {
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:${BLACK};">
-            <a href="${opts.cta.url}" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:${WHITE};text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">${opts.cta.label}</a>
+            <a href="${opts.cta.url}" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:${WHITE};text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">${opts.cta.label}</a>
           </td>
         </tr>
       </table>`

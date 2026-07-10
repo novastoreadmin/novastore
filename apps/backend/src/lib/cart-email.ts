@@ -17,6 +17,10 @@ export type AbandonedCartItem = {
 }
 
 export type AbandonedCartInput = {
+  /** Included in the CTA URL as ?cart_id= so the storefront can resume THIS
+   * cart even when opened on a device/browser that never had it in
+   * localStorage (see apps/storefront/src/app/checkout/page.tsx). */
+  cartId: string
   first_name?: string | null
   items: AbandonedCartItem[]
 }
@@ -24,8 +28,13 @@ export type AbandonedCartInput = {
 export type AbandonedCartCandidate = {
   id: string
   email?: string | null
+  /** Logged-in owner, if any. Lets a cart qualify even when the guest email
+   * hasn't been captured yet (never reached checkout) - the job resolves
+   * the recipient address from the customer's account instead. */
+  customer_id?: string | null
   completed_at?: string | Date | null
   updated_at: string | Date
+  items?: { quantity?: number }[] | null
   shipping_address?: { first_name?: string | null } | null
   metadata?: Record<string, unknown> | null
 }
@@ -36,10 +45,13 @@ const MIN_AGE_HOURS = Number(process.env.ABANDONED_CART_HOURS) || 3
 const MAX_AGE_DAYS = 7
 
 /**
- * Whether a cart qualifies for the abandoned-cart email: reached the
- * Information step (email + shipping address filled in) but never paid,
- * old enough to be a real abandonment but not so old it's a dead cart, and
- * hasn't already been emailed once.
+ * Whether a cart qualifies for the abandoned-cart email: has items and
+ * never paid, old enough to be a real abandonment but not so old it's a
+ * dead cart, hasn't already been emailed once, and we have some way to
+ * reach the owner - either a guest email saved at checkout, or a logged-in
+ * customer_id (the job resolves that to the account's email). A fully
+ * anonymous cart that never entered an email and was never logged into
+ * can't be reached at all, so it's excluded regardless of age.
  */
 export function isAbandonedCandidate(
   cart: AbandonedCartCandidate,
@@ -47,8 +59,8 @@ export function isAbandonedCandidate(
   opts: { minAgeHours?: number; maxAgeDays?: number } = {}
 ): boolean {
   if (cart.completed_at) return false
-  if (!cart.email) return false
-  if (!cart.shipping_address) return false
+  if (!cart.email && !cart.customer_id) return false
+  if (!cart.items?.length) return false
   if (cart.metadata?.abandoned_email_at) return false
 
   const minAgeHours = opts.minAgeHours ?? MIN_AGE_HOURS
@@ -112,7 +124,7 @@ export function buildAbandonedCartEmail(
   const s = STRINGS[lang]
   const firstName = input.first_name
   const storefrontUrl = DEFAULT_STOREFRONT_URL
-  const checkoutUrl = `${storefrontUrl}/checkout`
+  const checkoutUrl = `${storefrontUrl}/checkout?cart_id=${encodeURIComponent(input.cartId)}`
 
   const text = [
     firstName ? s.textGreeting(firstName) : s.textGreetingNoName,

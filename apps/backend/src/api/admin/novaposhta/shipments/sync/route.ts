@@ -1,6 +1,6 @@
 import type { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
-import type { IFulfillmentModuleService, Logger } from "@medusajs/framework/types"
+import type { IFulfillmentModuleService } from "@medusajs/framework/types"
 import {
   appendAudit,
   isNpAdminEnabled,
@@ -8,10 +8,7 @@ import {
   withRetries,
 } from "../../../../../lib/novaposhta-admin"
 import { getNovaPoshtaClient } from "../../../../../lib/novaposhta"
-import { resolveEmailLang } from "../../../../../lib/email-i18n"
-import { MAIL_ACCOUNTS, getAccount } from "../../../../../lib/mail-accounts"
-import { sendMail } from "../../../../../lib/mail-client"
-import { buildDeliveredEmail } from "../../../../../lib/order-email"
+import { sendDeliveredEmailForFulfillments } from "../../../../../lib/send-delivered-email"
 
 /**
  * POST /admin/novaposhta/shipments/sync   { ids: string[] }
@@ -102,11 +99,11 @@ export async function POST(
     res.json({ synced: results })
 
     // Fire-and-forget: send "delivered" emails after responding to the admin
-    // UI - Sync must never be slowed down or failed by mail delivery. Guard
-    // against a duplicate send with np_delivered_email_at, set only after a
-    // successful sendMail.
+    // UI - Sync must never be slowed down or failed by mail delivery.
+    // shouldSendDeliveredEmail() above already guarantees each id is a
+    // first-time transition, so this always sends.
     if (deliveredIds.length) {
-      sendDeliveredEmails(deliveredIds, req, logger).catch((err) => {
+      sendDeliveredEmailForFulfillments(req.scope, deliveredIds, logger).catch((err) => {
         logger.error(
           `[NovaPoshta admin] delivered-email batch failed: ${
             err instanceof Error ? err.message : String(err)
@@ -118,71 +115,5 @@ export async function POST(
     const message = err instanceof Error ? err.message : String(err)
     logger.error(`[NovaPoshta admin] sync failed: ${message}`)
     res.status(502).json({ message: `Nova Poshta sync failed: ${message}` })
-  }
-}
-
-/**
- * Sends the "delivered" email for each fulfillment that just made its FIRST
- * transition into a delivered status code, then stamps
- * metadata.np_delivered_email_at so a later re-sync never sends a duplicate.
- * Runs after the sync response is already sent - never blocks or fails Sync.
- */
-async function sendDeliveredEmails(
-  fulfillmentIds: string[],
-  req: AuthenticatedMedusaRequest,
-  logger: Logger
-): Promise<void> {
-  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
-  const fulfillmentModule = req.scope.resolve<IFulfillmentModuleService>(Modules.FULFILLMENT)
-
-  const { data: fulfillments } = await query.graph({
-    entity: "fulfillment",
-    fields: [
-      "id",
-      "data",
-      "metadata",
-      "order.id",
-      "order.display_id",
-      "order.email",
-      "order.currency_code",
-      "order.total",
-      "order.items.*",
-      "order.items.variant.*",
-      "order.items.variant.product.*",
-      "order.shipping_address.*",
-      "order.metadata",
-    ],
-    filters: { id: fulfillmentIds },
-  })
-
-  for (const f of fulfillments as any[]) {
-    const order = f.order
-    if (!order?.email) continue
-
-    const fromAddress = process.env.ORDER_EMAIL_FROM || "admin@nova.local"
-    const account = getAccount(fromAddress) ?? MAIL_ACCOUNTS[0]
-    if (!account) continue
-
-    try {
-      const ttn = String(f.data?.np_ttn ?? "") || null
-      const lang = resolveEmailLang(order.metadata?.locale)
-      const email = buildDeliveredEmail({ ...order, ttn }, lang)
-      await sendMail(account, {
-        to: order.email,
-        subject: email.subject,
-        text: email.text,
-        html: email.html,
-      })
-      await fulfillmentModule.updateFulfillment(f.id, {
-        metadata: { ...(f.metadata ?? {}), np_delivered_email_at: new Date().toISOString() },
-      })
-      logger.info(`[NovaPoshta admin] delivered email sent for order #${order.display_id}`)
-    } catch (err) {
-      logger.warn(
-        `[NovaPoshta admin] delivered email failed for order #${order.display_id}: ${
-          err instanceof Error ? err.message : String(err)
-        }`
-      )
-    }
   }
 }

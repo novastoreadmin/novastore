@@ -141,9 +141,9 @@ across email clients (light-mode only, dark-mode auto-invert disabled):
 | `customer.created` (real registration only, `has_account === true` — guest checkout customer records are skipped) | "Вітаємо в NOVA" welcome email | `src/subscribers/customer-created.ts` → `src/lib/customer-email.ts` |
 | `order.placed` (fires after checkout/payment completes) | Order confirmation (order #, amount, items, address) | `src/subscribers/order-placed.ts` → `buildOrderConfirmationEmail` in `src/lib/order-email.ts` |
 | `shipment.created` | Shipment notification (order #, Nova Poshta ТТН + tracking link when present, amount paid) | `src/subscribers/shipment-created-email.ts` → `buildShipmentEmail` in `src/lib/order-email.ts` |
-| Sync in the Nova Poshta admin extension, first transition into a delivered status code (9/10/11/106) | "Delivered" email — sent at most once per fulfillment, guarded by `fulfillment.metadata.np_delivered_email_at` | `src/api/admin/novaposhta/shipments/sync/route.ts` → `buildDeliveredEmail` in `src/lib/order-email.ts`; the "should we send" decision is the pure `shouldSendDeliveredEmail` in `src/lib/novaposhta-admin.ts` |
+| **Either**: (a) Sync in the Nova Poshta admin extension, first transition into a delivered status code (9/10/11/106), or (b) Medusa's own "Mark as delivered" order action (`delivery.created`) — any carrier, no NP tracking required | "Delivered" email — sent at most once per fulfillment no matter which trigger fires first, guarded by `fulfillment.metadata.np_delivered_email_at` | Shared sender: `sendDeliveredEmailForFulfillments` in `src/lib/send-delivered-email.ts` → `buildDeliveredEmail` in `src/lib/order-email.ts`. Trigger (a): `src/api/admin/novaposhta/shipments/sync/route.ts`, pre-filtered by the pure `shouldSendDeliveredEmail` in `src/lib/novaposhta-admin.ts` (requires a real delivered status code). Trigger (b): `src/subscribers/delivery-created.ts`, which respects `no_notification` and only checks the dedupe flag (no status-code requirement, since a manual admin confirmation has no NP data to check) |
 | `payment.refunded` (`PaymentEvents.REFUNDED`, emitted by `refundPaymentWorkflow`) | Refund confirmation with the ACTUAL refunded amount (may be less than `order.total` for a partial refund) | `src/subscribers/payment-refunded.ts` → `buildRefundEmail` in `src/lib/order-email.ts` |
-| Hourly cron (`abandoned-cart-email`) | Abandoned-cart nudge — cart has email + shipping address but never paid, 3h–7d old, one email per cart (`cart.metadata.abandoned_email_at`) | `src/jobs/abandoned-cart-email.ts` → `buildAbandonedCartEmail` in `src/lib/cart-email.ts`; candidate logic is the pure `isAbandonedCandidate` in the same file |
+| Hourly cron (`abandoned-cart-email`) | Abandoned-cart nudge — cart has items and never paid, 3h–7d old, one email per cart (`cart.metadata.abandoned_email_at`). Fires for guests who reached checkout (cart has its own `email`) **and** for logged-in customers who added to cart and left without ever reaching checkout (recipient resolved from `customer_id` → account email). A fully anonymous cart (no email, not logged in) can't be reached and is skipped. | `src/jobs/abandoned-cart-email.ts` → `buildAbandonedCartEmail` in `src/lib/cart-email.ts`; candidate logic is the pure `isAbandonedCandidate` in the same file |
 
 The refund and delivered subscribers each needed a `query.graph` path that
 isn't obvious - both were verified live against the local dev DB before
@@ -156,10 +156,19 @@ shipping, not assumed from docs:
   other direction: query entity `"payment"` filtered by its own `id`, then
   read `payment_collection.order.*` (confirmed live: resolves the correct
   single order).
-- **Delivered dedupe**: `shouldSendDeliveredEmail` only fires on the FIRST
-  observed transition into a delivered status code - re-syncing an
-  already-delivered shipment is a no-op, so Sync can be clicked repeatedly
-  without spamming the customer.
+- **Delivered dedupe across two triggers**: `shouldSendDeliveredEmail` only
+  fires on the FIRST observed transition into a delivered status code, so
+  Sync can be clicked repeatedly without spamming the customer. Because an
+  order can ALSO be marked delivered manually (independent of NP tracking -
+  confirmed live: Medusa emits `delivery.created` even for a fulfillment
+  with no shipping/tracking data at all), both triggers write the same
+  `metadata.np_delivered_email_at` flag and `delivery-created.ts` checks it
+  before sending - whichever trigger fires first "wins" and the other is a
+  no-op, verified live end-to-end (event dispatch → order/email lookup →
+  send → flag stamped → re-trigger correctly blocked) via the real
+  `POST /admin/orders/:id/fulfillments/:fulfillment_id/mark-as-delivered`
+  API against a running dev server (not just `medusa exec`, which exits
+  before the async subscriber finishes and gives a false negative).
 
 Shared layout: `src/lib/email-template.ts` → `renderEmail()` — a single
 600px desktop / ≤480px mobile HTML shell (logo tile, heading, key/value

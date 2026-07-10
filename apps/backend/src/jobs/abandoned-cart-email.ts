@@ -7,9 +7,14 @@ import { MAIL_ACCOUNTS, getAccount } from "../lib/mail-accounts"
 import { sendMail } from "../lib/mail-client"
 
 /**
- * Emails customers who reached the checkout Information step (email +
- * shipping address saved to the cart) but never paid. Runs on a cron
- * schedule (default hourly).
+ * Emails customers who added items to a cart but never paid. Runs on a cron
+ * schedule (default hourly). Covers two cases:
+ *  - Guest reached the checkout Information step: cart has its own `email`.
+ *  - Logged-in customer added to cart and left, without ever reaching
+ *    checkout: cart has no `email` yet, but has `customer_id` - the
+ *    recipient address is resolved from the customer's account instead.
+ * A fully anonymous cart (no email, not logged in) can't be reached at all
+ * and is skipped regardless of age (see isAbandonedCandidate).
  *
  * Two independent knobs, both env-driven so local testing doesn't need a
  * real hour-long wait:
@@ -44,6 +49,7 @@ export default async function abandonedCartEmailJob(container: MedusaContainer) 
       fields: [
         "id",
         "email",
+        "customer_id",
         "completed_at",
         "updated_at",
         "metadata",
@@ -72,13 +78,44 @@ export default async function abandonedCartEmailJob(container: MedusaContainer) 
       return
     }
 
+    // Carts that never reached checkout have no cart.email - for those,
+    // look up the logged-in owner's account email instead (guest carts with
+    // no email AND no customer_id are unreachable and already excluded by
+    // isAbandonedCandidate).
+    const missingEmailCustomerIds = Array.from(
+      new Set(
+        candidates
+          .filter((c) => !c.email && c.customer_id)
+          .map((c) => c.customer_id as string)
+      )
+    )
+    const customerById = new Map<string, { email?: string | null; first_name?: string | null }>()
+    if (missingEmailCustomerIds.length) {
+      const { data: customers } = await query.graph({
+        entity: "customer",
+        fields: ["id", "email", "first_name"],
+        filters: { id: missingEmailCustomerIds },
+      })
+      for (const customer of customers as any[]) {
+        customerById.set(customer.id, customer)
+      }
+    }
+
     let sent = 0
     for (const cart of candidates) {
       try {
+        const customer = cart.customer_id ? customerById.get(cart.customer_id) : undefined
+        const recipientEmail = cart.email || customer?.email
+        if (!recipientEmail) {
+          logger.warn(`[NOVA] Abandoned-cart email skipped for cart ${cart.id}: no resolvable recipient email`)
+          continue
+        }
+
         const lang = resolveEmailLang(cart.metadata?.locale)
         const email = buildAbandonedCartEmail(
           {
-            first_name: cart.shipping_address?.first_name,
+            cartId: cart.id,
+            first_name: cart.shipping_address?.first_name || customer?.first_name,
             items: (cart.items ?? []).map((item: any) => ({
               title: item.product_title || item.title,
               quantity: item.quantity,
@@ -88,7 +125,7 @@ export default async function abandonedCartEmailJob(container: MedusaContainer) 
           lang
         )
         await sendMail(account, {
-          to: cart.email,
+          to: recipientEmail,
           subject: email.subject,
           text: email.text,
           html: email.html,

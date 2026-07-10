@@ -66,7 +66,7 @@ exports[`email snapshots > buildAbandonedCartEmail (en) > html 1`] = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000/checkout" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Finish checkout</a>
+            <a href="http://localhost:3000/checkout?cart_id=cart_snap_1" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Finish checkout</a>
           </td>
         </tr>
       </table></td></tr>
@@ -104,7 +104,7 @@ exports[`email snapshots > buildAbandonedCartEmail (en) > text 1`] = `
 
 You're almost done - just checkout and payment left. Your items are still in stock, but we can't hold them forever.
 
-http://localhost:3000/checkout
+http://localhost:3000/checkout?cart_id=cart_snap_1
 
 NOVA"
 `;
@@ -175,7 +175,7 @@ exports[`email snapshots > buildAbandonedCartEmail (uk) > html 1`] = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000/checkout" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Завершити оформлення</a>
+            <a href="http://localhost:3000/checkout?cart_id=cart_snap_1" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Завершити оформлення</a>
           </td>
         </tr>
       </table></td></tr>
@@ -213,7 +213,7 @@ exports[`email snapshots > buildAbandonedCartEmail (uk) > text 1`] = `
 
 Ви майже оформили замовлення — залишилось обрати оплату. Товари ще в наявності, але ми не можемо тримати їх вічно.
 
-http://localhost:3000/checkout
+http://localhost:3000/checkout?cart_id=cart_snap_1
 
 NOVA"
 `;
@@ -308,7 +308,7 @@ exports[`email snapshots > buildDeliveredEmail with ttn (en) > html 1`] = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Go to store</a>
+            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Go to store</a>
           </td>
         </tr>
       </table></td></tr>
@@ -451,7 +451,7 @@ exports[`email snapshots > buildDeliveredEmail with ttn (uk) > html 1`] = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Перейти до магазину</a>
+            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Перейти до магазину</a>
           </td>
         </tr>
       </table></td></tr>
@@ -588,7 +588,7 @@ exports[`email snapshots > buildOrderConfirmationEmail (en) > html 1`] = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Go to store</a>
+            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Go to store</a>
           </td>
         </tr>
       </table></td></tr>
@@ -730,7 +730,7 @@ exports[`email snapshots > buildOrderConfirmationEmail (uk) > html 1`] = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Перейти до магазину</a>
+            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Перейти до магазину</a>
           </td>
         </tr>
       </table></td></tr>
@@ -858,7 +858,7 @@ exports[`email snapshots > buildRefundEmail (en) > html 1`] = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="mailto:support@novastore.com.ua" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Contact support</a>
+            <a href="mailto:support@novastore.com.ua" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Contact support</a>
           </td>
         </tr>
       </table></td></tr>
@@ -974,7 +974,7 @@ exports[`email snapshots > buildRefundEmail (uk) > html 1`] = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="mailto:support@novastore.com.ua" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Звʼязатися з підтримкою</a>
+            <a href="mailto:support@novastore.com.ua" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Звʼязатися з підтримкою</a>
           </td>
         </tr>
       </table></td></tr>
@@ -1110,7 +1110,7 @@ exports[`email snapshots > buildShipmentEmail with ttn (en) > html 1`] = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="https://novaposhta.ua/tracking/?cargo_number=20451483622811" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Track order</a>
+            <a href="https://novaposhta.ua/tracking/?cargo_number=20451483622811" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Track order</a>
           </td>
         </tr>
       </table></td></tr>
@@ -1255,7 +1255,7 @@ exports[`email snapshots > buildShipmentEmail with ttn (uk) > html 1`] = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="https://novaposhta.ua/tracking/?cargo_number=20451483622811" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Відстежити замовлення</a>
+            <a href="https://novaposhta.ua/tracking/?cargo_number=20451483622811" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Відстежити замовлення</a>
           </td>
         </tr>
       </table></td></tr>
@@ -1394,7 +1394,7 @@ exports[`email snapshots > buildShipmentEmail without ttn (en) > html 1`] = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Track order</a>
+            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Track order</a>
           </td>
         </tr>
       </table></td></tr>
@@ -1530,7 +1530,7 @@ exports[`email snapshots > buildShipmentEmail without ttn (uk) > html 1`] = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Відстежити замовлення</a>
+            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Відстежити замовлення</a>
           </td>
         </tr>
       </table></td></tr>
@@ -1634,7 +1634,7 @@ exports[`email snapshots > buildWelcomeEmail (en) > html 1`] = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Browse the catalog</a>
+            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">Browse the catalog</a>
           </td>
         </tr>
       </table></td></tr>
@@ -1729,7 +1729,7 @@ exports[`email snapshots > buildWelcomeEmail (uk) > html 1`] = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="border-radius:999px;background:#0a0a0a;">
-            <a href="http://localhost:3000" target="_blank" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">До каталогу</a>
+            <a href="http://localhost:3000" style="display:inline-block;padding:14px 40px;font-size:12px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:0.2em;border-radius:999px;">До каталогу</a>
           </td>
         </tr>
       </table></td></tr>

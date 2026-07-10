@@ -104,6 +104,7 @@ describe("email snapshots", () => {
     it(`buildAbandonedCartEmail (${lang})`, () => {
       const { subject, text, html } = buildAbandonedCartEmail(
         {
+          cartId: "cart_snap_1",
           first_name: "Макс",
           items: [
             {
