@@ -100,17 +100,17 @@ describe("renderEmail", () => {
     expect(html).toContain("A &amp; B")
   })
 
-  it("links the footer to the storefront's privacy and support pages, localized", () => {
+  it("links the footer to the storefront's privacy and support pages, localized, with no unsubscribe link", () => {
     const uk = renderEmail(base)
     expect(uk).toContain("https://novastore.com.ua/privacy")
     expect(uk).toContain("https://novastore.com.ua/support")
-    expect(uk).toContain("mailto:admin@novastore.com.ua?subject=Unsubscribe")
-    expect(uk).toContain("Відписатися")
     expect(uk).toContain("Політика конфіденційності")
+    expect(uk).not.toContain("Unsubscribe")
+    expect(uk).not.toContain("Відписатися")
 
     const en = renderEmail({ ...base, lang: "en" })
-    expect(en).toContain("Unsubscribe")
     expect(en).toContain("Privacy policy")
+    expect(en).not.toContain("Unsubscribe")
     expect(en).not.toContain("Відписатися")
   })
 

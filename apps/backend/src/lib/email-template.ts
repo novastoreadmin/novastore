@@ -60,13 +60,12 @@ const SUPPORT_EMAIL = "support@novastore.com.ua"
 
 const CHROME: Record<
   EmailLang,
-  { qty: string; disclaimer: string; unsubscribe: string; privacy: string; contacts: string }
+  { qty: string; disclaimer: string; privacy: string; contacts: string }
 > = {
   uk: {
     qty: "Кількість",
     disclaimer:
       "Цей лист надіслано автоматично, відповідати на нього не потрібно. Якщо у вас виникли запитання — зверніться у підтримку: ",
-    unsubscribe: "Відписатися",
     privacy: "Політика конфіденційності",
     contacts: "Контакти",
   },
@@ -74,7 +73,6 @@ const CHROME: Record<
     qty: "Quantity",
     disclaimer:
       "This is an automated email, please do not reply. If you have any questions, contact support: ",
-    unsubscribe: "Unsubscribe",
     privacy: "Privacy policy",
     contacts: "Contact us",
   },
@@ -209,8 +207,6 @@ export function renderEmail(opts: RenderEmailOptions): string {
             <td style="background:${BLACK};padding:24px 40px;text-align:center;">
               <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${TEXT_FAINT};">NOVA · ${opts.storefrontUrl.replace(/^https?:\/\//, "")}</p>
               <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${TEXT_FAINT};">
-                <a href="mailto:admin@novastore.com.ua?subject=Unsubscribe" style="color:${TEXT_FAINT};text-decoration:underline;">${chrome.unsubscribe}</a>
-                &nbsp;·&nbsp;
                 <a href="${opts.storefrontUrl}/privacy" style="color:${TEXT_FAINT};text-decoration:underline;">${chrome.privacy}</a>
                 &nbsp;·&nbsp;
                 <a href="${opts.storefrontUrl}/support" style="color:${TEXT_FAINT};text-decoration:underline;">${chrome.contacts}</a>
