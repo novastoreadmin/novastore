@@ -12,8 +12,9 @@ export function Footer() {
     {
       title: d.footer.products,
       links: [
-        { label: d.header.nav["card-readers"], href: "/categories/card-readers" },
-        { label: d.header.nav["ssd-enclosures"], href: "/categories/ssd-enclosures" },
+        { label: d.header.nav.autonomy, href: "/categories/autonomy" },
+        { label: d.header.nav.hubs, href: "/categories/hubs" },
+        { label: d.header.nav.adapters, href: "/categories/adapters" },
         { label: d.header.nav.memory, href: "/categories/memory" },
         { label: d.header.nav["usb-c-cables"], href: "/categories/usb-c-cables" },
         { label: d.header.nav.accessories, href: "/categories/accessories" },

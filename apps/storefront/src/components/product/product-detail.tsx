@@ -59,6 +59,7 @@ interface Product {
   options: ProductOption[];
   metadata?: {
     model?: string;
+    arriving?: boolean;
     specs?: { label: string; value: string }[];
     features?: { title: string; description: string }[];
     i18n?: {
@@ -109,6 +110,24 @@ const COLOR_MAP: Record<string, { hex: string; label: string }> = {
   black: { hex: "#1a1a1a", label: "Black" },
   White: { hex: "#f5f5f5", label: "White" },
   white: { hex: "#f5f5f5", label: "White" },
+  Blue: { hex: "#3b82f6", label: "Blue" },
+  Yellow: { hex: "#eab308", label: "Yellow" },
+  Orange: { hex: "#f97316", label: "Orange" },
+  Green: { hex: "#22c55e", label: "Green" },
+  Grey: { hex: "#8a8d8f", label: "Grey" },
+  Gray: { hex: "#8a8d8f", label: "Gray" },
+  Purple: { hex: "#a855f7", label: "Purple" },
+  Pink: { hex: "#ec4899", label: "Pink" },
+  Red: { hex: "#dc2626", label: "Red" },
+  "Light Blue": { hex: "#7dd3fc", label: "Light Blue" },
+  Ivory: { hex: "#f1e9dd", label: "Ivory" },
+  "Army Green": { hex: "#4b5320", label: "Army Green" },
+  "Dark Gray": { hex: "#374151", label: "Dark Gray" },
+  "Black Silver": { hex: "#3d3f42", label: "Black Silver" },
+  "Purple Pink": { hex: "#c084fc", label: "Purple Pink" },
+  "Black Gold": { hex: "#8a6d1a", label: "Black Gold" },
+  "Dark Red": { hex: "#7f1d1d", label: "Dark Red" },
+  "Purple Green": { hex: "#7c9a5a", label: "Purple Green" },
 };
 
 const FEATURE_ICONS = [Cpu, Battery, Wifi, Shield, Monitor, Zap];
@@ -170,9 +189,13 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
   }, [product.variants, selectedOptions]);
 
   const price = selectedVariant?.calculated_price;
+  // «Товар в дорозі»: партія ще їде на склад — показуємо бейдж і вимикаємо
+  // купівлю незалежно від inventory (захист, навіть якщо рівні ще не створені).
+  const arriving = product.metadata?.arriving === true;
   // In stock unless the variant is explicitly tracked-and-empty. A null quantity
   // (store API didn't compute it) is treated as available — the cart validates on add.
   const inStock =
+    !arriving &&
     !!selectedVariant &&
     (selectedVariant.allow_backorder === true ||
       selectedVariant.manage_inventory === false ||
@@ -437,10 +460,28 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                     {formatPrice(price.calculated_amount, price.currency_code)}
                   </p>
                 )}
-                {!inStock && selectedVariant && (
-                  <p className="mt-2 text-sm text-error font-medium">
-                    {d.productDetail.currentlyOut}
-                  </p>
+                {arriving ? (
+                  <div className="mt-3">
+                    <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/10 border border-amber-300/30">
+                      <span className="relative flex w-1.5 h-1.5">
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-amber-300/70 animate-ping" />
+                        <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-amber-300" />
+                      </span>
+                      <span className="text-xs font-medium tracking-wide uppercase text-amber-200">
+                        {d.productDetail.arriving}
+                      </span>
+                    </span>
+                    <p className="mt-2 text-sm text-text-secondary">
+                      {d.productDetail.arrivingNote}
+                    </p>
+                  </div>
+                ) : (
+                  !inStock &&
+                  selectedVariant && (
+                    <p className="mt-2 text-sm text-error font-medium">
+                      {d.productDetail.currentlyOut}
+                    </p>
+                  )
                 )}
               </motion.div>
 
@@ -585,7 +626,11 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                       >
-                        {inStock ? d.productDetail.addToCart : d.productDetail.outOfStock}
+                        {inStock
+                          ? d.productDetail.addToCart
+                          : arriving
+                            ? d.productDetail.arriving
+                            : d.productDetail.outOfStock}
                       </motion.span>
                     )}
                   </AnimatePresence>

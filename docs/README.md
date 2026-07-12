@@ -19,6 +19,7 @@
 | [BACKEND.md](BACKEND.md) | Мапа `apps/backend`: модулі, всі API-роути, сабскрайбери, джоби, lib, middlewares, повний довідник env | Будь-яка зміна бекенда |
 | [STOREFRONT.md](STOREFRONT.md) | Мапа `apps/storefront`: роути, стейт (Zustand), чекаут-флоу, кешування/ISR + revalidation, auth | Будь-яка зміна storefront |
 | [CATALOG.md](CATALOG.md) | Дані каталогу: `catalog.ts`, три скрипти (seed / import ⚠️ / update-texts ✅), ціни USD→UAH, картинки, скидання кеша | Будь-яка робота з товарами/категоріями |
+| [INCOMING-IMPORT.md](INCOMING-IMPORT.md) | Партія «Товар в дорозі»: `incoming-catalog.ts`, prepare-import → CSV → apply-metadata, бейдж на storefront, чекліст локально/прод | Заливаєш/оновлюєш партію нових товарів |
 | [I18N.md](I18N.md) | Два шари локалізації (UI-словники + каталог у metadata) і мова листів | Додаєш будь-який текст користувачу |
 
 ## Інтеграції

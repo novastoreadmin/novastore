@@ -10,6 +10,7 @@ import { gsap } from "@/animations/gsap-config";
 import { cn, formatPrice } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { localizeTitle } from "@/lib/catalog-i18n";
+import { ArrivingBadge } from "@/components/product/product-card";
 
 interface Category {
   id: string;
@@ -22,7 +23,7 @@ interface Product {
   title: string;
   handle: string;
   thumbnail?: string | null;
-  metadata?: { i18n?: { en?: { title?: string } } } | null;
+  metadata?: { arriving?: boolean; i18n?: { en?: { title?: string } } } | null;
   categories?: Category[];
   variants?: {
     calculated_price?: {
@@ -247,6 +248,10 @@ export function ProductsView({
                       <div className="absolute top-4 right-4 w-9 h-9 rounded-full border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-bg/60 backdrop-blur-sm">
                         <ArrowUpRight className="w-4 h-4 text-text-secondary" />
                       </div>
+
+                      {product.metadata?.arriving === true && (
+                        <ArrivingBadge className="absolute top-4 left-4 z-10" />
+                      )}
                     </div>
 
                     <div className="p-6">

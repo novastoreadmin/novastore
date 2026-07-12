@@ -17,3 +17,6 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+
+# Generated product-import CSVs (per-DB ids/urls — regenerate with prepare-import.ts)
+apps/backend/data/import/
