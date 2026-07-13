@@ -41,6 +41,14 @@ async function getRegionId(): Promise<string | undefined> {
   return (await getRegion())?.id;
 }
 
+// Catalog reads go through sdk.client.fetch (NOT the high-level sdk.store.*
+// helpers): the helpers' second argument is HTTP *headers*, so `next.tags`
+// passed there never reached fetch() - in a production build the pages
+// prerendered at `next build` time and revalidateTag() had nothing tagged to
+// invalidate (admin edits / imports stayed invisible until the next build;
+// bitten live on /products). sdk.client.fetch spreads its init into fetch(),
+// so tags + force-cache actually register with Next's data cache.
+
 export async function getProducts(params?: {
   limit?: number;
   offset?: number;
@@ -48,8 +56,11 @@ export async function getProducts(params?: {
   collection_id?: string[];
   id?: string[];
 }) {
-  const { products, count } = await sdk.store.product.list(
-    {
+  const { products, count } = await sdk.client.fetch<{
+    products: import("@medusajs/types").HttpTypes.StoreProduct[];
+    count: number;
+  }>("/store/products", {
+    query: {
       limit: params?.limit ?? 12,
       offset: params?.offset ?? 0,
       category_id: params?.category_id,
@@ -59,37 +70,46 @@ export async function getProducts(params?: {
       fields:
         "+thumbnail,+metadata,+variants.calculated_price,+variants.inventory_quantity,*categories",
     },
-    { next: { tags: ["products"] } }
-  );
+    cache: "force-cache",
+    next: { tags: ["products"] },
+  });
   return { products, count };
 }
 
 export async function getProduct(handle: string) {
-  const { products } = await sdk.store.product.list(
-    {
+  const { products } = await sdk.client.fetch<{
+    products: import("@medusajs/types").HttpTypes.StoreProduct[];
+  }>("/store/products", {
+    query: {
       handle,
       region_id: await getRegionId(),
       fields:
         "+thumbnail,+metadata,*images,*options.values,*variants.options,+variants.calculated_price,+variants.inventory_quantity,+variants.manage_inventory,+variants.allow_backorder",
     },
-    { next: { tags: [`product-${handle}`] } }
-  );
+    cache: "force-cache",
+    next: { tags: [`product-${handle}`] },
+  });
   return products[0] ?? null;
 }
 
 export async function getCategories() {
-  const { product_categories } = await sdk.store.category.list(
-    { fields: "+products" },
-    { next: { tags: ["categories"] } }
-  );
+  const { product_categories } = await sdk.client.fetch<{
+    product_categories: import("@medusajs/types").HttpTypes.StoreProductCategory[];
+  }>("/store/product-categories", {
+    query: { fields: "+products" },
+    cache: "force-cache",
+    next: { tags: ["categories"] },
+  });
   return product_categories;
 }
 
 export async function getCollections() {
-  const { collections } = await sdk.store.collection.list(
-    {},
-    { next: { tags: ["collections"] } }
-  );
+  const { collections } = await sdk.client.fetch<{
+    collections: import("@medusajs/types").HttpTypes.StoreCollection[];
+  }>("/store/collections", {
+    cache: "force-cache",
+    next: { tags: ["collections"] },
+  });
   return collections;
 }
 

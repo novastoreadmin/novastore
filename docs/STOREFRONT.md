@@ -65,7 +65,15 @@ I18nProvider → SmoothScroll (Lenis).
 - Правка товару в адмінці → бекендовий subscriber `product-changed` → POST
   `/api/revalidate` → `revalidateTag`. Якщо міняв дані скриптом — скинь кеш руками
   (curl-приклад у [DEPLOY.md](DEPLOY.md) §4).
-- ⚠️ Додаєш новий fetch каталогу — додай тег і подумай, чи інвалідовується він цим ланцюгом.
+- ⚠️ **Gotcha (ловилось на проді):** каталожні читання йдуть через
+  `sdk.client.fetch(...)`, а НЕ через хелпери `sdk.store.product.list(query, headers)` —
+  у хелперів другий аргумент це HTTP-*заголовки*, тож переданий туди
+  `{ next: { tags } }` мовчки губиться. Наслідок у prod-білді: статичні сторінки
+  (`/products` — ○ Static у виводі `next build`) запікають дані на момент білда,
+  `revalidateTag` не має що інвалідувати, і нові/змінені товари не з'являються до
+  наступного `npm run build`. У dev/E2E цього не видно (dev не пререндерить).
+  Новий fetch каталогу роби ТІЛЬКИ через `sdk.client.fetch` з
+  `cache: "force-cache"` + `next: { tags: [...] }`.
 
 ## Env (storefront)
 
