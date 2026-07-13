@@ -27,8 +27,9 @@ if (!accounts.length) {
   process.exit(1)
 }
 
-// Використовуємо перший акаунт для SMTP-автентифікації
-const sender = accounts[0]
+// Використовуємо business@ як відправника, якщо він є в MAIL_ACCOUNTS
+const sender =
+  accounts.find((a) => a.email === "business@novastore.com.ua") || accounts[0]
 
 const transporter = nodemailer.createTransport({
   host: process.env.MAIL_SMTP_HOST || "127.0.0.1",
