@@ -49,7 +49,7 @@ const transporter = nodemailer.createTransport({
 
 const EMAILS = [
   {
-    to: "midnightmaiter@duck.com", //partner@itsellopt.com.ua
+    to: "partner@itsellopt.com.ua", // Іван +380 93 758 3340 (Київська, Сумська, Полтавська обл.)
     subject:
       "Співпраця з NOVA Store — опт/дропшипінг: кабелі, аксесуари, зарядні",
     file: "1-itsellopt.html",
@@ -64,6 +64,11 @@ const EMAILS = [
     subject:
       "NOVA Store — партнерство з Kosmotech: опт по кабелях, аксесуарах, павербанках і пам'яті",
     file: "3-kosmotech.html",
+  },
+  {
+    to: "midnightmaiter@duck.com", // "elektrihka77@gmail.com",
+    subject: "Дропшипінг-партнерство з NOVA Store — мобільні аксесуари, кабелі, зарядні",
+    file: "4-elektrihka.html",
   },
 ]
 
