@@ -278,6 +278,15 @@ const uk = {
     shippingTitle: "Спосіб доставки",
     noShippingOptions: "Для цього кошика немає доступних способів доставки.",
     paymentTitle: "Оплата",
+    payNowTitle: "Сплатити зараз (картка)",
+    payNowHint: "Monobank, Apple Pay, Google Pay",
+    codTitle: "Післяплата на Новій Пошті",
+    codHint: "Оплата готівкою або карткою при отриманні",
+    dropshipCodDescription:
+      "Цей товар відправляється зі складу партнера. Оплата — при отриманні на Новій Пошті.",
+    dropshipShippingNote:
+      "Цей товар відправляється зі складу партнера й доїде окремою посилкою на відділення Нової Пошти.",
+    dropshipBadge: "Зі складу партнера",
     payWithMono: "Оплата через Monobank",
     payWithSavedCard: "Оплата збереженою карткою",
     monoDescription:
@@ -788,6 +797,15 @@ const en: Dictionary = {
     shippingTitle: "Shipping Method",
     noShippingOptions: "No shipping options are available for this cart.",
     paymentTitle: "Payment",
+    payNowTitle: "Pay now (card)",
+    payNowHint: "Monobank, Apple Pay, Google Pay",
+    codTitle: "Cash on delivery (Nova Poshta)",
+    codHint: "Pay by cash or card on pickup",
+    dropshipCodDescription:
+      "This item ships from a partner's warehouse. Payment is collected on delivery at the Nova Poshta branch.",
+    dropshipShippingNote:
+      "This item ships from a partner's warehouse and arrives as a separate parcel at a Nova Poshta branch.",
+    dropshipBadge: "From partner warehouse",
     payWithMono: "Pay with Monobank",
     payWithSavedCard: "Pay with a saved card",
     monoDescription:

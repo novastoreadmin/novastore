@@ -14,13 +14,10 @@ if (isProduction && !redisUrl) {
   )
 }
 
+// cod (Nova Poshta postplata) needs no secrets and is always included by
+// resolvePaymentProviders, so this list is never empty - no boot-time guard
+// needed here anymore (see docs/DROPSHIP-ITSELLOPT.md).
 const paymentProviders = resolvePaymentProviders(process.env, isProduction)
-
-if (!paymentProviders.length) {
-  throw new Error(
-    "No payment providers configured. Set MONO_TOKEN (production) or ALLOW_TEST_PAYMENTS=true (dev/staging only)."
-  )
-}
 
 export default defineConfig({
   projectConfig: {

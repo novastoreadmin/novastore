@@ -121,7 +121,7 @@ export async function getCollections() {
 export async function getCart(cartId: string) {
   const { cart } = await sdk.store.cart.retrieve(cartId, {
     fields:
-      "*items,+items.variant.inventory_quantity,+items.variant.manage_inventory,+items.variant.allow_backorder,email,*shipping_address",
+      "*items,+items.variant.inventory_quantity,+items.variant.manage_inventory,+items.variant.allow_backorder,+items.variant.product.metadata,email,*shipping_address",
   });
   // Self-heal carts created without a region (e.g. saved in the browser before
   // the region fix): their line items have no resolved price. Assigning the

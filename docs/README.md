@@ -29,6 +29,7 @@
 | [MAIL.md](MAIL.md) | Поштова система: GreenMail dev / cPanel prod, `MAIL_ACCOUNTS`, таблиця «подія → лист», Sent-папка, gotchas | Все, що стосується листів |
 | [PAYMENTS-MONOBANK.md](PAYMENTS-MONOBANK.md) | Monobank-провайдер: інвойси, hold/finalize, вебхук (ECDSA), збережені картки, monoPay-віджет | Все, що стосується оплат |
 | [NOVAPOSHTA.md](NOVAPOSHTA.md) | НП-інтеграція: fulfillment-модуль, ТТН-lifecycle, чекаут-пікер, статуси, delivered-лист | Все, що стосується доставки |
+| [DROPSHIP-ITSELLOPT.md](DROPSHIP-ITSELLOPT.md) | Дропшип ITsellOPT: COD-оплата, правила кошика, черга заявок, локальна тест-матриця, прод-чекліст | Впроваджуєш/змінюєш дропшип-флоу |
 
 ## Адмін-розширення
 

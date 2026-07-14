@@ -42,6 +42,7 @@ export default async function orderPlacedHandler({
         "items.variant.*",
         "items.variant.product.*",
         "shipping_address.*",
+        "payment_collection.payment_sessions.provider_id",
         "metadata",
       ],
       filters: {
@@ -90,7 +91,11 @@ export default async function orderPlacedHandler({
 
     try {
       const lang = resolveEmailLang((order.metadata as Record<string, unknown> | null)?.locale)
-      const email = buildOrderConfirmationEmail(order as any, lang)
+      const paymentProviderId = (order as any).payment_collection?.payment_sessions?.[0]?.provider_id ?? null
+      const email = buildOrderConfirmationEmail(
+        { ...(order as any), payment_provider_id: paymentProviderId },
+        lang
+      )
       const { messageId } = await sendMail(account, {
         to: order.email,
         subject: email.subject,

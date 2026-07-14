@@ -63,5 +63,12 @@ export function resolvePaymentProviders(
           },
         ]
       : []),
+    // Cash-on-delivery (Nova Poshta postplata) - no secrets needed, always
+    // registered. Own goods: money → NOVA's NP account. ITsellOPT dropship
+    // goods: money → ITsellOPT, our margin arrives biweekly (see
+    // docs/DROPSHIP-ITSELLOPT.md). Which cart may actually USE this provider
+    // is enforced server-side by allowedProviders() in lib/itsellopt-dropship.ts,
+    // not by whether it's registered here.
+    { resolve: "./src/modules/payment-cod", id: "cod", options: {} },
   ]
 }

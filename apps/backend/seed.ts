@@ -20,6 +20,7 @@ import {
   linkProductsToSalesChannelWorkflow,
 } from "@medusajs/medusa/core-flows"
 import { CATEGORIES, PRODUCTS, resolveImages, STORE_CURRENCY, toStoreMinor } from "./src/data/catalog"
+import { DROPSHIP_SHIPPING_OPTION_NAME } from "./src/lib/itsellopt-dropship-constants"
 
 export default async function seed({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
@@ -113,7 +114,7 @@ export default async function seed({ container }: ExecArgs) {
   // real Stripe key, e.g. the isolated test stack.
   const paymentModule = container.resolve(Modules.PAYMENT)
   const availablePaymentProviders = await paymentModule.listPaymentProviders()
-  const desiredPaymentProviderIds = ["pp_system_system", "pp_stripe_stripe"]
+  const desiredPaymentProviderIds = ["pp_system_system", "pp_stripe_stripe", "pp_monobank_monobank", "pp_cod_cod"]
   const regionPaymentProviders = desiredPaymentProviderIds.filter((id) =>
     availablePaymentProviders.some((p) => p.id === id)
   )
@@ -158,6 +159,20 @@ export default async function seed({ container }: ExecArgs) {
           provider_id: manualProvider.id,
           type: { label: "Express", description: "1-2 business days", code: "express" },
           prices: [{ region_id: region.id, currency_code: STORE_CURRENCY, amount: 120 }],
+        },
+        {
+          // ITsellOPT dropship orders only — matched by exact NAME in the
+          // storefront (DROPSHIP_SHIPPING_OPTION_NAME in cart-kind.ts) and
+          // server-enforced in src/api/middlewares.ts. On the `manual`
+          // provider like the two above, so validateFulfillmentData never
+          // injects `np_kind` — see docs/DROPSHIP-ITSELLOPT.md §4.
+          name: DROPSHIP_SHIPPING_OPTION_NAME,
+          price_type: "flat",
+          service_zone_id: serviceZone.id,
+          shipping_profile_id: shippingProfileId,
+          provider_id: manualProvider.id,
+          type: { label: "Dropship", description: "Ships from the supplier's warehouse", code: "dropship" },
+          prices: [{ region_id: region.id, currency_code: STORE_CURRENCY, amount: 0 }],
         },
       ],
     })

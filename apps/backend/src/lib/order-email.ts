@@ -46,6 +46,10 @@ export type OrderEmailInput = {
   shipping_total?: number | null
   items?: OrderEmailItem[] | null
   shipping_address?: OrderEmailAddress | null
+  /** Provider id of the order's payment session (e.g. "pp_cod_cod",
+   *  "pp_monobank_monobank") - drives the "Оплачено" / "До сплати при
+   *  отриманні" line. Missing/unrecognized providers are treated as paid. */
+  payment_provider_id?: string | null
 }
 
 export type ShipmentEmailInput = OrderEmailInput & {
@@ -74,6 +78,9 @@ const STRINGS: Record<
     labelOrderNumber: string
     labelAmount: string
     labelAddress: string
+    labelPaymentMethod: string
+    paymentPaid: string
+    paymentCod: (amount: string) => string
     ctaShop: string
     textItemsLabel: string
     textSubtotal: string
@@ -121,14 +128,17 @@ const STRINGS: Record<
     orderTextGreeting: (name) => `${name}, дякуємо за замовлення!`,
     orderTextGreetingNoName: "Дякуємо за замовлення!",
     orderIntro:
-      "Ваше замовлення прийнято й оплачено. Ми повідомимо, щойно передамо його Новій Пошті.",
+      "Ваше замовлення прийнято. Ми повідомимо, щойно передамо його Новій Пошті.",
     orderTextIntro: [
-      "Ваше замовлення прийнято й оплачено. Ми повідомимо, щойно передамо його",
+      "Ваше замовлення прийнято. Ми повідомимо, щойно передамо його",
       "Новій Пошті.",
     ],
     labelOrderNumber: "Номер замовлення",
     labelAmount: "Сума",
     labelAddress: "Адреса доставки",
+    labelPaymentMethod: "Оплата",
+    paymentPaid: "Оплачено",
+    paymentCod: (amount) => `До сплати при отриманні: ${amount}`,
     ctaShop: "Перейти до магазину",
     textItemsLabel: "Товари:",
     textSubtotal: "Проміжна сума",
@@ -186,14 +196,17 @@ const STRINGS: Record<
     orderHeadingNoName: "Thank you for your order.",
     orderTextGreeting: (name) => `${name}, thank you for your order!`,
     orderTextGreetingNoName: "Thank you for your order!",
-    orderIntro: "Your order has been received and paid. We'll let you know as soon as it ships with Nova Poshta.",
+    orderIntro: "Your order has been received. We'll let you know as soon as it ships with Nova Poshta.",
     orderTextIntro: [
-      "Your order has been received and paid. We'll let you know as soon as it",
+      "Your order has been received. We'll let you know as soon as it",
       "ships with Nova Poshta.",
     ],
     labelOrderNumber: "Order number",
     labelAmount: "Amount",
     labelAddress: "Shipping address",
+    labelPaymentMethod: "Payment",
+    paymentPaid: "Paid",
+    paymentCod: (amount) => `Due on delivery: ${amount}`,
     ctaShop: "Go to store",
     textItemsLabel: "Items:",
     textSubtotal: "Subtotal",
@@ -314,6 +327,10 @@ export function buildOrderConfirmationEmail(
   const addressLines = formatAddress(order.shipping_address)
   const firstName = order.shipping_address?.first_name
   const storefrontUrl = DEFAULT_STOREFRONT_URL
+  const isCod = order.payment_provider_id === "pp_cod_cod"
+  const paymentLine = isCod
+    ? s.paymentCod(formatOrderAmount(order.total, currency))
+    : s.paymentPaid
 
   const subject = s.orderSubject(orderNo)
 
@@ -336,6 +353,7 @@ export function buildOrderConfirmationEmail(
     `${s.textSubtotal}: ${formatOrderAmount(order.subtotal, currency)}`,
     `${s.textShipping}: ${formatOrderAmount(order.shipping_total, currency)}`,
     `${s.textTotal}: ${formatOrderAmount(order.total, currency)}`,
+    `${s.labelPaymentMethod}: ${paymentLine}`,
     ...(addressLines.length
       ? [``, s.textAddressLabel, ...addressLines.map((l) => `  ${l}`)]
       : []),
@@ -348,6 +366,7 @@ export function buildOrderConfirmationEmail(
   const kv: EmailKv[] = [
     { label: s.labelOrderNumber, value: `#${escapeHtml(orderNo)}` },
     { label: s.labelAmount, value: escapeHtml(formatOrderAmount(order.total, currency)) },
+    { label: s.labelPaymentMethod, value: escapeHtml(paymentLine) },
     ...(addressLines.length
       ? [{ label: s.labelAddress, value: addressLines.map((l) => escapeHtml(l)).join("<br/>") }]
       : []),

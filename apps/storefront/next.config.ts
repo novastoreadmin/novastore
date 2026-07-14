@@ -35,6 +35,16 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "medusa-public-images.s3.eu-west-1.amazonaws.com",
       },
+      // ITsellOPT dropship products hotlink their photos (docs/DROPSHIP-ITSELLOPT.md
+      // §1 - v1 doesn't download them into static/) - both domains they use.
+      {
+        protocol: "https",
+        hostname: "itsellopt.ua",
+      },
+      {
+        protocol: "https",
+        hostname: "itsellopt.com.ua",
+      },
       ...(dynamicBackendPattern ? [dynamicBackendPattern] : []),
     ],
     formats: ["image/avif", "image/webp"],

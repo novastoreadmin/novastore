@@ -122,6 +122,12 @@ export const infoPagesUk: InfoPagesDict = {
           "Хочете інший колір або модель? Оформимо обмін тим самим відправленням — просто вкажіть це в листі.",
         ],
       },
+      {
+        heading: "Товари зі складу партнера",
+        paragraphs: [
+          "Товари з позначкою «Зі складу партнера» відправляються окремою посилкою напряму від постачальника. Повернення таких товарів приймається протягом 14 днів за умови, що заводська захисна плівка/пакування не розкриті. Товар з дефектом приймається за наявності повної комплектації.",
+        ],
+      },
     ],
   },
   support: {
@@ -488,6 +494,12 @@ export const infoPagesEn: InfoPagesDict = {
         heading: "Exchanges",
         paragraphs: [
           "Want a different color or model? We'll arrange an exchange in the same shipment — just mention it in your email.",
+        ],
+      },
+      {
+        heading: "Items from a partner warehouse",
+        paragraphs: [
+          "Items marked \"From partner warehouse\" ship as a separate parcel directly from the supplier. Returns are accepted within 14 days provided the factory protective film/packaging is unopened. Defective items are accepted only with the full original kit.",
         ],
       },
     ],
