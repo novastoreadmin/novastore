@@ -67,7 +67,12 @@ export default async function orderPlacedItselloptHandler({
     })
     logger.info(`[ITsellOPT] Order #${order.display_id} queued for dropship placement`)
 
-    const fromAddress = process.env.ORDER_EMAIL_FROM || "admin@nova.local"
+    // Unlike every other subscriber here, this isn't a customer-facing email -
+    // it's an internal note to whoever places the matching order on ITsellOPT's
+    // own site, so it deliberately does NOT reuse ORDER_EMAIL_FROM (the
+    // customer-facing "NOVA Store" identity). Falls back to it only if
+    // ITSELLOPT_QUEUE_FROM isn't set (e.g. local dev).
+    const fromAddress = process.env.ITSELLOPT_QUEUE_FROM || process.env.ORDER_EMAIL_FROM || "admin@nova.local"
     const toAddress = process.env.ITSELLOPT_QUEUE_EMAIL || fromAddress
     const account = getAccount(fromAddress) ?? MAIL_ACCOUNTS[0]
     if (!account) {

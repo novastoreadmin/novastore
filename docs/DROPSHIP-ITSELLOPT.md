@@ -236,15 +236,47 @@ storefront :3000). ⚠️ Сабскрайбери НЕ перевіряютьс
 ### 10.0. Перед початком
 
 - `npm run test:unit` (backend) зелений, локальна матриця §9 пройдена.
-- Додати в прод `.env` (DEPLOY.md §5, runtime-змінна, rebuild не потрібен):
-  `ITSELLOPT_QUEUE_EMAIL=...` (куди падають заявки на дропшип-замовлення; якщо
-  не задати — піде на `ORDER_EMAIL_FROM`).
+- Гілка `dev/AddNewProductsCategory` закомічена й запушена на `origin`
+  (перевірити на сервері перед білдом: `git log -1 --oneline` після pull має
+  показати останній комміт з фічею, не старий).
+- Додати в прод `.env` (DEPLOY.md §5, runtime-змінні, rebuild не потрібен):
+  ```bash
+  ITSELLOPT_QUEUE_EMAIL=business@novastore.com.ua   # куди падають заявки на дропшип-замовлення
+  ITSELLOPT_QUEUE_FROM=business@novastore.com.ua    # від чийого імені їх надсилати
+  ```
+  `ITSELLOPT_QUEUE_FROM` навмисно ВІДОКРЕМЛЕНИЙ від `ORDER_EMAIL_FROM` —
+  клієнтські листи (підтвердження замовлення тощо) й далі йдуть з "NOVA"
+  (`ORDER_EMAIL_FROM`), а ця заявка — внутрішня нотатка «піти оформити на
+  itsellopt.ua», і логічно, щоб вона йшла з того самого акаунта
+  (`business@novastore.com.ua`), під яким зареєстрований кабінет на
+  itsellopt.ua.
+  **Важливо:** `business@novastore.com.ua` має бути присутній як окремий
+  запис у `MAIL_ACCOUNTS` (JSON env, `mail-accounts.ts`) з реальним
+  логіном/паролем поштової скриньки на cPanel — інакше `getAccount()` його
+  не знайде і `order-placed-itsellopt.ts` МОВЧКИ відправить листа з
+  `MAIL_ACCOUNTS[0]` (найімовірніше — admin), без помилки в логах. Тобто сама
+  зміна env `ITSELLOPT_QUEUE_FROM` без відповідного акаунта в `MAIL_ACCOUNTS`
+  нічого не виправить.
 - COD-провайдер (`payment-cod`) реєструється в коді безумовно
   (`runtime-config.ts`) — окремих секретів/env не потребує.
 
 ### 10.1. Деплой коду
 
-За [DEPLOY.md](DEPLOY.md) розділи 2 (backend) і 3 (storefront) повністю.
+Якщо прод-сервер зазвичай стоїть на `main`, а тестуєте саме цю гілку —
+спершу перемкнутись (замість звичайного «просто `git pull`» з DEPLOY.md §1):
+
+```bash
+cd ~/novastore
+git status                          # переконатись, що на сервері нема своїх незакомічених правок
+git fetch origin
+git checkout dev/AddNewProductsCategory   # або: git switch dev/AddNewProductsCategory
+git pull origin dev/AddNewProductsCategory
+git log -1 --oneline                # звірити, що це саме потрібний комміт
+```
+
+Далі — за [DEPLOY.md](DEPLOY.md) розділи 2 (backend) і 3 (storefront) повністю
+(build, `.medusa/server` install, `.env` → `.env.production`, `db:migrate`
+— для цієї гілки no-op, нових таблиць немає, — `pm2 restart --update-env`).
 
 **Очікувано:** `curl -s http://127.0.0.1:9000/health` → `OK`; `pm2 logs medusa
 --lines 30` без помилок; `https://novastore.com.ua` віддає 200, старий функціонал
