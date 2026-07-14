@@ -35,10 +35,17 @@ export default async function createItselloptProducts({ container }: ExecArgs) {
   if (!salesChannel) {
     throw new Error("No sales channel found — run `npm run seed` first.")
   }
+  // Dropship products live on the dedicated "ItSellOpt" profile (type
+  // "itsellopt"), so a dropship cart resolves to exactly the dropship shipping
+  // option. Locally seed.ts creates it; on prod it's created by hand in the
+  // admin (docs/DROPSHIP-ITSELLOPT.md §10.2) — hence the hard error, not a
+  // silent fallback to default, which would let NP options ship these items.
   const profiles = await fulfillmentModule.listShippingProfiles({})
-  const shippingProfile = profiles.find((p) => p.type === "default") ?? profiles[0]
+  const shippingProfile = profiles.find((p) => p.type === "itsellopt")
   if (!shippingProfile) {
-    throw new Error("No shipping profile found — run `npm run seed` first.")
+    throw new Error(
+      'No "itsellopt" shipping profile found — create it first (admin: Settings → Locations & Shipping → Shipping Profiles → name "ItSellOpt", type "itsellopt"; locally: npm run seed).'
+    )
   }
 
   const categories = await productModule.listProductCategories({}, { select: ["id", "handle"], take: 1000 })

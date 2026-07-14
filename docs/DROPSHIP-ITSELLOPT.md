@@ -110,7 +110,12 @@ buildDropshipOrderText(order): string   // блок для менеджера: �
 Рішення — окрема shipping-опція для дропшип-замовлень:
 
 - нова опція «Нова Пошта (відправлення зі складу постачальника)» на провайдері
-  **`manual`** (вже зареєстрований у medusa-config поряд з NP);
+  **`itsellopt`** (`src/modules/fulfillment-itsellopt` — pass-through клон
+  manual-провайдера з власною назвою, щоб в адмінці він читався як Itsellopt,
+  а не Manual; fulfillment option — `itsellopt-dropship`). Опція живе на
+  окремому shipping-профілі **ItSellOpt** (type `itsellopt`) разом з усіма
+  дропшип-товарами — тому дропшип-кошик резолвить рівно одну опцію, а власні
+  кошики її взагалі не бачать на рівні API;
 - у `data` опції НЕ класти `np_kind` (щоб guard сабскрайбера природно не
   спрацював), обране відділення класти під власним ключем, напр.
   `dropship_np: { cityRef, warehouseNumber, … }` — NP-пікер чекаута
@@ -293,58 +298,57 @@ curl -s "https://api.novastore.com.ua/store/payment-providers?region_id=<REGION_
 ### 10.2. Locations & Shipping — нова shipping-опція дропшипу
 
 **Важливо про архітектуру:** в Medusa немає окремої сутності «постачальник» —
-ITsellOPT не з'являється в Locations & Shipping як окрема локація чи
-провайдер. Все, що фізично відрізняє dropship-замовлення — це (а) одна нова
-**Shipping Option** на вже існуючій локації «NOVA Warehouse» і (б) мітка
-`metadata.itsellopt` на самих товарах (проставлена скриптом у 10.4). Тому
-нижче — не «додавання ITsellOPT», а створення цієї shipping-опції плюс
-перевірка, що існуюча інфраструктура (локація/зона/профіль) вже на місці.
+ITsellOPT не з'являється в Locations & Shipping як окрема локація. Іменування
+«ItSellOpt» живе на трьох речах: **Fulfillment provider** `itsellopt` (модуль
+`src/modules/fulfillment-itsellopt`, потрапляє на прод з деплоєм коду),
+**Shipping profile** «ItSellOpt» (type `itsellopt`) і **Shipping option type**
+«ItSellOpt» (code `itsellopt`). Плюс мітка `metadata.itsellopt` на самих
+товарах (проставляє скрипт у 10.4).
 
-**Крок A — переконатись, що локація й зона вже існують (мали з'явитись при
-першому `npm run seed`, нічого створювати заново):**
+Фактичний стан прод-адмінки (звірено 2026-07-14): локація називається **Main
+Storage**, fulfillment set «Nova poshta» із зоною «Ukraine», дві існуючі
+опції «Нова Пошта — Відділення» і «Нова Пошта — Кур'єр» на провайдері
+**Novaposhta**; профілі: «Default Shipping Profile» (default) і «Nova poshta».
 
-`/app` → Settings (⚙ ліворуч знизу, під розділом Store) → **Locations &
-Shipping**. На сторінці має бути:
-- Блок **Locations**: одна локація «NOVA Warehouse» (Kyiv, 12 Khreshchatyk
-  St). Клікнути на неї.
-- Всередині — блок **Service Zones**: одна зона «Ukraine» (geo zone: country
-  = UA).
-- У зоні «Ukraine» — блок **Shipping Options**: вже мають бути «NOVA Standard
-  Shipping» (₴60) і «NOVA Express Shipping» (₴120), обидві на провайдері
-  Manual fulfillment.
+**Крок A — довідник (уже виконано 2026-07-14 через адмінку):**
+- Shipping profile «ItSellOpt», type `itsellopt` — Settings → Locations &
+  Shipping → Shipping Profiles → Create. ✔
+- Shipping option type «ItSellOpt», code `itsellopt`, description
+  «Відправлення зі складу партнера, оплата при отриманні» — Settings →
+  Locations & Shipping → Shipping Option Types → Create. ✔
+  (description показується клієнту в чекауті під назвою опції)
 
-Якщо чогось із цього немає — це НЕ проблема дропшип-фічі, це означає що прод
-ще жодного разу не сідив (`npm run seed`) або локацію видалили; зупинитись і
-розібратись окремо, далі не йти.
+**Крок B — після деплою бекенда (провайдер itsellopt з'являється тільки
+після рестарту нового коду):**
 
-**Крок B — додати третю Shipping Option (сам дропшип):**
-
-У тій самій зоні «Ukraine» → Shipping Options → **Create** (кнопка «+»
-поруч із заголовком блоку). У формі:
+1. Локація Main Storage → картка **Fulfillment Providers** → «...» → Edit →
+   відмітити **Itsellopt** (Novaposhta лишити як є) → Save.
+2. Зона «Ukraine» (fulfillment set «Nova poshta») → Shipping Options →
+   **Create option**:
 
 | Поле | Значення |
 |---|---|
+| Price type | Fixed |
 | Name | `Нова Пошта (відправлення постачальника)` — **скопіювати рядок-в-рядок**, код звіряє точний текст |
-| Fulfillment provider | Manual fulfillment (той самий, що в Standard/Express) |
-| Shipping profile | default (той самий, що в Standard/Express) |
-| Price type | Flat rate |
-| Ціна для регіону Ukraine | `0` UAH (постачальник не бере з NOVA за доставку — гроші за неї в структурі їхньої РРЦ) |
-| Type → Label | `Dropship` |
-| Type → Description | `Ships from the supplier's warehouse` |
-| Type → Code | `dropship` |
-
-Зберегти.
+| Shipping profile | **ItSellOpt** (НЕ default і НЕ Nova poshta) |
+| Shipping option type | ItSellOpt |
+| Fulfillment provider | Itsellopt |
+| Fulfillment option | itsellopt-dropship |
+| Enable in store | увімкнено |
+| Prices (наступний крок форми) | Ukraine / UAH / `0` (постачальник не бере з NOVA за доставку — вона в структурі їхньої РРЦ) |
 
 **Очікувано:** у списку Shipping Options зони «Ukraine» тепер три опції.
-Точна назва нової опції — єдине, що звіряють `middlewares.ts` і
-`cart-kind.ts` (константа `DROPSHIP_SHIPPING_OPTION_NAME`) — зайвий пробіл,
-велика/мала літера чи інші лапки означають, що фронт її просто не знайде і
-дропшип-кошик на кроці доставки буде порожній.
+Точна назва нової — єдине, що звіряють `middlewares.ts` і `cart-kind.ts`
+(константа `DROPSHIP_SHIPPING_OPTION_NAME`): зайвий пробіл чи інші лапки — і
+фронт її не знайде, дропшип-кошик на кроці доставки буде порожній.
 
-**Помилка, яку легко зробити:** якщо випадково вибрати provider не Manual, а
-«novaposhta» — підписник `order-placed-novaposhta.ts` спробує сам створити
-ТТН для dropship-замовлення, хоча відправляє посилку постачальник. Опція має
-бути саме на Manual fulfillment (docs/DROPSHIP-ITSELLOPT.md §4).
+**Помилки, які легко зробити:**
+- Провайдер «Novaposhta» замість «Itsellopt» → `validateFulfillmentData`
+  НП-провайдера впише `np_kind`, і підписник авто-ТТН спробує створити ТТН з
+  акаунта NOVA для замовлення, яке відправляє постачальник.
+- Профіль «Default Shipping Profile» замість «ItSellOpt» → дропшип-опція
+  пропонуватиметься кошикам зі звичайними товарами (і навпаки, дропшип-кошику
+  запропонує НП-опції) — профіль і є механізмом розділення опцій по товарах.
 
 ### 10.2б. Перевірка товарів ITsellOPT в адмінці
 
@@ -360,7 +364,7 @@ Products → відкрити будь-який товар з категорій
 | Категорія | Organize → Categories | Одна з 5: Кабелі/Адаптери/Автономія/Пам'ять/Хаби |
 | Sales channel | Organize → Sales channels | Лише «NOVA Online Store» (НЕ «Default Sales Channel») |
 | Ціна | Variants → відкрити варіант «Default» → Prices | = РРЦ ITsellOPT, валюта UAH |
-| Shipping profile | Attributes/Organize → Shipping Profile | `default` — той самий, що в звичайних товарів NOVA |
+| Shipping profile | Attributes/Organize → Shipping Profile | **ItSellOpt** (окремий від товарів NOVA — саме він прив'язує дропшип-товари до дропшип-опції доставки) |
 | Inventory | Variants → варіант | «Manage inventory» вимкнено — залишок не показується/не блокує продаж, бо склад належить ITsellOPT, не NOVA |
 | Фото | Media (або Thumbnail угорі) | Прев'ю з itsellopt.ua — в адмінці може не завжди рендеритись мініатюра (хотлінк, залежить від їхнього hotlink-захисту), але URL має бути валідний; на сторфронті рендериться через `next.config.ts` (вже виправлено — §1) |
 | Метадані | Метадані (кнопка «Edit metadata» або в JSON-вигляді внизу сторінки) | Ключ `itsellopt` з `code`, `vendorCode`, `bucket`, `rrpUah`, `availability` — саме ця мітка визначає, що товар дропшиповий (перевіряють `middlewares.ts`, `cart-kind.ts`) |

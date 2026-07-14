@@ -77,6 +77,11 @@ export default async function seed({ container }: ExecArgs) {
   const fulfillmentProviders = await fulfillmentModule.listFulfillmentProviders()
   const manualProvider =
     fulfillmentProviders.find((p) => p.id === "manual_manual") || fulfillmentProviders[0]
+  // Dropship provider (fulfillment-itsellopt module) - falls back to manual on
+  // DBs seeded before the module existed; both are pass-through, the split is
+  // for naming/auditability in the admin (docs/DROPSHIP-ITSELLOPT.md §4).
+  const itselloptProvider =
+    fulfillmentProviders.find((p) => p.id === "itsellopt_itsellopt") || manualProvider
 
   const fulfillmentSet = await fulfillmentModule.createFulfillmentSets({
     name: "NOVA Shipping",
@@ -101,6 +106,14 @@ export default async function seed({ container }: ExecArgs) {
       {
         [Modules.STOCK_LOCATION]: { stock_location_id: stockLocation.id },
         [Modules.FULFILLMENT]: { fulfillment_provider_id: manualProvider.id },
+      },
+    ])
+  }
+  if (itselloptProvider && itselloptProvider.id !== manualProvider?.id) {
+    await remoteLink.create([
+      {
+        [Modules.STOCK_LOCATION]: { stock_location_id: stockLocation.id },
+        [Modules.FULFILLMENT]: { fulfillment_provider_id: itselloptProvider.id },
       },
     ])
   }
@@ -139,6 +152,18 @@ export default async function seed({ container }: ExecArgs) {
   // ─────────────────────────────────────────────────
   const shippingProfileId = (await fulfillmentModule.listShippingProfiles())[0]?.id
 
+  // Dedicated profile for ITsellOPT dropship products: a dropship-only cart
+  // then resolves to exactly the dropship shipping option and nothing else
+  // (options are matched to carts per item shipping profile). Prod has the
+  // same profile, created by hand in the admin (docs/DROPSHIP-ITSELLOPT.md §10.2).
+  const existingProfiles = await fulfillmentModule.listShippingProfiles({ type: "itsellopt" })
+  const itselloptProfile =
+    existingProfiles[0] ??
+    (await fulfillmentModule.createShippingProfiles({ name: "ItSellOpt", type: "itsellopt" }))
+  const itselloptProfileId = Array.isArray(itselloptProfile)
+    ? itselloptProfile[0].id
+    : itselloptProfile.id
+
   if (manualProvider) {
     await createShippingOptionsWorkflow(container).run({
       input: [
@@ -163,15 +188,21 @@ export default async function seed({ container }: ExecArgs) {
         {
           // ITsellOPT dropship orders only — matched by exact NAME in the
           // storefront (DROPSHIP_SHIPPING_OPTION_NAME in cart-kind.ts) and
-          // server-enforced in src/api/middlewares.ts. On the `manual`
-          // provider like the two above, so validateFulfillmentData never
-          // injects `np_kind` — see docs/DROPSHIP-ITSELLOPT.md §4.
+          // server-enforced in src/api/middlewares.ts. On the pass-through
+          // `itsellopt` provider (never novaposhta), so validateFulfillmentData
+          // never injects `np_kind` — see docs/DROPSHIP-ITSELLOPT.md §4. Lives
+          // on the dedicated ItSellOpt profile so it's only ever offered to
+          // carts of dropship products.
           name: DROPSHIP_SHIPPING_OPTION_NAME,
           price_type: "flat",
           service_zone_id: serviceZone.id,
-          shipping_profile_id: shippingProfileId,
-          provider_id: manualProvider.id,
-          type: { label: "Dropship", description: "Ships from the supplier's warehouse", code: "dropship" },
+          shipping_profile_id: itselloptProfileId,
+          provider_id: itselloptProvider.id,
+          type: {
+            label: "ItSellOpt",
+            description: "Відправлення зі складу партнера, оплата при отриманні",
+            code: "itsellopt",
+          },
           prices: [{ region_id: region.id, currency_code: STORE_CURRENCY, amount: 0 }],
         },
       ],

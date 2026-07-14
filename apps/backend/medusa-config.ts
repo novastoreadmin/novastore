@@ -135,6 +135,13 @@ export default defineConfig({
             id: "manual",
           },
           {
+            // ITsellOPT dropship: manual-like pass-through provider with its
+            // own identity, so the dropship shipping option lives on
+            // "Itsellopt", not "Manual" (docs/DROPSHIP-ITSELLOPT.md §4).
+            resolve: "./src/modules/fulfillment-itsellopt",
+            id: "itsellopt",
+          },
+          {
             resolve: "./src/modules/fulfillment-novaposhta",
             id: "novaposhta",
             options: {
