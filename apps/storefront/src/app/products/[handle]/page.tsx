@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { getProduct, getProducts } from "@/lib/medusa";
 import { ProductDetail } from "@/components/product/product-detail";
 
@@ -42,13 +43,21 @@ export default async function ProductPage({ params }: PageProps) {
       getProducts({ limit: 8 }),
     ]);
 
-    if (fetched) product = fetched;
-    relatedProducts = allProducts
-      .filter((p) => p.id !== product.id)
-      .slice(0, 4);
+    if (fetched) {
+      product = fetched;
+      relatedProducts = allProducts
+        .filter((p) => p.id !== product.id)
+        .slice(0, 4);
+    }
   } catch {
     // Medusa not running — use fallback
   }
+
+  // Unknown/unpublished handle (or one outside the storefront key's sales
+  // channel): render the 404 page. Passing null into ProductDetail crashes
+  // client-side on `product.title` — every bad product URL used to show
+  // Next's "Application error" screen instead of a 404.
+  if (!product) notFound();
 
   return <ProductDetail product={product} relatedProducts={relatedProducts} />;
 }

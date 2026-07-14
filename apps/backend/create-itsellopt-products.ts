@@ -24,16 +24,25 @@ export default async function createItselloptProducts({ container }: ExecArgs) {
 
   logger.info("=== Creating ITsellOPT dropship products (draft) ===")
 
-  // Must match the channel the storefront's publishable key is scoped to
-  // ("NOVA Online Store" - seed.ts §8b deliberately excludes every other
-  // channel from that key). Picking "the first channel" here silently linked
-  // all 568 products to Medusa's own "Default Sales Channel" instead on a DB
-  // that predates this script, making them invisible to the storefront.
+  // Must match the channel the storefront's publishable key is scoped to —
+  // and that NAME DIFFERS between environments (local seed: "NOVA Online
+  // Store"; prod: the active storefront-prod key is scoped to "Prom.ua" —
+  // discovered live when all 568 products came back invisible on
+  // novastore.com.ua). Set ITSELLOPT_SALES_CHANNEL explicitly on prod; for
+  // already-created products use link-itsellopt-channel.ts instead.
   const allChannels = await salesChannelModule.listSalesChannels({})
-  const salesChannel =
-    allChannels.find((c) => c.name === "NOVA Online Store") ?? allChannels[0]
+  // Same env as link-itsellopt-channel.ts (comma-separated); creation links
+  // the FIRST channel, the link script adds the rest afterwards.
+  const channelNameEnv = process.env.ITSELLOPT_SALES_CHANNEL?.split(",")[0]?.trim()
+  const salesChannel = channelNameEnv
+    ? allChannels.find((c) => c.name === channelNameEnv)
+    : (allChannels.find((c) => c.name === "NOVA Online Store") ?? allChannels[0])
   if (!salesChannel) {
-    throw new Error("No sales channel found — run `npm run seed` first.")
+    throw new Error(
+      channelNameEnv
+        ? `Sales channel "${channelNameEnv}" (ITSELLOPT_SALES_CHANNEL) not found. Available: ${allChannels.map((c) => `"${c.name}"`).join(", ")}`
+        : "No sales channel found — run `npm run seed` first."
+    )
   }
   // Dropship products live on the dedicated "ItSellOpt" profile (type
   // "itsellopt"), so a dropship cart resolves to exactly the dropship shipping

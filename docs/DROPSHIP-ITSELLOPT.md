@@ -383,9 +383,46 @@ Settings → Regions → «Ukraine» → Edit → Payment providers → відм
 
 ### 10.4. Імпорт товарів ITsellOPT
 
+**Sales-channel архітектура (рішення 2026-07-14):** канали = інтеграції.
+- **«NOVA Online Store»** — сайт novastore.com.ua (сюди дивиться publishable
+  key `storefront-prod`; історично він вказував на «Prom.ua» — виправлено
+  вручну через адмінку, бо ключі конфігуруються тільки людиною).
+- **«Prom.ua»** — зарезервований під майбутню інтеграцію з маркетплейсом,
+  дропшип туди НЕ лінкуємо.
+- **«ITsellOPT»** — організаційний канал дропшип-асортименту.
+
+Товар, не злінкований з каналом ключа, для Store API просто не існує (без
+помилки — порожня відповідь). УВАГА: ключ мусить мати РІВНО один канал — з
+кількома Medusa відмовляється створювати кошики без явного
+`sales_channel_id` у запиті (наш сторфронт його не шле).
+
+Дропшип-товари мають бути у двох каналах: «NOVA Online Store» + «ITsellOPT»:
+
 ```bash
 cd ~/novastore/apps/backend
-npx medusa exec ./create-itsellopt-products.ts
+ITSELLOPT_SALES_CHANNEL="NOVA Online Store,ITsellOPT" npx medusa exec ./create-itsellopt-products.ts
+# (create лінкує в перший канал; далі долінкувати другий:)
+ITSELLOPT_SALES_CHANNEL="NOVA Online Store,ITsellOPT" npx medusa exec ./link-itsellopt-channel.ts
+```
+
+Разова міграція власних товарів сайту з «Prom.ua» до «NOVA Online Store»
+(адитивно, старі кошики не ламає):
+
+```bash
+FROM_CHANNEL="Prom.ua" TO_CHANNEL="NOVA Online Store" npx medusa exec ./link-channel-products.ts
+```
+
+Після зміни каналів/публікацій скинути кеш сторфронта. УВАГА: сторінка товару
+кешується окремим тегом `product-<handle>` (див. getProduct у
+apps/storefront/src/lib/medusa.ts) — глобальних тегів недостатньо, якщо
+сторінку вже відкривали, поки товар був невидимий (закешувалась порожня
+відповідь):
+
+```bash
+RS=$(grep REVALIDATE_SECRET ~/novastore/apps/storefront/.env.local | cut -d= -f2)
+curl -sS -X POST https://novastore.com.ua/api/revalidate \
+  -H "x-revalidate-secret: $RS" -H "Content-Type: application/json" \
+  -d '{"tags":["products","categories","collections","product-<handle-1>","product-<handle-2>"]}'
 ```
 
 **Очікувано в логах:** `568 to create, 0 already exist (skipped)` →
