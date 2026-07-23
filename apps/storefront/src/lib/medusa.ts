@@ -118,10 +118,21 @@ export async function getCollections() {
 // on the POST (mutation) routes. So the UI never relies on item.total — it
 // computes line totals from unit_price * quantity, which are always present.
 
+// Shared across every cart read/mutation below. `+items.variant.product.metadata`
+// is what classifyCartItems() reads to tell an ITsellOPT dropship item from
+// NOVA's own catalog (docs/DROPSHIP-ITSELLOPT.md §0) - every one of these calls
+// feeds its returned `cart` straight into checkout's setCart(), so any call
+// that omits it silently downgrades a dropship cart to "own" the moment it
+// runs (wrong shipping options offered, no partner badge, guardrail only
+// catches it server-side). Verified live 2026-07-14: updateCartDetails (no
+// fields at all) was overwriting the fully-fielded getCart() result the
+// instant the customer clicked past the Information step.
+const CART_FIELDS =
+  "*items,+items.variant.inventory_quantity,+items.variant.manage_inventory,+items.variant.allow_backorder,+items.variant.product.metadata,email,*shipping_address";
+
 export async function getCart(cartId: string) {
   const { cart } = await sdk.store.cart.retrieve(cartId, {
-    fields:
-      "*items,+items.variant.inventory_quantity,+items.variant.manage_inventory,+items.variant.allow_backorder,+items.variant.product.metadata,email,*shipping_address",
+    fields: CART_FIELDS,
   });
   // Self-heal carts created without a region (e.g. saved in the browser before
   // the region fix): their line items have no resolved price. Assigning the
@@ -129,9 +140,11 @@ export async function getCart(cartId: string) {
   if (cart && !cart.region_id) {
     const region_id = await getRegionId();
     if (region_id) {
-      const { cart: repriced } = await sdk.store.cart.update(cartId, {
-        region_id,
-      });
+      const { cart: repriced } = await sdk.store.cart.update(
+        cartId,
+        { region_id },
+        { fields: CART_FIELDS }
+      );
       return repriced;
     }
   }
@@ -146,10 +159,11 @@ export async function createCart() {
 }
 
 export async function addToCart(cartId: string, variantId: string, quantity: number) {
-  const { cart } = await sdk.store.cart.createLineItem(cartId, {
-    variant_id: variantId,
-    quantity,
-  });
+  const { cart } = await sdk.store.cart.createLineItem(
+    cartId,
+    { variant_id: variantId, quantity },
+    { fields: CART_FIELDS }
+  );
   return cart;
 }
 
@@ -158,9 +172,12 @@ export async function updateCartItem(
   lineItemId: string,
   quantity: number
 ) {
-  const { cart } = await sdk.store.cart.updateLineItem(cartId, lineItemId, {
-    quantity,
-  });
+  const { cart } = await sdk.store.cart.updateLineItem(
+    cartId,
+    lineItemId,
+    { quantity },
+    { fields: CART_FIELDS }
+  );
   return cart;
 }
 
@@ -186,10 +203,11 @@ export async function addShippingMethod(
   // validated by the fulfillment provider and stored on the shipping method.
   data?: Record<string, unknown>
 ) {
-  const { cart } = await sdk.store.cart.addShippingMethod(cartId, {
-    option_id: optionId,
-    ...(data ? { data } : {}),
-  });
+  const { cart } = await sdk.store.cart.addShippingMethod(
+    cartId,
+    { option_id: optionId, ...(data ? { data } : {}) },
+    { fields: CART_FIELDS }
+  );
   return cart;
 }
 
@@ -256,13 +274,17 @@ export async function updateCartDetails(
   cartId: string,
   data: { email: string; shipping_address: ShippingAddressInput; locale?: string }
 ) {
-  const { cart } = await sdk.store.cart.update(cartId, {
-    email: data.email,
-    shipping_address: {
-      ...data.shipping_address,
-      country_code: data.shipping_address.country_code ?? DEFAULT_COUNTRY,
+  const { cart } = await sdk.store.cart.update(
+    cartId,
+    {
+      email: data.email,
+      shipping_address: {
+        ...data.shipping_address,
+        country_code: data.shipping_address.country_code ?? DEFAULT_COUNTRY,
+      },
+      metadata: data.locale ? { locale: data.locale } : undefined,
     },
-    metadata: data.locale ? { locale: data.locale } : undefined,
-  });
+    { fields: CART_FIELDS }
+  );
   return cart;
 }
