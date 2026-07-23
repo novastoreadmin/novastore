@@ -299,6 +299,7 @@ const uk = {
     secureNote:
       "Картка зберігається в Monobank, ми бачимо лише її маску. Платежі обробляє Monobank.",
     pay: "Оплатити",
+    confirmOrder: "Підтвердити замовлення",
     back: "Назад",
     returnToShop: "Повернутися в магазин",
     continue: "Продовжити",
@@ -818,6 +819,7 @@ const en: Dictionary = {
     secureNote:
       "Your card is stored by Monobank; we only ever see its masked number. Payments are processed by Monobank.",
     pay: "Pay",
+    confirmOrder: "Confirm order",
     back: "Back",
     returnToShop: "Return to Shop",
     continue: "Continue",

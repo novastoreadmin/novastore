@@ -238,7 +238,15 @@ export default function CheckoutPage() {
       setMonoSessionReady(false);
       return;
     }
-    if (!cartId || !cart || widgetUnavailable) return;
+    // Dropship carts are COD-only - never stand up a Monobank session for
+    // them. Without this guard the payment step always renders the monoPay
+    // button (it's gated on monoSessionReady/widgetUnavailable, not on cart
+    // kind - see the button render below), so a customer could try to pay a
+    // dropship order by card even though placeOrder() only ever looks for
+    // the cod provider for these carts.
+    if (!cartId || !cart || widgetUnavailable || classifyCartItems(cart.items ?? []) === "dropship") {
+      return;
+    }
     let active = true;
     (async () => {
       try {
@@ -257,7 +265,7 @@ export default function CheckoutPage() {
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, cartId, widgetUnavailable]);
+  }, [currentStep, cartId, widgetUnavailable, cart]);
 
   const currency = cart?.currency_code;
   const items = cart?.items ?? [];
@@ -1042,11 +1050,29 @@ export default function CheckoutPage() {
                   {orderError && (
                     <p className="text-xs text-red-400 max-w-xs text-right">{orderError}</p>
                   )}
-                  {/* Official monoPay widget button (QR / app deep-link). Falls
-                      back to the hosted-page button when the widget keys are
-                      not configured. Saved-card payments use the classic
-                      button — the widget only handles new-card payments. */}
-                  {selectedCard === null && !widgetUnavailable && cartId && monoSessionReady ? (
+                  {/* COD (dropship, or "pay on delivery" chosen on an own
+                      cart) never touches Monobank - always the plain confirm
+                      button, regardless of widget/session state (those only
+                      ever apply to the card flow below). Card payments keep
+                      the official monoPay widget button (QR / app deep-link),
+                      falling back to the hosted-page button when the widget
+                      keys aren't configured or a saved card is selected (the
+                      widget only handles new-card payments). */}
+                  {isDropshipCart || paymentMethod === "cod" ? (
+                    <button
+                      type="button"
+                      onClick={placeOrder}
+                      disabled={placingOrder}
+                      className="h-12 min-w-[220px] px-8 rounded-xl bg-black text-white border border-white/20 hover:border-white/40 hover:bg-[#111] transition-all duration-300 flex items-center justify-center gap-2.5 disabled:opacity-60 cursor-pointer"
+                    >
+                      {placingOrder ? (
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Lock className="w-3.5 h-3.5" />
+                      )}
+                      <span className="text-sm font-medium">{d.checkout.confirmOrder}</span>
+                    </button>
+                  ) : selectedCard === null && !widgetUnavailable && cartId && monoSessionReady ? (
                     <MonoPayWidgetButton
                       cartId={cartId}
                       saveCard={saveCard}

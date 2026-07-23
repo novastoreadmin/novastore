@@ -127,8 +127,22 @@ export async function getCollections() {
 // catches it server-side). Verified live 2026-07-14: updateCartDetails (no
 // fields at all) was overwriting the fully-fielded getCart() result the
 // instant the customer clicked past the Information step.
+//
+// GOTCHA (found chasing the fix above): every token here MUST carry a
+// +/-/*/space prefix or end in ".*". Medusa's FieldParser.parse treats even a
+// SINGLE bare field (no prefix) as "replace the defaults", not "add to them"
+// (@medusajs/framework/dist/http/utils/field-filtering/field-parser.js -
+// shouldReplaceDefaults). The very first version of this string had a bare
+// `email` in it - Medusa's default cart field set (id, region_id, total,
+// payment_collection, shipping_address.*, email, ...) already covers
+// everything we need except these four, so it silently NUKED region_id and
+// payment_collection out of every cart returned by addShippingMethod /
+// updateCartDetails, which made placeOrder() see `providers = []` (no
+// region_id -> getPaymentProviders never called) and throw "no available
+// payment provider" right after a dropship shipping method was saved. Keep
+// this list additive-only - never add a field without a prefix.
 const CART_FIELDS =
-  "*items,+items.variant.inventory_quantity,+items.variant.manage_inventory,+items.variant.allow_backorder,+items.variant.product.metadata,email,*shipping_address";
+  "+items.variant.inventory_quantity,+items.variant.manage_inventory,+items.variant.allow_backorder,+items.variant.product.metadata";
 
 export async function getCart(cartId: string) {
   const { cart } = await sdk.store.cart.retrieve(cartId, {
