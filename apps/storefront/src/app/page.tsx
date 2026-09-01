@@ -1,4 +1,5 @@
 import { Hero } from "@/components/home/hero";
+import { CommerceBar } from "@/components/home/commerce-bar";
 import { ProductStorytelling } from "@/components/home/product-storytelling";
 import { FeatureShowcase } from "@/components/home/feature-showcase";
 import { TechnologySection } from "@/components/home/technology-section";
@@ -24,6 +25,7 @@ export default async function HomePage() {
   return (
     <>
       <Hero />
+      <CommerceBar />
       <ProductStorytelling />
       <FeatureShowcase />
       <TechnologySection />

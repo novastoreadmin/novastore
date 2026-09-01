@@ -35,7 +35,9 @@ export default defineConfig({
   },
   admin: {
     backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
-    disable: false,
+    // DISABLE_MEDUSA_ADMIN=true — швидкий старт без збірки адмінки
+    // (корисно для локального тестування самої вітрини / API).
+    disable: process.env.DISABLE_MEDUSA_ADMIN === "true",
     vite: () => ({
       publicDir: path.resolve(__dirname, "src/admin/assets"),
       plugins: [

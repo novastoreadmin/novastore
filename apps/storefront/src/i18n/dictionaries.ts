@@ -245,7 +245,29 @@ const uk = {
     emptyHint: "Спробуйте розширити діапазон цін або скинути фільтр категорії.",
     startingAt: "Від",
   },
+  bottomNav: {
+    home: "Головна",
+    catalog: "Каталог",
+    cart: "Кошик",
+    account: "Акаунт",
+  },
+  homeCommerce: {
+    searchPlaceholder: "Кабель 240W, SSD-кишеня, хаб…",
+    chips: [
+      "Нова Пошта 1–2 дні",
+      "Оплата частинами",
+      "Гарантія 1 рік",
+      "Повернення 14 днів",
+    ],
+  },
   productDetail: {
+    installmentFrom: (n: number) => `від ${n} ₴/міс частинами`,
+    trust: [
+      { title: "Нова Пошта — 1–2 дні", subtitle: "Відділення, поштомат або кур'єр" },
+      { title: "Оплата при отриманні", subtitle: "Або карткою чи частинами онлайн" },
+      { title: "Повернення 14 днів", subtitle: "Без пояснення причин" },
+      { title: "Гарантія 12 місяців", subtitle: "Обмін при заводському браку" },
+    ],
     addToCart: "Додати в кошик",
     added: "Додано",
     outOfStock: "Немає в наявності",
@@ -782,7 +804,29 @@ const en: Dictionary = {
     emptyHint: "Try widening your price range or clearing the category filter.",
     startingAt: "Starting at",
   },
+  bottomNav: {
+    home: "Home",
+    catalog: "Catalog",
+    cart: "Cart",
+    account: "Account",
+  },
+  homeCommerce: {
+    searchPlaceholder: "240W cable, SSD enclosure, hub…",
+    chips: [
+      "Nova Poshta 1–2 days",
+      "Pay in installments",
+      "1-year warranty",
+      "14-day returns",
+    ],
+  },
   productDetail: {
+    installmentFrom: (n: number) => `from ₴${n}/mo in installments`,
+    trust: [
+      { title: "Nova Poshta — 1–2 days", subtitle: "Branch, parcel locker or courier" },
+      { title: "Pay on delivery", subtitle: "Or by card / installments online" },
+      { title: "14-day returns", subtitle: "No questions asked" },
+      { title: "12-month warranty", subtitle: "Replacement for factory defects" },
+    ],
     addToCart: "Add to Cart",
     added: "Added",
     outOfStock: "Out of Stock",
