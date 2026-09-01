@@ -65,16 +65,18 @@ describe("isMonobankConfigured", () => {
 })
 
 describe("resolvePaymentProviders", () => {
-  it("includes only the system provider in dev with no Monobank token", () => {
+  it("includes cod alongside the system provider in dev with no Monobank token", () => {
     const providers = resolvePaymentProviders({}, false)
-    expect(providers).toHaveLength(1)
+    expect(providers).toHaveLength(2)
     expect(providers[0]).toMatchObject({ id: "system" })
+    expect(providers[1]).toMatchObject({ id: "cod" })
   })
 
-  it("includes only Monobank in production with a real token and test payments not explicitly allowed", () => {
+  it("includes cod alongside Monobank in production with a real token and test payments not explicitly allowed", () => {
     const providers = resolvePaymentProviders({ MONO_TOKEN: "uXyzRealToken123" }, true)
-    expect(providers).toHaveLength(1)
+    expect(providers).toHaveLength(2)
     expect(providers[0]).toMatchObject({ id: "monobank" })
+    expect(providers[1]).toMatchObject({ id: "cod" })
   })
 
   it("passes the token and URLs through to the Monobank provider options", () => {
@@ -96,27 +98,37 @@ describe("resolvePaymentProviders", () => {
     })
   })
 
-  it("includes both providers when Monobank is configured and test payments are explicitly allowed", () => {
+  it("includes system, monobank and cod when Monobank is configured and test payments are explicitly allowed", () => {
     const providers = resolvePaymentProviders(
       { MONO_TOKEN: "uXyzRealToken123", ALLOW_TEST_PAYMENTS: "true" },
       true
     )
-    expect(providers).toHaveLength(2)
+    expect(providers).toHaveLength(3)
     const ids = providers.map((p) => p.id)
     expect(ids).toContain("system")
     expect(ids).toContain("monobank")
+    expect(ids).toContain("cod")
   })
 
-  it("returns an empty array in production with no Monobank token and test payments disabled", () => {
-    // This is the case medusa-config.ts guards against by throwing at boot.
-    // We only assert the array is empty here; the throw itself lives in
-    // medusa-config.ts's top-level code and is out of scope for this unit test.
+  it("falls back to cod alone in production with no Monobank token and test payments disabled", () => {
+    // Previously this was the empty-array case medusa-config.ts guards against
+    // by throwing at boot - cod needs no secrets and is always registered
+    // (see docs/DROPSHIP-KOSMOTECH.md), so the provider list can no longer be
+    // empty and that boot-time throw is now unreachable dead code, left as-is.
     const providers = resolvePaymentProviders({}, true)
-    expect(providers).toEqual([])
+    expect(providers).toEqual([{ resolve: "./src/modules/payment-cod", id: "cod", options: {} }])
   })
 
-  it("returns an empty array when ALLOW_TEST_PAYMENTS=false and no Monobank token, even in dev", () => {
+  it("falls back to cod alone when ALLOW_TEST_PAYMENTS=false and no Monobank token, even in dev", () => {
     const providers = resolvePaymentProviders({ ALLOW_TEST_PAYMENTS: "false" }, false)
-    expect(providers).toEqual([])
+    expect(providers).toEqual([{ resolve: "./src/modules/payment-cod", id: "cod", options: {} }])
+  })
+
+  it("always includes cod, regardless of environment or configuration", () => {
+    expect(resolvePaymentProviders({}, false).some((p) => p.id === "cod")).toBe(true)
+    expect(resolvePaymentProviders({}, true).some((p) => p.id === "cod")).toBe(true)
+    expect(
+      resolvePaymentProviders({ MONO_TOKEN: "uXyzRealToken123" }, true).some((p) => p.id === "cod")
+    ).toBe(true)
   })
 })

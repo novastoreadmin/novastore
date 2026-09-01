@@ -19,6 +19,7 @@
 | [BACKEND.md](BACKEND.md) | Мапа `apps/backend`: модулі, всі API-роути, сабскрайбери, джоби, lib, middlewares, повний довідник env | Будь-яка зміна бекенда |
 | [STOREFRONT.md](STOREFRONT.md) | Мапа `apps/storefront`: роути, стейт (Zustand), чекаут-флоу, кешування/ISR + revalidation, auth | Будь-яка зміна storefront |
 | [CATALOG.md](CATALOG.md) | Дані каталогу: `catalog.ts`, три скрипти (seed / import ⚠️ / update-texts ✅), ціни USD→UAH, картинки, скидання кеша | Будь-яка робота з товарами/категоріями |
+| [INCOMING-IMPORT.md](INCOMING-IMPORT.md) | Партія «Товар в дорозі»: `incoming-catalog.ts`, prepare-import → CSV → apply-metadata, бейдж на storefront, чекліст локально/прод | Заливаєш/оновлюєш партію нових товарів |
 | [I18N.md](I18N.md) | Два шари локалізації (UI-словники + каталог у metadata) і мова листів | Додаєш будь-який текст користувачу |
 
 ## Інтеграції
@@ -28,6 +29,7 @@
 | [MAIL.md](MAIL.md) | Поштова система: GreenMail dev / cPanel prod, `MAIL_ACCOUNTS`, таблиця «подія → лист», Sent-папка, gotchas | Все, що стосується листів |
 | [PAYMENTS-MONOBANK.md](PAYMENTS-MONOBANK.md) | Monobank-провайдер: інвойси, hold/finalize, вебхук (ECDSA), збережені картки, monoPay-віджет | Все, що стосується оплат |
 | [NOVAPOSHTA.md](NOVAPOSHTA.md) | НП-інтеграція: fulfillment-модуль, ТТН-lifecycle, чекаут-пікер, статуси, delivered-лист | Все, що стосується доставки |
+| [DROPSHIP-KOSMOTECH.md](DROPSHIP-KOSMOTECH.md) | Дропшип Kosmotech: модель грошей, правила кошика, авто-ТТН, черга заявок, локальна тест-матриця, прод-чекліст | Впроваджуєш/змінюєш дропшип-флоу |
 
 ## Адмін-розширення
 

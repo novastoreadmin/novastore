@@ -14,13 +14,10 @@ if (isProduction && !redisUrl) {
   )
 }
 
+// cod (Nova Poshta postplata) needs no secrets and is always included by
+// resolvePaymentProviders, so this list is never empty - no boot-time guard
+// needed here anymore (see docs/DROPSHIP-KOSMOTECH.md).
 const paymentProviders = resolvePaymentProviders(process.env, isProduction)
-
-if (!paymentProviders.length) {
-  throw new Error(
-    "No payment providers configured. Set MONO_TOKEN (production) or ALLOW_TEST_PAYMENTS=true (dev/staging only)."
-  )
-}
 
 export default defineConfig({
   projectConfig: {
@@ -38,7 +35,9 @@ export default defineConfig({
   },
   admin: {
     backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
-    disable: false,
+    // DISABLE_MEDUSA_ADMIN=true — швидкий старт без збірки адмінки
+    // (корисно для локального тестування самої вітрини / API).
+    disable: process.env.DISABLE_MEDUSA_ADMIN === "true",
     vite: () => ({
       publicDir: path.resolve(__dirname, "src/admin/assets"),
       plugins: [

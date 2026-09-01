@@ -10,6 +10,11 @@ import { createOrderFulfillmentWorkflow } from "@medusajs/medusa/core-flows"
  *
  * Set NP_AUTO_TTN=false to opt out and create fulfillments manually from the
  * admin (Orders → order → Fulfillment → Fulfill items) instead.
+ *
+ * This DELIBERATELY fires for Kosmotech dropship orders too: NOVA creates
+ * the waybill from its own NP account, and Kosmotech ships the parcel
+ * against that number («Відправка по ТТН» in their cabinet) — see
+ * docs/DROPSHIP-KOSMOTECH.md §4.
  */
 export default async function orderPlacedNovaPoshtaHandler({
   event: { data },
@@ -24,11 +29,14 @@ export default async function orderPlacedNovaPoshtaHandler({
     const query = container.resolve(ContainerRegistrationKeys.QUERY)
     const { data: orders } = await query.graph({
       entity: "order",
+      // "items.quantity" as an explicit dotted field silently returns
+      // undefined (query.graph gotcha, pre-existing - not specific to this
+      // subscriber). "items.*" is the verified-working shape (matches
+      // order-placed.ts) and is what actually populates quantity.
       fields: [
         "id",
         "display_id",
-        "items.id",
-        "items.quantity",
+        "items.*",
         "shipping_methods.data",
       ],
       filters: { id: data.id },

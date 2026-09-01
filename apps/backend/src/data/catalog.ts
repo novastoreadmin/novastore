@@ -73,10 +73,16 @@ export const CATEGORIES: {
   handle: string
   description: string
 }[] = [
-  { name: "Кардридери", handle: "card-readers", description: "Яскраві компактні кардридери для SD та microSD." },
-  { name: "SSD-кишені", handle: "ssd-enclosures", description: "Ультратонкі та легкі кишені для M.2 NVMe SSD." },
+  // Реструктуризація липень 2026: «Кардридери» і «SSD-кишені» злиті в «Хаби»,
+  // зарядні пристрої винесені в «Адаптери» (міграція живої БД —
+  // restructure-categories.ts).
+  { name: "Автономія", handle: "autonomy", description: "Павербанки та зарядні станції." },
+  { name: "Хаби", handle: "hubs", description: "USB-C хаби, кардридери та SSD-кишені." },
+  { name: "Адаптери", handle: "adapters", description: "Зарядні пристрої та мережеві адаптери." },
   { name: "Пам'ять", handle: "memory", description: "Портативні накопичувачі великої ємності та швидкості." },
-  { name: "Кабелі USB-C", handle: "usb-c-cables", description: "Гнучкі та витривалі швидкісні кабелі USB-C." },
+  // Handle лишається usb-c-cables (живі URL), але категорія тепер ширша:
+  // сюди входять усі кабелі — USB-C, відео, мережеві, клавіатурні.
+  { name: "Кабелі", handle: "usb-c-cables", description: "Кабелі USB-C, відео, мережеві та кастомні для клавіатур." },
   { name: "Аксесуари", handle: "accessories", description: "Багатофункціональні аксесуари на щодень." },
 ]
 
@@ -88,7 +94,7 @@ export const PRODUCTS: CatalogProduct[] = [
     description:
       "Ретро-кардридер, натхненний дизайном дискет 1990-х. Одночасно читає картки SD і Micro SD на швидкостях SD 4.0 (теоретично до 312 МБ/с), а захисний чип GL забезпечує стабільну передачу даних. Суцільноалюмінієвий корпус розсіює тепло — при товщині 8 мм і вазі 31 г кардридер зручно причепити до рюкзака.",
     priceCents: 2599,
-    categoryHandles: ["card-readers"],
+    categoryHandles: ["hubs"],
     options: [],
     variants: [{ title: "Default", sku: "DKQ04" }],
     metadata: {
@@ -136,7 +142,7 @@ export const PRODUCTS: CatalogProduct[] = [
     description:
       "Кардридер із двома слотами в дизайні комп'ютерної теки у кольорах Mac Blue та Windows Yellow. Одночасно читає SD і Micro SD на швидкостях SD 4.0 до теоретичних 312 МБ/с, має захисний чип GL та U-подібний суцільноалюмінієвий корпус для розсіювання тепла при товщині лише 8 мм.",
     priceCents: 2399,
-    categoryHandles: ["card-readers"],
+    categoryHandles: ["hubs"],
     options: [{ title: "Color", values: ["Blue", "Yellow"] }],
     variants: [
       { title: "Mac Blue", sku: "DKQ03-BL", options: { Color: "Blue" } },
@@ -187,7 +193,7 @@ export const PRODUCTS: CatalogProduct[] = [
     description:
       "Ретро-кишеня для M.2 NVMe SSD у формі 3,5-дюймової дискети. Інтерфейс USB 3.2 Gen2 Type-C видає 10 Гбіт/с із реальними швидкостями читання/запису 1000–1200 МБ/с. Підтримує SSD M.2 2230/2242 NVMe (ключ B+M або M) у тонкому корпусі 6,1 мм і працює з iPhone 15/16/17 Pro для запису ProRes.",
     priceCents: 3299,
-    categoryHandles: ["ssd-enclosures", "memory"],
+    categoryHandles: ["hubs", "memory"],
     options: [{ title: "Color", values: ["Grey", "Orange", "Green"] }],
     variants: [
       { title: "Grey", sku: "YPHN02-GY", options: { Color: "Grey" } },
@@ -239,7 +245,7 @@ export const PRODUCTS: CatalogProduct[] = [
     description:
       "Кишеня для M.2 NVMe SSD у вигляді комп'ютерної теки. USB 3.2 Type-C видає 10 Гбіт/с із читанням/записом 1000–1200 МБ/с, підтримуються диски M.2 2230/2242/2260/2280 NVMe. Лише 8 мм і 28 г — поміститься в будь-яку сумку, а нові iPhone Pro пишуть на неї ProRes 4K@120Гц напряму.",
     priceCents: 2999,
-    categoryHandles: ["ssd-enclosures", "memory"],
+    categoryHandles: ["hubs", "memory"],
     options: [{ title: "Color", values: ["Blue", "Yellow"] }],
     variants: [
       { title: "Blue", sku: "YPHN03-BL", options: { Color: "Blue" } },

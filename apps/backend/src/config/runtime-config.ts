@@ -63,5 +63,12 @@ export function resolvePaymentProviders(
           },
         ]
       : []),
+    // Cash-on-delivery (Nova Poshta postplata) - no secrets needed, always
+    // registered. Money always flows to NOVA's NP account, for own and
+    // Kosmotech dropship goods alike (see docs/DROPSHIP-KOSMOTECH.md). Which
+    // cart may actually USE this provider is enforced server-side by
+    // allowedProviders() in lib/kosmotech-dropship.ts, not by whether it's
+    // registered here.
+    { resolve: "./src/modules/payment-cod", id: "cod", options: {} },
   ]
 }

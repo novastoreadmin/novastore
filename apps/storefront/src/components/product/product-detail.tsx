@@ -14,6 +14,10 @@ import {
   Minus,
   Plus,
   Check,
+  Truck,
+  CreditCard,
+  RotateCcw,
+  ShieldCheck,
 } from "lucide-react";
 import { gsap, ScrollTrigger } from "@/animations/gsap-config";
 import { fadeUp, fadeIn, staggerContainer, scaleIn } from "@/animations/variants";
@@ -59,6 +63,7 @@ interface Product {
   options: ProductOption[];
   metadata?: {
     model?: string;
+    arriving?: boolean;
     specs?: { label: string; value: string }[];
     features?: { title: string; description: string }[];
     i18n?: {
@@ -109,6 +114,24 @@ const COLOR_MAP: Record<string, { hex: string; label: string }> = {
   black: { hex: "#1a1a1a", label: "Black" },
   White: { hex: "#f5f5f5", label: "White" },
   white: { hex: "#f5f5f5", label: "White" },
+  Blue: { hex: "#3b82f6", label: "Blue" },
+  Yellow: { hex: "#eab308", label: "Yellow" },
+  Orange: { hex: "#f97316", label: "Orange" },
+  Green: { hex: "#22c55e", label: "Green" },
+  Grey: { hex: "#8a8d8f", label: "Grey" },
+  Gray: { hex: "#8a8d8f", label: "Gray" },
+  Purple: { hex: "#a855f7", label: "Purple" },
+  Pink: { hex: "#ec4899", label: "Pink" },
+  Red: { hex: "#dc2626", label: "Red" },
+  "Light Blue": { hex: "#7dd3fc", label: "Light Blue" },
+  Ivory: { hex: "#f1e9dd", label: "Ivory" },
+  "Army Green": { hex: "#4b5320", label: "Army Green" },
+  "Dark Gray": { hex: "#374151", label: "Dark Gray" },
+  "Black Silver": { hex: "#3d3f42", label: "Black Silver" },
+  "Purple Pink": { hex: "#c084fc", label: "Purple Pink" },
+  "Black Gold": { hex: "#8a6d1a", label: "Black Gold" },
+  "Dark Red": { hex: "#7f1d1d", label: "Dark Red" },
+  "Purple Green": { hex: "#7c9a5a", label: "Purple Green" },
 };
 
 const FEATURE_ICONS = [Cpu, Battery, Wifi, Shield, Monitor, Zap];
@@ -170,9 +193,13 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
   }, [product.variants, selectedOptions]);
 
   const price = selectedVariant?.calculated_price;
+  // «Товар в дорозі»: партія ще їде на склад — показуємо бейдж і вимикаємо
+  // купівлю незалежно від inventory (захист, навіть якщо рівні ще не створені).
+  const arriving = product.metadata?.arriving === true;
   // In stock unless the variant is explicitly tracked-and-empty. A null quantity
   // (store API didn't compute it) is treated as available — the cart validates on add.
   const inStock =
+    !arriving &&
     !!selectedVariant &&
     (selectedVariant.allow_backorder === true ||
       selectedVariant.manage_inventory === false ||
@@ -433,14 +460,44 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
               {/* Price */}
               <motion.div variants={fadeUp} className="mt-6 md:mt-8">
                 {price && (
-                  <p className="text-2xl md:text-3xl font-semibold text-text-primary tracking-tight">
-                    {formatPrice(price.calculated_amount, price.currency_code)}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <p className="text-2xl md:text-3xl font-semibold text-text-primary tracking-tight">
+                      {formatPrice(price.calculated_amount, price.currency_code)}
+                    </p>
+                    {/* Оплата частинами: в UA рішення часто ухвалюють за
+                        місячним платежем — показуємо орієнтир на 12 платежів. */}
+                    {price.currency_code?.toLowerCase() === "uah" &&
+                      price.calculated_amount >= 500 && (
+                        <span className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-text-secondary">
+                          {d.productDetail.installmentFrom(
+                            Math.ceil(price.calculated_amount / 12)
+                          )}
+                        </span>
+                      )}
+                  </div>
                 )}
-                {!inStock && selectedVariant && (
-                  <p className="mt-2 text-sm text-error font-medium">
-                    {d.productDetail.currentlyOut}
-                  </p>
+                {arriving ? (
+                  <div className="mt-3">
+                    <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/10 border border-amber-300/30">
+                      <span className="relative flex w-1.5 h-1.5">
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-amber-300/70 animate-ping" />
+                        <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-amber-300" />
+                      </span>
+                      <span className="text-xs font-medium tracking-wide uppercase text-amber-200">
+                        {d.productDetail.arriving}
+                      </span>
+                    </span>
+                    <p className="mt-2 text-sm text-text-secondary">
+                      {d.productDetail.arrivingNote}
+                    </p>
+                  </div>
+                ) : (
+                  !inStock &&
+                  selectedVariant && (
+                    <p className="mt-2 text-sm text-error font-medium">
+                      {d.productDetail.currentlyOut}
+                    </p>
+                  )
                 )}
               </motion.div>
 
@@ -585,7 +642,11 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                       >
-                        {inStock ? d.productDetail.addToCart : d.productDetail.outOfStock}
+                        {inStock
+                          ? d.productDetail.addToCart
+                          : arriving
+                            ? d.productDetail.arriving
+                            : d.productDetail.outOfStock}
                       </motion.span>
                     )}
                   </AnimatePresence>
@@ -595,6 +656,36 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
               {addError && (
                 <p className="text-xs text-error mt-2">{addError}</p>
               )}
+
+              {/* ---- Trust: delivery / payment / returns / warranty ---- */}
+              <motion.div
+                variants={fadeUp}
+                className="mt-8 rounded-2xl border border-border bg-bg-card px-4"
+              >
+                {d.productDetail.trust.map((row, i) => {
+                  const Icon = [Truck, CreditCard, RotateCcw, ShieldCheck][i] ?? Truck;
+                  return (
+                    <div
+                      key={row.title}
+                      className={cn(
+                        "flex items-center gap-3 py-3",
+                        i < d.productDetail.trust.length - 1 &&
+                          "border-b border-border"
+                      )}
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface">
+                        <Icon size={17} strokeWidth={1.8} className="text-text-primary" />
+                      </span>
+                      <span className="flex flex-col">
+                        <span className="text-sm font-medium text-text-primary">
+                          {row.title}
+                        </span>
+                        <span className="text-xs text-text-muted">{row.subtitle}</span>
+                      </span>
+                    </div>
+                  );
+                })}
+              </motion.div>
             </motion.div>
           </div>
         </div>
@@ -773,6 +864,39 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
       {/*  RELATED PRODUCTS                                                   */}
       {/* ================================================================== */}
       <RelatedProducts products={relatedProducts} />
+
+      {/* ---- Sticky mobile buy bar: ціна + CTA завжди на екрані ---- */}
+      {price && (
+        <>
+          <div className="h-[72px] md:hidden" aria-hidden="true" />
+          <div className="fixed bottom-0 inset-x-0 z-40 flex items-center gap-3 border-t border-border bg-bg-elevated/95 px-4 py-3 backdrop-blur-md md:hidden">
+            <div className="flex flex-col">
+              <span className="text-[11px] text-text-muted">
+                {d.cart.subtotal}
+              </span>
+              <span className="text-lg font-bold tracking-tight text-text-primary tabular-nums">
+                {formatPrice(price.calculated_amount, price.currency_code)}
+              </span>
+            </div>
+            <Button
+              size="md"
+              variant="primary"
+              onClick={handleAddToCart}
+              isLoading={isAdding}
+              disabled={!inStock || isAdding}
+              className="flex-1"
+            >
+              {addedFeedback
+                ? d.productDetail.added
+                : inStock
+                  ? d.productDetail.addToCart
+                  : arriving
+                    ? d.productDetail.arriving
+                    : d.productDetail.outOfStock}
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

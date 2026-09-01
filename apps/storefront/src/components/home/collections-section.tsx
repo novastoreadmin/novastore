@@ -10,8 +10,9 @@ import { gsap, ScrollTrigger } from "@/animations/gsap-config";
 import { useI18n } from "@/lib/i18n";
 
 const categoryMeta = [
-  { slug: "card-readers", gradient: "from-white/[0.04] to-white/[0.01]" },
-  { slug: "ssd-enclosures", gradient: "from-white/[0.03] to-transparent" },
+  { slug: "autonomy", gradient: "from-white/[0.04] to-white/[0.01]" },
+  { slug: "hubs", gradient: "from-white/[0.04] to-white/[0.01]" },
+  { slug: "adapters", gradient: "from-white/[0.03] to-transparent" },
   { slug: "memory", gradient: "from-white/[0.03] to-transparent" },
   { slug: "usb-c-cables", gradient: "from-white/[0.04] to-white/[0.02]" },
   { slug: "accessories", gradient: "from-white/[0.03] to-transparent" },

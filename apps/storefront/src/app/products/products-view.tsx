@@ -4,17 +4,19 @@ import { useMemo, useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Search, SlidersHorizontal, X } from "lucide-react";
 import { fadeUp, staggerContainer } from "@/animations/variants";
 import { gsap } from "@/animations/gsap-config";
 import { cn, formatPrice } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { localizeTitle } from "@/lib/catalog-i18n";
+import { ArrivingBadge } from "@/components/product/product-card";
 
 interface Category {
   id: string;
   name: string;
   handle: string;
+  parent_category_id?: string | null;
 }
 
 interface Product {
@@ -22,7 +24,7 @@ interface Product {
   title: string;
   handle: string;
   thumbnail?: string | null;
-  metadata?: { i18n?: { en?: { title?: string } } } | null;
+  metadata?: { arriving?: boolean; i18n?: { en?: { title?: string } } } | null;
   categories?: Category[];
   variants?: {
     calculated_price?: {
@@ -54,6 +56,22 @@ export function ProductsView({
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [search, setSearch] = useState("");
+  // 850+ SKU: render the grid in pages so first paint (and the entrance
+  // animation) stays light; "show more" reveals the next chunk.
+  const PAGE_SIZE = 24;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  // Мобільна шторка фільтрів (затверджений дизайн-канвас: фільтри знизу,
+  // кнопка «Показати N товарів» одразу показує результат).
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Chips show top-level categories only (the dropship import adds ~60
+  // subcategories under them — products are linked to BOTH levels, so a
+  // top-level chip still matches by id).
+  const topCategories = useMemo(
+    () => categories.filter((c) => !c.parent_category_id),
+    [categories]
+  );
 
   const currency = products.find((p) => currencyOf(p))
     ? currencyOf(products.find((p) => currencyOf(p))!)
@@ -62,9 +80,13 @@ export function ProductsView({
   const filteredProducts = useMemo(() => {
     const min = minPrice.trim() === "" ? null : Number(minPrice);
     const max = maxPrice.trim() === "" ? null : Number(maxPrice);
+    const q = search.trim().toLowerCase();
 
     return products.filter((product) => {
       if (activeCategory && !product.categories?.some((c) => c.id === activeCategory)) {
+        return false;
+      }
+      if (q && !localizeTitle(product, lang).toLowerCase().includes(q)) {
         return false;
       }
       const price = priceOf(product);
@@ -72,7 +94,14 @@ export function ProductsView({
       if (max != null && !Number.isNaN(max) && price > max) return false;
       return true;
     });
-  }, [products, activeCategory, minPrice, maxPrice]);
+  }, [products, activeCategory, minPrice, maxPrice, search, lang]);
+
+  // New filter → back to the first page of results.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [activeCategory, minPrice, maxPrice, search]);
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -89,9 +118,10 @@ export function ProductsView({
     }, gridRef);
 
     return () => ctx.revert();
-  }, [filteredProducts.length]);
+  }, [visibleProducts.length]);
 
-  const hasActiveFilters = activeCategory !== null || minPrice !== "" || maxPrice !== "";
+  const hasActiveFilters =
+    activeCategory !== null || minPrice !== "" || maxPrice !== "" || search !== "";
 
   return (
     <div className="min-h-screen pt-32 pb-24">
@@ -125,12 +155,41 @@ export function ProductsView({
 
         {/* Filters */}
         <div className="mb-12 space-y-6">
-          {/* Category chips */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Search (затверджений мобільний дизайн: пошук над чіпами категорій)
+              + кнопка шторки фільтрів на мобільному */}
+          <div className="flex items-center gap-3 max-w-md">
+            <div className="relative flex-1">
+              <Search
+                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+              />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={d.productsPage.searchPlaceholder}
+                className="w-full h-12 pl-11 pr-4 rounded-2xl bg-bg-card border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/10 transition-all"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(true)}
+              className="md:hidden relative h-12 w-12 shrink-0 rounded-2xl bg-bg-card border border-border flex items-center justify-center text-text-secondary hover:border-white/20 transition-colors"
+              aria-label={d.productsPage.filtersButton}
+            >
+              <SlidersHorizontal size={18} />
+              {hasActiveFilters && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-white" />
+              )}
+            </button>
+          </div>
+
+          {/* Category chips — top-level only; horizontally scrollable on mobile */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               onClick={() => setActiveCategory(null)}
               className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                "px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 shrink-0 whitespace-nowrap",
                 activeCategory === null
                   ? "bg-white text-black"
                   : "bg-bg-card text-text-secondary border border-border hover:border-white/20"
@@ -138,14 +197,14 @@ export function ProductsView({
             >
               {d.productsPage.all}
             </button>
-            {categories.map((category) => (
+            {topCategories.map((category) => (
               <button
                 key={category.id}
                 onClick={() =>
                   setActiveCategory((prev) => (prev === category.id ? null : category.id))
                 }
                 className={cn(
-                  "px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                  "px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 shrink-0 whitespace-nowrap",
                   activeCategory === category.id
                     ? "bg-white text-black"
                     : "bg-bg-card text-text-secondary border border-border hover:border-white/20"
@@ -156,8 +215,8 @@ export function ProductsView({
             ))}
           </div>
 
-          {/* Price range */}
-          <div className="flex flex-wrap items-end gap-4">
+          {/* Price range — desktop inline; на мобільному живе в шторці фільтрів */}
+          <div className="hidden md:flex flex-wrap items-end gap-4">
             <div>
               <label htmlFor="minPrice" className="block text-xs font-medium text-text-secondary mb-2">
                 {d.productsPage.minPrice}{currency ? ` (${currency.toUpperCase()})` : ""}
@@ -192,6 +251,7 @@ export function ProductsView({
                   setActiveCategory(null);
                   setMinPrice("");
                   setMaxPrice("");
+                  setSearch("");
                 }}
                 className="h-11 px-4 text-sm text-text-secondary hover:text-text-primary transition-colors"
               >
@@ -220,7 +280,7 @@ export function ProductsView({
             ref={gridRef}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
           >
-            {filteredProducts.map((product) => {
+            {visibleProducts.map((product) => {
               const price = priceOf(product);
               const currencyCode = currencyOf(product);
 
@@ -247,6 +307,10 @@ export function ProductsView({
                       <div className="absolute top-4 right-4 w-9 h-9 rounded-full border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-bg/60 backdrop-blur-sm">
                         <ArrowUpRight className="w-4 h-4 text-text-secondary" />
                       </div>
+
+                      {product.metadata?.arriving === true && (
+                        <ArrivingBadge className="absolute top-4 left-4 z-10" />
+                      )}
                     </div>
 
                     <div className="p-6">
@@ -266,7 +330,135 @@ export function ProductsView({
             })}
           </div>
         )}
+
+        {/* Show more — pagination for the 850+ SKU catalog */}
+        {visibleCount < filteredProducts.length && (
+          <div className="mt-12 flex justify-center">
+            <button
+              onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+              className="h-12 px-8 rounded-xl bg-bg-card border border-border text-sm font-medium text-text-primary hover:border-white/20 transition-all duration-300"
+            >
+              {d.productsPage.showMore(filteredProducts.length - visibleCount)}
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Мобільна шторка фільтрів (дизайн-канвас NOVA Mobile Shop, екран
+          Filters): категорія + ціна, кнопка «Показати N товарів» з живим
+          лічильником. Фільтри застосовуються одразу — кнопка лише закриває. */}
+      {filtersOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <button
+            type="button"
+            aria-label={d.common.close}
+            onClick={() => setFiltersOpen(false)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute bottom-0 left-0 right-0 rounded-t-3xl bg-bg-card border-t border-border p-6 pb-8 max-h-[80vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold tracking-tight">
+                {d.productsPage.filtersTitle}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+                className="w-9 h-9 rounded-full border border-border flex items-center justify-center text-text-secondary"
+                aria-label={d.common.close}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-muted mb-3">
+              {d.productsPage.filterCategory}
+            </p>
+            <div className="flex flex-wrap gap-2 mb-6">
+              <button
+                onClick={() => setActiveCategory(null)}
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                  activeCategory === null
+                    ? "bg-white text-black"
+                    : "bg-bg border border-border text-text-secondary"
+                )}
+              >
+                {d.productsPage.all}
+              </button>
+              {topCategories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() =>
+                    setActiveCategory((prev) => (prev === category.id ? null : category.id))
+                  }
+                  className={cn(
+                    "px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                    activeCategory === category.id
+                      ? "bg-white text-black"
+                      : "bg-bg border border-border text-text-secondary"
+                  )}
+                >
+                  {categoryName(category)}
+                </button>
+              ))}
+            </div>
+
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-muted mb-3">
+              {d.productsPage.filterPrice}
+            </p>
+            <div className="flex items-center gap-3 mb-8">
+              <input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                placeholder={d.productsPage.minPrice}
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                className="flex-1 min-w-0 h-12 px-4 rounded-xl bg-bg border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-white/20"
+              />
+              <span className="text-text-muted">—</span>
+              <input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                placeholder={d.productsPage.anyPlaceholder}
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                className="flex-1 min-w-0 h-12 px-4 rounded-xl bg-bg border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-white/20"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveCategory(null);
+                    setMinPrice("");
+                    setMaxPrice("");
+                    setSearch("");
+                  }}
+                  className="h-12 px-5 rounded-xl border border-border text-sm font-medium text-text-secondary"
+                >
+                  {d.productsPage.clearFilters}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+                className="flex-1 h-12 rounded-xl bg-white text-black text-sm font-semibold"
+              >
+                {d.productsPage.showResults(filteredProducts.length)}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

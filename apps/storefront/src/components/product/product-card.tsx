@@ -14,7 +14,7 @@ interface ProductCardProduct {
   title: string;
   handle: string;
   thumbnail: string | null;
-  metadata?: { i18n?: { en?: { title?: string } } } | null;
+  metadata?: { arriving?: boolean; i18n?: { en?: { title?: string } } } | null;
   variants: {
     id: string;
     calculated_price: {
@@ -30,10 +30,35 @@ interface ProductCardProps {
   index?: number;
 }
 
+/**
+ * Бейдж «Товар в дорозі» для карток товарів (metadata.arriving).
+ * Спільний для ProductCard, категорійної сторінки та повного каталогу.
+ */
+export function ArrivingBadge({ className }: { className?: string }) {
+  const { d } = useI18n();
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/45 backdrop-blur-md border border-amber-300/30",
+        className
+      )}
+    >
+      <span className="relative flex w-1.5 h-1.5">
+        <span className="absolute inline-flex h-full w-full rounded-full bg-amber-300/70 animate-ping" />
+        <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-amber-300" />
+      </span>
+      <span className="text-[11px] font-medium tracking-wide uppercase text-amber-200">
+        {d.productDetail.arriving}
+      </span>
+    </div>
+  );
+}
+
 export function ProductCard({ product, className, index = 0 }: ProductCardProps) {
   const { d, lang } = useI18n();
   const price = product.variants[0]?.calculated_price;
   const title = localizeTitle(product, lang);
+  const arriving = product.metadata?.arriving === true;
 
   return (
     <motion.div
@@ -70,6 +95,9 @@ export function ProductCard({ product, className, index = 0 }: ProductCardProps)
                 <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-bg-card to-transparent" />
               </div>
             )}
+
+            {/* Arriving soon badge */}
+            {arriving && <ArrivingBadge className="absolute top-3 left-3 z-10" />}
 
             {/* Hover overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

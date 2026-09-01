@@ -10,10 +10,10 @@ import { useI18n } from "@/lib/i18n";
 // Language-independent parts; titles/descriptions/statLabels come from the
 // dictionary (d.storytelling.features, same order).
 const featureMeta = [
-  { label: "01", stat: "10Gbps", image: "/images/home/feature-transfer.jpg" },
+  { label: "01", stat: "120Gbps", image: "/images/home/feature-transfer.jpg" },
   { label: "02", stat: "6mm", image: "/images/home/feature-unibody.jpg" },
   { label: "03", stat: "240W", image: "/images/home/feature-power.jpg" },
-  { label: "04", stat: "8K@60Hz", image: "/images/home/feature-display.jpg" },
+  { label: "04", stat: "16K", image: "/images/home/feature-display.jpg" },
 ];
 
 type Feature = (typeof featureMeta)[number] & {

@@ -11,8 +11,9 @@ import { useI18n } from "@/lib/i18n";
 import type { Lang } from "@/i18n/dictionaries";
 
 const navSlugs = [
-  "card-readers",
-  "ssd-enclosures",
+  "autonomy",
+  "hubs",
+  "adapters",
   "memory",
   "usb-c-cables",
   "accessories",

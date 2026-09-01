@@ -15,13 +15,15 @@ const uk = {
     continueShopping: "Продовжити покупки",
     loading: "Завантаження…",
     view: "Переглянути",
+    close: "Закрити",
   },
   header: {
     nav: {
-      "card-readers": "Кардридери",
-      "ssd-enclosures": "SSD-кишені",
+      autonomy: "Автономія",
+      hubs: "Хаби",
+      adapters: "Адаптери",
       memory: "Пам'ять",
-      "usb-c-cables": "Кабелі USB-C",
+      "usb-c-cables": "Кабелі",
       accessories: "Аксесуари",
     },
     search: "Пошук",
@@ -49,6 +51,16 @@ const uk = {
       cookies: "Cookies",
     },
     rights: "Всі права захищені.",
+    contacts: "Контакти",
+    phone: "+380 68 990-06-74",
+    phoneHref: "tel:+380689900674",
+    email: "business@novastore.com.ua",
+    viber: "Viber",
+    viberHref: "viber://chat?number=%2B380689900674",
+    requisites: "ФОП Кобзар Роман Юрійович · РНОКПП 3381411016",
+    paymentsLine:
+      "Оплата: Monobank · Visa · Mastercard · Apple Pay · Google Pay · накладений платіж",
+    deliveryLine: "Доставка Новою Поштою по всій Україні",
   },
   hero: {
     badge: "Твій SSD апгрейд у ретро-стилі",
@@ -63,27 +75,27 @@ const uk = {
     featureLabel: "Особливість",
     features: [
       {
-        title: "Швидкість 10 Гбіт/с",
+        title: "Дані до 120 Гбіт/с",
         description:
-          "Інтерфейси USB 3.2 Gen2 передають дані зі швидкістю до 10 Гбіт/с — реальні 1000–1200 МБ/с на читання й запис. Скидайте цілу фотосесію або завантажуйтесь із зовнішнього диска за лічені хвилини.",
+          "Від кардридерів SD 4.0 і кишень USB 3.2 Gen2 до кабелів Thunderbolt 5 на 120 Гбіт/с та NVMe SSD зі швидкістю 6000 МБ/с. Ціла фотосесія скидається за лічені хвилини, ігри стартують миттєво.",
         statLabel: "Швидкість передачі",
       },
       {
         title: "Алюмінієвий моноблок",
         description:
-          "Прецизійні корпуси з алюмінієвого сплаву розсіюють тепло і витримують щоденне використання — у профілях до 6 мм. Створені жити у вашій сумці.",
+          "Прецизійні корпуси з алюмінієвого сплаву розсіюють тепло і витримують щоденне використання — у профілях до 6 мм: кардридери, SSD-кишені, хаби. Створені жити у вашій сумці.",
         statLabel: "Тонкий профіль",
       },
       {
         title: "Заряджання 240 Вт",
         description:
-          "Кабелі та хаби з PD 3.1 віддають до 240 Вт (48В/5А) із захистом E-marker — ноутбуки, смартфони та консолі заряджаються на повній швидкості.",
+          "Кабелі PD 3.1 з E-marker віддають до 240 Вт, GaN-зарядки Nexode та Baseus — до 140 Вт у кишеньковому корпусі. Ноутбуки, смартфони та консолі заряджаються на повній швидкості.",
         statLabel: "Швидка зарядка",
       },
       {
-        title: "Виведення зображення 8K",
+        title: "Виведення зображення 16K",
         description:
-          "8K@60Гц по одному кабелю або 4K@60Гц через тонкий хаб. Повноцінне робоче місце — будь-де.",
+          "DisplayPort 2.1 тягне до 16K і 4K@240Гц, витий HDMI 2.1 виводить 8K з камери, а тонкий хаб — 4K@60Гц. Повноцінне робоче місце — будь-де.",
         statLabel: "Відеовихід",
       },
     ],
@@ -95,34 +107,34 @@ const uk = {
       "Кожен аксесуар спроєктований, щоб швидше передавати дані, живлення й пікселі — без зайвого об'єму.",
     cards: [
       {
-        title: "Передача 10 Гбіт/с",
+        title: "Дані до 120 Гбіт/с",
         description:
-          "Контролери USB 3.2 Gen2 передають дані до 10 Гбіт/с із реальними 1000–1200 МБ/с. Більше жодного очікування прогрес-бару.",
+          "Кабелі Thunderbolt 5 на 120 Гбіт/с, NVMe SSD Kingston і Samsung до 6000 МБ/с, кардридери SD 4.0. Більше жодного очікування прогрес-бару.",
       },
       {
-        title: "Відео 4K та 8K",
+        title: "Відео до 16K",
         description:
-          "Дублюйте або розширюйте картинку на 4K@60Гц через хаб — чи виводьте 8K@60Гц одним кабелем USB-C.",
+          "DisplayPort 2.1 до 16K і 4K@240Гц, витий HDMI 2.1 для камер, хаби з 4K@60Гц — картинка без компромісів.",
       },
       {
-        title: "Зарядка 240 Вт PD 3.1",
+        title: "Зарядка до 240 Вт",
         description:
-          "Кабелі з E-marker та хаби віддають до 240 Вт для зарядки ноутбуків, смартфонів і консолей на повній швидкості.",
+          "Кабелі PD 3.1 з E-marker на 240 Вт та GaN-зарядки від 30 до 140 Вт — ноутбуки, смартфони й консолі на повній швидкості.",
       },
       {
-        title: "Гігабітний Ethernet",
+        title: "Гігабітна мережа",
         description:
-          "Тонкий хаб додає справжню гігабітну (1000 Мбіт/с) дротову мережу поруч із USB 5 Гбіт/с та HDMI.",
+          "Хаби з RJ45, розгалужувачі та короткі патч-корди CAT6 — справжній гігабіт там, де Wi-Fi не дотягує.",
       },
       {
-        title: "Алюмінієвий корпус",
+        title: "Алюміній і захист",
         description:
-          "Корпуси з авіаційного алюмінію розсіюють тепло й захищають техніку — у профілях від 6 мм.",
+          "Корпуси з авіаційного алюмінію та повний набір захистів у зарядках: від перегріву, перенапруги й короткого замикання.",
       },
       {
-        title: "Трекер на рік роботи",
+        title: "Автономія до 50 000 мА·год",
         description:
-          "Трекер Find My працює близько року від змінної батарейки, з глобальним покриттям через застосунок Find.",
+          "Павербанки від кишенькових 5000 до 140-ватних 25 000 мА·год і станції для AA/AAA — енергія завжди з собою.",
       },
     ],
   },
@@ -131,7 +143,7 @@ const uk = {
     title1: "Продумано",
     title2: "зсередини",
     description:
-      "П'ять прецизійних шарів працюють як одне ціле. Кожен компонент створений під задачу, кожне з'єднання оптимізоване.",
+      "П'ять прецизійних шарів працюють як одне ціле. Кожен компонент — від NVMe-контролерів до GaN-транзисторів у зарядках — створений під задачу, кожне з'єднання оптимізоване.",
     layers: [
       "Алюмінієвий корпус",
       "Термопрокладка",
@@ -140,7 +152,7 @@ const uk = {
       "Інтерфейс USB-C",
     ],
     captionMain: "Шар за шаром",
-    captionChip: "Контролер 9210CN",
+    captionChip: "Контролери 9210CN та GaN",
   },
   comparison: {
     label: "Порівняння",
@@ -150,14 +162,15 @@ const uk = {
     colOthers: "Інші",
     rows: [
       { label: "Матеріал", nova: "Алюмінієвий сплав", competitor: "Пластик" },
-      { label: "Швидкість передачі", nova: "До 10 Гбіт/с", competitor: "До 5 Гбіт/с" },
-      { label: "Швидка зарядка", nova: "240 Вт PD 3.1", competitor: "60 Вт" },
-      { label: "Відеовихід", nova: "До 8K@60Гц", competitor: "4K@30Гц" },
+      { label: "Швидкість передачі", nova: "До 120 Гбіт/с", competitor: "До 10 Гбіт/с" },
+      { label: "Швидка зарядка", nova: "До 240 Вт (PD 3.1, GaN)", competitor: "60 Вт" },
+      { label: "Відеовихід", nova: "До 16K (DP 2.1)", competitor: "4K@30Гц" },
+      { label: "Автономія", nova: "До 50 000 мА·год", competitor: "10 000 мА·год" },
       { label: "Сумісність", nova: "Універсальна", competitor: "Обмежена" },
       { label: "Розсіювання тепла", nova: true, competitor: false },
       { label: "Захист E-marker", nova: true, competitor: false },
-      { label: "Гарантія 2 роки", nova: true, competitor: false },
-      { label: "Підтримка 24/7", nova: true, competitor: false },
+      { label: "Гарантія 1 рік", nova: true, competitor: false },
+      { label: "Підтримка у месенджерах", nova: true, competitor: false },
     ] as { label: string; nova: string | boolean; competitor: string | boolean }[],
   },
   social: {
@@ -194,10 +207,11 @@ const uk = {
     title: "Досліджуйте категорії",
     description: "Знайдіть ідеальний пристрій для кожного виміру вашого життя.",
     items: {
-      "card-readers": { title: "Кардридери", subtitle: "Яскравий дизайн і компактність" },
-      "ssd-enclosures": { title: "SSD-кишені", subtitle: "Ультратонкі та легкі" },
+      autonomy: { title: "Автономія", subtitle: "Павербанки та зарядні станції" },
+      hubs: { title: "Хаби", subtitle: "Хаби, кардридери та SSD-кишені" },
+      adapters: { title: "Адаптери", subtitle: "Зарядні пристрої на щодень" },
       memory: { title: "Пам'ять", subtitle: "Великий обсяг і швидкість" },
-      "usb-c-cables": { title: "Кабелі USB-C", subtitle: "Гнучкі та витривалі" },
+      "usb-c-cables": { title: "Кабелі", subtitle: "USB-C, відео, мережа та кастом" },
       accessories: { title: "Аксесуари", subtitle: "Багатофункціональні рішення" },
     },
   },
@@ -208,6 +222,13 @@ const uk = {
     subtitle:
       "Техніка, що встигає за вашими амбіціями. Швидка доставка Новою Поштою по всій Україні.",
     bullets: "Доставка Новою Поштою · Повернення 14 днів · Гарантія 1 рік",
+  },
+  bestsellers: {
+    label: "Бестселери",
+    title: "Обирають найчастіше",
+    description:
+      "Товари, з яких найкраще починати знайомство з NOVA — з реальними цінами та наявністю.",
+    viewAll: "Дивитися весь каталог",
   },
   productsPage: {
     label: "Повний каталог",
@@ -224,12 +245,44 @@ const uk = {
     emptyTitle: "Жоден товар не підходить під фільтри.",
     emptyHint: "Спробуйте розширити діапазон цін або скинути фільтр категорії.",
     startingAt: "Від",
+    searchPlaceholder: "Пошук: кабель, зарядка, SSD…",
+    showMore: (n: number) => `Показати ще (${n})`,
+    filtersButton: "Фільтри",
+    filtersTitle: "Фільтри",
+    filterCategory: "Категорія",
+    filterPrice: "Ціна, ₴",
+    showResults: (n: number) =>
+      `Показати ${n} ${n === 1 ? "товар" : n >= 2 && n <= 4 ? "товари" : "товарів"}`,
+  },
+  bottomNav: {
+    home: "Головна",
+    catalog: "Каталог",
+    cart: "Кошик",
+    account: "Акаунт",
+  },
+  homeCommerce: {
+    searchPlaceholder: "Кабель 240W, SSD-кишеня, хаб…",
+    chips: [
+      "Нова Пошта 1–2 дні",
+      "Оплата частинами",
+      "Гарантія 1 рік",
+      "Повернення 14 днів",
+    ],
   },
   productDetail: {
+    installmentFrom: (n: number) => `від ${n} ₴/міс частинами`,
+    trust: [
+      { title: "Нова Пошта — 1–2 дні", subtitle: "Відділення, поштомат або кур'єр" },
+      { title: "Оплата при отриманні", subtitle: "Або карткою чи частинами онлайн" },
+      { title: "Повернення 14 днів", subtitle: "Без пояснення причин" },
+      { title: "Гарантія 12 місяців", subtitle: "Обмін при заводському браку" },
+    ],
     addToCart: "Додати в кошик",
     added: "Додано",
     outOfStock: "Немає в наявності",
     currentlyOut: "Наразі немає в наявності",
+    arriving: "Товар в дорозі",
+    arrivingNote: "Партія вже їде до нас — незабаром у продажу.",
     errorAdd: "Не вдалося додати товар у кошик.",
     overviewLabel: "Огляд",
     overviewTitle1: "Створено без",
@@ -273,6 +326,25 @@ const uk = {
     shippingTitle: "Спосіб доставки",
     noShippingOptions: "Для цього кошика немає доступних способів доставки.",
     paymentTitle: "Оплата",
+    payNowTitle: "Сплатити зараз (картка)",
+    payNowHint: "Monobank, Apple Pay, Google Pay",
+    codTitle: "Післяплата на Новій Пошті",
+    codHint: "Оплата готівкою або карткою при отриманні",
+    dropshipCodDescription:
+      "Це замовлення відправляється зі складу партнера, тому оплата — тільки при отриманні на Новій Пошті (готівкою або карткою у відділенні).",
+    dropshipShippingNote:
+      "Цей товар відправляється зі складу партнера й доїде окремою посилкою на відділення Нової Пошти.",
+    dropshipBadge: "Зі складу партнера",
+    mixedShippingNote:
+      "У кошику товари з нашого складу та зі складу партнера — вони приїдуть двома посилками на обране відділення Нової Пошти.",
+    mixedPaymentNote:
+      "Замовлення буде оформлено як два: товари зі складу партнера — тільки оплата при отриманні; ваші інші товари — обраним нижче способом.",
+    ownShipmentLabel: "Відправлення 1 — з нашого складу",
+    partnerShipmentLabel: "Відправлення 2 — зі складу партнера",
+    partnerShipmentCod: "Оплата при отриманні",
+    mixedOrdersPlacedText:
+      "Оформлено два замовлення: посилка з нашого складу та посилка зі складу партнера. Листи з деталями вже в дорозі.",
+    errSplit: "Не вдалося розділити замовлення. Спробуйте ще раз.",
     payWithMono: "Оплата через Monobank",
     payWithSavedCard: "Оплата збереженою карткою",
     monoDescription:
@@ -285,6 +357,7 @@ const uk = {
     secureNote:
       "Картка зберігається в Monobank, ми бачимо лише її маску. Платежі обробляє Monobank.",
     pay: "Оплатити",
+    confirmOrder: "Підтвердити замовлення",
     back: "Назад",
     returnToShop: "Повернутися в магазин",
     continue: "Продовжити",
@@ -416,6 +489,14 @@ const uk = {
     optionTitles: {
       Color: "Колір",
       Length: "Довжина",
+      Kit: "Комплект",
+      Model: "Модель",
+      Capacity: "Ємність",
+      Config: "Конфігурація",
+      Pack: "Кількість",
+      Variant: "Варіант",
+      Version: "Версія",
+      Colorway: "Розцвітка",
     } as Record<string, string>,
     optionValues: {
       Blue: "Синій",
@@ -426,9 +507,76 @@ const uk = {
       Green: "Зелений",
       Silver: "Сріблястий",
       Red: "Червоний",
+      White: "Білий",
+      Black: "Чорний",
+      Purple: "Фіолетовий",
+      Pink: "Рожевий",
+      "Light Blue": "Блакитний",
+      Ivory: "Айворі",
+      "Army Green": "Хакі",
+      "Dark Gray": "Темно-сірий",
+      "Black Silver": "Чорно-сріблястий",
+      "Purple Pink": "Фіолетово-рожевий",
+      "Black Gold": "Чорний із золотом",
+      "Dark Red": "Темно-червоний",
+      "Purple Green": "Фіолетово-зелений",
+      "Black Orange": "Чорно-помаранчевий",
+      "Black White": "Чорно-білий",
+      "White Green": "Біло-зелений",
+      "Magnet Black Orange": "Магнітний чорно-помаранчевий",
+      "Magnet Silver": "Магнітний сріблястий",
+      "Magnet Black Green": "Магнітний чорно-зелений",
       "0.5ft": "15 см",
       "1.6ft": "50 см",
       "3.3ft": "1 м",
+      "0.2m": "0,2 м",
+      "0.25m": "0,25 м",
+      "0.3m": "0,3 м",
+      "0.5m": "0,5 м",
+      "1m": "1 м",
+      "1.2m": "1,2 м",
+      "1.5m": "1,5 м",
+      "2m": "2 м",
+      "3m": "3 м",
+      "35mm": "35 мм",
+      "55mm": "55 мм",
+      "70mm": "70 мм",
+      "Charger only": "Тільки зарядка",
+      "With cable": "З кабелем",
+      "With 1m cable": "З кабелем 1 м",
+      "With 4×AA": "З 4×AA",
+      "With 4×AAA": "З 4×AAA",
+      "For AA": "Для AA",
+      "For AAA": "Для AAA",
+      "AA + AAA": "AA + AAA",
+      "2 pcs": "2 шт",
+      "4 pcs": "4 шт",
+      "6 pcs": "6 шт",
+      "8 pcs": "8 шт",
+      "10 pcs": "10 шт",
+      "5-in-1 HDMI": "5-в-1 HDMI",
+      "6-in-1 Black": "6-в-1 чорний",
+      "6-in-1 Purple": "6-в-1 фіолетовий",
+      "7-in-1 RJ45": "7-в-1 з RJ45",
+      "8-in-1 SD/TF": "8-в-1 з SD/TF",
+      "8K DP 1.4": "8K DP 1.4",
+      "16K DP 2.1": "16K DP 2.1",
+      "20000mAh 100W": "20000 мА·год, 100 Вт",
+      "25000mAh 140W": "25000 мА·год, 140 Вт",
+      "20000mAh": "20000 мА·год",
+      "30000mAh": "30000 мА·год",
+      "50000mAh": "50000 мА·год",
+      "Blue Straight": "Синій прямий",
+      "Red Left Angle": "Червоний кутовий лівий",
+      "Right Angle": "Кутовий правий",
+      "Face to Face": "Конектори назустріч",
+      "Blue Right Angle": "Синій кутовий правий",
+      "Keychain 0.15m Gray": "Брелок 0,15 м сірий",
+      "Keychain Gray 2 pcs": "Брелок сірий, 2 шт",
+      "Lanyard 0.3m Gray": "Ланярд 0,3 м сірий",
+      "Keychain 0.15m Silver": "Брелок 0,15 м сріблястий",
+      "Keychain Silver 2 pcs": "Брелок сріблястий, 2 шт",
+      "Lanyard 0.3m Silver": "Ланярд 0,3 м сріблястий",
       Default: "Стандарт",
       "Mac Blue": "Синій Mac",
       "Windows Yellow": "Жовтий Windows",
@@ -446,13 +594,15 @@ const en: Dictionary = {
     continueShopping: "Continue Shopping",
     loading: "Loading…",
     view: "View",
+    close: "Close",
   },
   header: {
     nav: {
-      "card-readers": "Card Readers",
-      "ssd-enclosures": "SSD Enclosures",
+      autonomy: "Autonomy",
+      hubs: "Hubs",
+      adapters: "Adapters",
       memory: "Memory",
-      "usb-c-cables": "USB-C Cables",
+      "usb-c-cables": "Cables",
       accessories: "Accessories",
     },
     search: "Search",
@@ -480,6 +630,16 @@ const en: Dictionary = {
       cookies: "Cookies",
     },
     rights: "All rights reserved.",
+    contacts: "Contacts",
+    phone: "+380 68 990-06-74",
+    phoneHref: "tel:+380689900674",
+    email: "business@novastore.com.ua",
+    viber: "Viber",
+    viberHref: "viber://chat?number=%2B380689900674",
+    requisites: "Sole proprietor Roman Kobzar · Tax ID 3381411016",
+    paymentsLine:
+      "Payments: Monobank · Visa · Mastercard · Apple Pay · Google Pay · cash on delivery",
+    deliveryLine: "Nova Poshta delivery across Ukraine",
   },
   hero: {
     badge: "Your retro-style SSD upgrade",
@@ -494,27 +654,27 @@ const en: Dictionary = {
     featureLabel: "Feature",
     features: [
       {
-        title: "10Gbps Transfer Engine",
+        title: "Up to 120Gbps of Data",
         description:
-          "USB 3.2 Gen2 interfaces move data at up to 10Gbps, with real-world read/write speeds of 1000-1200MB/s. Offload a full shoot or boot from an external drive in moments.",
+          "From SD 4.0 card readers and USB 3.2 Gen2 enclosures to 120Gbps Thunderbolt 5 cables and 6000MB/s NVMe SSDs. A full shoot offloads in minutes; games launch instantly.",
         statLabel: "Transfer Speed",
       },
       {
         title: "Aluminum Unibody",
         description:
-          "Precision-machined aluminum-alloy shells dissipate heat and shrug off daily wear, in profiles as thin as 6mm. Built to live in your bag.",
+          "Precision-machined aluminum-alloy shells dissipate heat and shrug off daily wear, in profiles as thin as 6mm — card readers, SSD enclosures, hubs. Built to live in your bag.",
         statLabel: "Slim Profile",
       },
       {
         title: "240W Power Delivery",
         description:
-          "PD 3.1 cables and hubs deliver up to 240W (48V/5A) with E-marker safety, charging laptops, phones and consoles at full speed.",
+          "E-marked PD 3.1 cables deliver up to 240W, and Nexode & Baseus GaN chargers push up to 140W from pocket-sized bodies. Laptops, phones and consoles charge at full speed.",
         statLabel: "Fast Charging",
       },
       {
-        title: "8K Display Output",
+        title: "16K Display Output",
         description:
-          "Drive an 8K@60Hz display over a single cable, or 4K@60Hz from the slim hub. Your full desk setup, anywhere you go.",
+          "DisplayPort 2.1 drives up to 16K and 4K@240Hz, coiled HDMI 2.1 pulls 8K from a camera, and the slim hub outputs 4K@60Hz. Your full desk setup, anywhere you go.",
         statLabel: "Video Output",
       },
     ],
@@ -526,34 +686,34 @@ const en: Dictionary = {
       "Every accessory engineered to move data, power and pixels faster — without the bulk.",
     cards: [
       {
-        title: "10Gbps Transfers",
+        title: "Up to 120Gbps of Data",
         description:
-          "USB 3.2 Gen2 controllers move data at up to 10Gbps with 1000-1200MB/s real-world speeds. No more waiting on the progress bar.",
+          "Thunderbolt 5 cables at 120Gbps, Kingston and Samsung NVMe SSDs up to 6000MB/s, SD 4.0 card readers. No more waiting on the progress bar.",
       },
       {
-        title: "4K & 8K Video Out",
+        title: "Video up to 16K",
         description:
-          "Mirror or extend to a 4K@60Hz display through the hub, or push 8K@60Hz over a single USB-C cable.",
+          "DisplayPort 2.1 up to 16K and 4K@240Hz, coiled HDMI 2.1 for cameras, hubs with 4K@60Hz — pixels without compromise.",
       },
       {
-        title: "240W PD 3.1 Charging",
+        title: "Charging up to 240W",
         description:
-          "E-marked cables and hubs deliver up to 240W (48V/5A) to charge laptops, phones and consoles at full speed.",
+          "E-marked PD 3.1 cables at 240W plus GaN chargers from 30 to 140W — laptops, phones and consoles at full speed.",
       },
       {
-        title: "Gigabit Ethernet",
+        title: "Gigabit Networking",
         description:
-          "The slim hub adds true Gigabit (1000Mbps) wired networking alongside 5Gbps USB data and HDMI.",
+          "Hubs with RJ45, splitters and short CAT6 patch cords — true Gigabit where Wi-Fi can't reach.",
       },
       {
-        title: "Aluminum Build",
+        title: "Aluminum & Protection",
         description:
-          "Aircraft-grade aluminum shells dissipate heat and protect your gear, in profiles as thin as 6mm.",
+          "Aircraft-grade aluminum shells plus a full protection suite in every charger: overheat, overvoltage and short-circuit.",
       },
       {
-        title: "Year-Long Tracking",
+        title: "Up to 50,000mAh of Power",
         description:
-          "The Find My tracker runs about a year on a replaceable battery, with global coverage built into the Find app.",
+          "Power banks from pocketable 5,000 to 140W 25,000mAh units, plus AA/AAA charging stations — energy always with you.",
       },
     ],
   },
@@ -562,7 +722,7 @@ const en: Dictionary = {
     title1: "Engineered",
     title2: "From Within",
     description:
-      "Five precision layers working in concert. Each component purpose-built, every connection optimized for performance.",
+      "Five precision layers working in concert. Each component — from NVMe controllers to the GaN transistors in our chargers — purpose-built, every connection optimized for performance.",
     layers: [
       "Aluminum Shell",
       "Thermal Pad",
@@ -571,7 +731,7 @@ const en: Dictionary = {
       "USB-C Interface",
     ],
     captionMain: "Layer by Layer",
-    captionChip: "9210CN Controller",
+    captionChip: "9210CN & GaN Controllers",
   },
   comparison: {
     label: "Comparison",
@@ -581,14 +741,15 @@ const en: Dictionary = {
     colOthers: "Others",
     rows: [
       { label: "Build", nova: "Aluminum alloy", competitor: "Plastic" },
-      { label: "Transfer Speed", nova: "Up to 10Gbps", competitor: "Up to 5Gbps" },
-      { label: "Fast Charging", nova: "240W PD 3.1", competitor: "60W" },
-      { label: "Video Output", nova: "Up to 8K@60Hz", competitor: "4K@30Hz" },
+      { label: "Transfer Speed", nova: "Up to 120Gbps", competitor: "Up to 10Gbps" },
+      { label: "Fast Charging", nova: "Up to 240W (PD 3.1, GaN)", competitor: "60W" },
+      { label: "Video Output", nova: "Up to 16K (DP 2.1)", competitor: "4K@30Hz" },
+      { label: "Battery Capacity", nova: "Up to 50,000mAh", competitor: "10,000mAh" },
       { label: "Compatibility", nova: "Universal", competitor: "Limited" },
       { label: "Heat Dissipation", nova: true, competitor: false },
       { label: "E-marker Safety", nova: true, competitor: false },
-      { label: "2-Year Warranty", nova: true, competitor: false },
-      { label: "24/7 Support", nova: true, competitor: false },
+      { label: "1-Year Warranty", nova: true, competitor: false },
+      { label: "Messenger Support", nova: true, competitor: false },
     ],
   },
   social: {
@@ -625,10 +786,11 @@ const en: Dictionary = {
     title: "Explore Categories",
     description: "Find the perfect device for every dimension of your life.",
     items: {
-      "card-readers": { title: "Card Readers", subtitle: "Fun Styling & Compact" },
-      "ssd-enclosures": { title: "SSD Enclosures", subtitle: "Ultra Slim & Light Design" },
+      autonomy: { title: "Autonomy", subtitle: "Power Banks & Charging Stations" },
+      hubs: { title: "Hubs", subtitle: "Hubs, Card Readers & Enclosures" },
+      adapters: { title: "Adapters", subtitle: "Everyday Charging Essentials" },
       memory: { title: "Memory", subtitle: "High Capacity & Speed" },
-      "usb-c-cables": { title: "USB-C Cables", subtitle: "Flexible & Durable" },
+      "usb-c-cables": { title: "Cables", subtitle: "USB-C, Video, Network & Custom" },
       accessories: { title: "Accessories", subtitle: "Multifunctional designs" },
     },
   },
@@ -639,6 +801,13 @@ const en: Dictionary = {
     subtitle:
       "Experience technology that anticipates your ambition. Fast Nova Poshta delivery across Ukraine.",
     bullets: "Nova Poshta delivery · 14-day returns · 1-year warranty",
+  },
+  bestsellers: {
+    label: "Bestsellers",
+    title: "Most Loved Picks",
+    description:
+      "The best products to start your NOVA journey — with real prices and availability.",
+    viewAll: "View full catalog",
   },
   productsPage: {
     label: "Full Catalog",
@@ -654,12 +823,43 @@ const en: Dictionary = {
     emptyTitle: "No products match your filters.",
     emptyHint: "Try widening your price range or clearing the category filter.",
     startingAt: "Starting at",
+    searchPlaceholder: "Search: cable, charger, SSD…",
+    showMore: (n: number) => `Show more (${n})`,
+    filtersButton: "Filters",
+    filtersTitle: "Filters",
+    filterCategory: "Category",
+    filterPrice: "Price, ₴",
+    showResults: (n: number) => `Show ${n} product${n === 1 ? "" : "s"}`,
+  },
+  bottomNav: {
+    home: "Home",
+    catalog: "Catalog",
+    cart: "Cart",
+    account: "Account",
+  },
+  homeCommerce: {
+    searchPlaceholder: "240W cable, SSD enclosure, hub…",
+    chips: [
+      "Nova Poshta 1–2 days",
+      "Pay in installments",
+      "1-year warranty",
+      "14-day returns",
+    ],
   },
   productDetail: {
+    installmentFrom: (n: number) => `from ₴${n}/mo in installments`,
+    trust: [
+      { title: "Nova Poshta — 1–2 days", subtitle: "Branch, parcel locker or courier" },
+      { title: "Pay on delivery", subtitle: "Or by card / installments online" },
+      { title: "14-day returns", subtitle: "No questions asked" },
+      { title: "12-month warranty", subtitle: "Replacement for factory defects" },
+    ],
     addToCart: "Add to Cart",
     added: "Added",
     outOfStock: "Out of Stock",
     currentlyOut: "Currently out of stock",
+    arriving: "On its way",
+    arrivingNote: "This batch is heading to our warehouse — available soon.",
     errorAdd: "Couldn't add this item to your cart.",
     overviewLabel: "Overview",
     overviewTitle1: "Designed Without",
@@ -703,6 +903,25 @@ const en: Dictionary = {
     shippingTitle: "Shipping Method",
     noShippingOptions: "No shipping options are available for this cart.",
     paymentTitle: "Payment",
+    payNowTitle: "Pay now (card)",
+    payNowHint: "Monobank, Apple Pay, Google Pay",
+    codTitle: "Cash on delivery (Nova Poshta)",
+    codHint: "Pay by cash or card on pickup",
+    dropshipCodDescription:
+      "This order ships from a partner's warehouse, so it can only be paid on delivery at Nova Poshta (cash or card at the branch).",
+    dropshipShippingNote:
+      "This item ships from a partner's warehouse and arrives as a separate parcel at a Nova Poshta branch.",
+    dropshipBadge: "From partner warehouse",
+    mixedShippingNote:
+      "Your cart has items from our warehouse and from a partner's — they will arrive as two parcels at the Nova Poshta branch you pick.",
+    mixedPaymentNote:
+      "Your order will be placed as two: partner-warehouse items are paid on delivery only; your other items — with the method chosen below.",
+    ownShipmentLabel: "Shipment 1 — from our warehouse",
+    partnerShipmentLabel: "Shipment 2 — from partner warehouse",
+    partnerShipmentCod: "Pay on delivery",
+    mixedOrdersPlacedText:
+      "Two orders have been placed: a parcel from our warehouse and a parcel from the partner's. Confirmation emails are on the way.",
+    errSplit: "Couldn't split the order. Please try again.",
     payWithMono: "Pay with Monobank",
     payWithSavedCard: "Pay with a saved card",
     monoDescription:
@@ -715,6 +934,7 @@ const en: Dictionary = {
     secureNote:
       "Your card is stored by Monobank; we only ever see its masked number. Payments are processed by Monobank.",
     pay: "Pay",
+    confirmOrder: "Confirm order",
     back: "Back",
     returnToShop: "Return to Shop",
     continue: "Continue",

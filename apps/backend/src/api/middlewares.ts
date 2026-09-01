@@ -3,9 +3,12 @@ import {
   defineMiddlewares,
   type AuthenticatedMedusaRequest,
   type MedusaNextFunction,
+  type MedusaRequest,
   type MedusaResponse,
 } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { allowedProviders, classifyCart, type CartClassifyItem } from "../lib/kosmotech-dropship"
+import { DROPSHIP_SHIPPING_OPTION_NAME } from "../lib/kosmotech-dropship-constants"
 
 /**
  * Medusa's stock GET /store/orders/:id treats the order id as a bearer
@@ -30,6 +33,131 @@ async function enforceOrderOwnership(
   const order = orders[0]
   if (!order || !customerId || order.customer_id !== customerId) {
     res.status(404).json({ message: "Order not found", type: "not_found" })
+    return
+  }
+  next()
+}
+
+function rejectDropship(res: MedusaResponse, message: string) {
+  res.status(400).json({ message, type: "dropship_cart_error" })
+}
+
+/** POST /store/carts/:id/shipping-methods - the chosen option must match what
+ *  the cart is allowed to ship with. Mixed carts behave like "own" here: the
+ *  method saved before the split belongs to the own part (the dropship part
+ *  gets its own method inside the split-dropship route). */
+async function enforceShippingOptionMatchesCart(
+  req: MedusaRequest,
+  res: MedusaResponse,
+  next: MedusaNextFunction
+) {
+  const cartId = req.params.id
+  const body = req.body as { option_id?: string } | undefined
+  const optionId = body?.option_id
+  if (!optionId) return next()
+
+  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const [{ data: carts }, { data: options }] = await Promise.all([
+    query.graph({
+      entity: "cart",
+      fields: ["id", "items.variant.product.metadata"],
+      filters: { id: cartId },
+    }),
+    query.graph({
+      entity: "shipping_option",
+      fields: ["id", "name"],
+      filters: { id: optionId },
+    }),
+  ])
+  const items: CartClassifyItem[] = (carts[0]?.items ?? []).map((i: any) => ({
+    product: i.variant?.product,
+  }))
+  const kind = classifyCart(items)
+  const isDropshipOption = options[0]?.name === DROPSHIP_SHIPPING_OPTION_NAME
+
+  if (kind === "dropship" && !isDropshipOption) {
+    rejectDropship(res, "Цей кошик містить товари постачальника — доступна лише доставка постачальника.")
+    return
+  }
+  // "own" AND "mixed" carts save the own-part method here; the dropship
+  // option is reserved for pure dropship carts (and the split route).
+  if (kind !== "dropship" && isDropshipOption) {
+    rejectDropship(res, "Ця доставка доступна лише для товарів постачальника.")
+    return
+  }
+  next()
+}
+
+/** POST /store/payment-collections/:id/payment-sessions - the provider must be one the cart's kind allows. */
+async function enforcePaymentProviderMatchesCart(
+  req: MedusaRequest,
+  res: MedusaResponse,
+  next: MedusaNextFunction
+) {
+  const paymentCollectionId = req.params.id
+  const body = req.body as { provider_id?: string } | undefined
+  const providerId = body?.provider_id
+  if (!providerId) return next()
+
+  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const { data: collections } = await query.graph({
+    entity: "payment_collection",
+    fields: ["id", "cart.items.variant.product.metadata"],
+    filters: { id: paymentCollectionId },
+  })
+  const items: CartClassifyItem[] = ((collections[0] as any)?.cart?.items ?? []).map((i: any) => ({
+    product: i.variant?.product,
+  }))
+  const kind = classifyCart(items)
+
+  if (!allowedProviders(kind).includes(providerId)) {
+    rejectDropship(res, "Цей спосіб оплати недоступний для товарів у кошику.")
+    return
+  }
+  next()
+}
+
+/**
+ * POST /store/carts/:id/complete - the last line of defense. Re-checks the
+ * cart isn't mixed and that whatever payment session ended up on it belongs
+ * to a provider its kind allows, in case the earlier guards were somehow
+ * bypassed (e.g. a session created before an item was added).
+ */
+async function enforceCartCompletionRules(
+  req: MedusaRequest,
+  res: MedusaResponse,
+  next: MedusaNextFunction
+) {
+  const cartId = req.params.id
+  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const { data: carts } = await query.graph({
+    entity: "cart",
+    fields: [
+      "id",
+      "items.variant.product.metadata",
+      "payment_collection.payment_sessions.provider_id",
+    ],
+    filters: { id: cartId },
+  })
+  const cart = carts[0] as any
+  if (!cart) return next() // let the real route handler produce the right 404
+
+  const items: CartClassifyItem[] = (cart.items ?? []).map((i: any) => ({ product: i.variant?.product }))
+  const kind = classifyCart(items)
+  if (kind === "mixed") {
+    rejectDropship(
+      res,
+      "Кошик містить товари з різних складів — оформлення розділяє його на два замовлення (split-dropship)."
+    )
+    return
+  }
+
+  const allowed = allowedProviders(kind)
+  const sessionProviderIds: string[] = (cart.payment_collection?.payment_sessions ?? []).map(
+    (s: any) => s.provider_id
+  )
+  if (sessionProviderIds.some((id) => !allowed.includes(id))) {
+    rejectDropship(res, "Спосіб оплати не відповідає товарам у кошику.")
     return
   }
   next()
@@ -66,6 +194,26 @@ export default defineMiddlewares({
       middlewares: [
         authenticate("customer", ["bearer", "session"], { allowUnauthenticated: true }),
       ],
+    },
+    // Dropship cart rules (docs/DROPSHIP-KOSMOTECH.md §3) — the storefront
+    // already respects these, but the server never trusts it. Mixed carts are
+    // ALLOWED to build (checkout splits them into two orders); they just
+    // can't pick the dropship shipping option, start a payment session, or
+    // complete without splitting first.
+    {
+      matcher: "/store/carts/:id/shipping-methods",
+      methods: ["POST"],
+      middlewares: [enforceShippingOptionMatchesCart],
+    },
+    {
+      matcher: "/store/payment-collections/:id/payment-sessions",
+      methods: ["POST"],
+      middlewares: [enforcePaymentProviderMatchesCart],
+    },
+    {
+      matcher: "/store/carts/:id/complete",
+      methods: ["POST"],
+      middlewares: [enforceCartCompletionRules],
     },
   ],
 })

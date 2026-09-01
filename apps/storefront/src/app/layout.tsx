@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "@/styles/globals.css";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { Providers } from "./providers";
 
@@ -14,11 +15,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "NOVA — The Future of Performance",
+    default: "NOVA — техніка та USB-C аксесуари з гарантією",
     template: "%s | NOVA",
   },
   description:
-    "Premium electronics engineered for those who demand the extraordinary. Laptops, smartphones, and accessories built without compromise.",
+    "Інтернет-магазин NOVA: USB-C хаби, SSD-кишені, зарядні станції, кабелі та аксесуари преміальної якості. Оплата карткою, доставка Новою Поштою по Україні, гарантія та повернення 14 днів.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
   ),
@@ -26,6 +27,23 @@ export const metadata: Metadata = {
     type: "website",
     locale: "uk_UA",
     siteName: "NOVA",
+  },
+};
+
+// Structured data: Organization + OnlineStore — довіра й брендовий сніпет у Google.
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "OnlineStore",
+  name: "NOVA",
+  url: "https://novastore.com.ua",
+  logo: "https://novastore.com.ua/icon.svg",
+  email: "business@novastore.com.ua",
+  telephone: "+380689900674",
+  contactPoint: {
+    "@type": "ContactPoint",
+    telephone: "+380689900674",
+    contactType: "customer service",
+    availableLanguage: ["Ukrainian", "English"],
   },
 };
 
@@ -52,10 +70,16 @@ export default function RootLayout({
         className="bg-bg text-text-primary font-body antialiased"
         suppressHydrationWarning
       >
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
         <Providers>
           <Header />
           <main className="min-h-screen">{children}</main>
           <Footer />
+          <BottomNav />
           <CartDrawer />
         </Providers>
       </body>

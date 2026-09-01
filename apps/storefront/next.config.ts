@@ -35,6 +35,22 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "medusa-public-images.s3.eu-west-1.amazonaws.com",
       },
+      // Kosmotech dropship products may hotlink their photos (docs/DROPSHIP-KOSMOTECH.md
+      // §1 - v1 doesn't download them into static/) - both domains they use.
+      {
+        protocol: "https",
+        hostname: "kosmotech.com.ua",
+      },
+      {
+        protocol: "https",
+        hostname: "newb2b.kosmotech.com.ua",
+      },
+      // Фото дропшип-каталогу, імпортованого з Prom-експорту
+      // (import-kosmotech-csv.ts) — хостяться на CDN Prom.
+      {
+        protocol: "https",
+        hostname: "images.prom.ua",
+      },
       ...(dynamicBackendPattern ? [dynamicBackendPattern] : []),
     ],
     formats: ["image/avif", "image/webp"],

@@ -41,6 +41,14 @@ async function getRegionId(): Promise<string | undefined> {
   return (await getRegion())?.id;
 }
 
+// Catalog reads go through sdk.client.fetch (NOT the high-level sdk.store.*
+// helpers): the helpers' second argument is HTTP *headers*, so `next.tags`
+// passed there never reached fetch() - in a production build the pages
+// prerendered at `next build` time and revalidateTag() had nothing tagged to
+// invalidate (admin edits / imports stayed invisible until the next build;
+// bitten live on /products). sdk.client.fetch spreads its init into fetch(),
+// so tags + force-cache actually register with Next's data cache.
+
 export async function getProducts(params?: {
   limit?: number;
   offset?: number;
@@ -48,8 +56,11 @@ export async function getProducts(params?: {
   collection_id?: string[];
   id?: string[];
 }) {
-  const { products, count } = await sdk.store.product.list(
-    {
+  const { products, count } = await sdk.client.fetch<{
+    products: import("@medusajs/types").HttpTypes.StoreProduct[];
+    count: number;
+  }>("/store/products", {
+    query: {
       limit: params?.limit ?? 12,
       offset: params?.offset ?? 0,
       category_id: params?.category_id,
@@ -59,37 +70,46 @@ export async function getProducts(params?: {
       fields:
         "+thumbnail,+metadata,+variants.calculated_price,+variants.inventory_quantity,*categories",
     },
-    { next: { tags: ["products"] } }
-  );
+    cache: "force-cache",
+    next: { tags: ["products"] },
+  });
   return { products, count };
 }
 
 export async function getProduct(handle: string) {
-  const { products } = await sdk.store.product.list(
-    {
+  const { products } = await sdk.client.fetch<{
+    products: import("@medusajs/types").HttpTypes.StoreProduct[];
+  }>("/store/products", {
+    query: {
       handle,
       region_id: await getRegionId(),
       fields:
         "+thumbnail,+metadata,*images,*options.values,*variants.options,+variants.calculated_price,+variants.inventory_quantity,+variants.manage_inventory,+variants.allow_backorder",
     },
-    { next: { tags: [`product-${handle}`] } }
-  );
+    cache: "force-cache",
+    next: { tags: [`product-${handle}`] },
+  });
   return products[0] ?? null;
 }
 
 export async function getCategories() {
-  const { product_categories } = await sdk.store.category.list(
-    { fields: "+products" },
-    { next: { tags: ["categories"] } }
-  );
+  const { product_categories } = await sdk.client.fetch<{
+    product_categories: import("@medusajs/types").HttpTypes.StoreProductCategory[];
+  }>("/store/product-categories", {
+    query: { fields: "+products,+parent_category_id" },
+    cache: "force-cache",
+    next: { tags: ["categories"] },
+  });
   return product_categories;
 }
 
 export async function getCollections() {
-  const { collections } = await sdk.store.collection.list(
-    {},
-    { next: { tags: ["collections"] } }
-  );
+  const { collections } = await sdk.client.fetch<{
+    collections: import("@medusajs/types").HttpTypes.StoreCollection[];
+  }>("/store/collections", {
+    cache: "force-cache",
+    next: { tags: ["collections"] },
+  });
   return collections;
 }
 
@@ -98,10 +118,35 @@ export async function getCollections() {
 // on the POST (mutation) routes. So the UI never relies on item.total — it
 // computes line totals from unit_price * quantity, which are always present.
 
+// Shared across every cart read/mutation below. `+items.variant.product.metadata`
+// is what classifyCartItems() reads to tell a Kosmotech dropship item from
+// NOVA's own catalog (docs/DROPSHIP-KOSMOTECH.md §0) - every one of these calls
+// feeds its returned `cart` straight into checkout's setCart(), so any call
+// that omits it silently downgrades a dropship cart to "own" the moment it
+// runs (wrong shipping options offered, no partner badge, guardrail only
+// catches it server-side). Verified live 2026-07-14: updateCartDetails (no
+// fields at all) was overwriting the fully-fielded getCart() result the
+// instant the customer clicked past the Information step.
+//
+// GOTCHA (found chasing the fix above): every token here MUST carry a
+// +/-/*/space prefix or end in ".*". Medusa's FieldParser.parse treats even a
+// SINGLE bare field (no prefix) as "replace the defaults", not "add to them"
+// (@medusajs/framework/dist/http/utils/field-filtering/field-parser.js -
+// shouldReplaceDefaults). The very first version of this string had a bare
+// `email` in it - Medusa's default cart field set (id, region_id, total,
+// payment_collection, shipping_address.*, email, ...) already covers
+// everything we need except these four, so it silently NUKED region_id and
+// payment_collection out of every cart returned by addShippingMethod /
+// updateCartDetails, which made placeOrder() see `providers = []` (no
+// region_id -> getPaymentProviders never called) and throw "no available
+// payment provider" right after a dropship shipping method was saved. Keep
+// this list additive-only - never add a field without a prefix.
+const CART_FIELDS =
+  "+items.variant.inventory_quantity,+items.variant.manage_inventory,+items.variant.allow_backorder,+items.variant.product.metadata";
+
 export async function getCart(cartId: string) {
   const { cart } = await sdk.store.cart.retrieve(cartId, {
-    fields:
-      "*items,+items.variant.inventory_quantity,+items.variant.manage_inventory,+items.variant.allow_backorder,email,*shipping_address",
+    fields: CART_FIELDS,
   });
   // Self-heal carts created without a region (e.g. saved in the browser before
   // the region fix): their line items have no resolved price. Assigning the
@@ -109,9 +154,11 @@ export async function getCart(cartId: string) {
   if (cart && !cart.region_id) {
     const region_id = await getRegionId();
     if (region_id) {
-      const { cart: repriced } = await sdk.store.cart.update(cartId, {
-        region_id,
-      });
+      const { cart: repriced } = await sdk.store.cart.update(
+        cartId,
+        { region_id },
+        { fields: CART_FIELDS }
+      );
       return repriced;
     }
   }
@@ -126,10 +173,11 @@ export async function createCart() {
 }
 
 export async function addToCart(cartId: string, variantId: string, quantity: number) {
-  const { cart } = await sdk.store.cart.createLineItem(cartId, {
-    variant_id: variantId,
-    quantity,
-  });
+  const { cart } = await sdk.store.cart.createLineItem(
+    cartId,
+    { variant_id: variantId, quantity },
+    { fields: CART_FIELDS }
+  );
   return cart;
 }
 
@@ -138,9 +186,12 @@ export async function updateCartItem(
   lineItemId: string,
   quantity: number
 ) {
-  const { cart } = await sdk.store.cart.updateLineItem(cartId, lineItemId, {
-    quantity,
-  });
+  const { cart } = await sdk.store.cart.updateLineItem(
+    cartId,
+    lineItemId,
+    { quantity },
+    { fields: CART_FIELDS }
+  );
   return cart;
 }
 
@@ -166,10 +217,11 @@ export async function addShippingMethod(
   // validated by the fulfillment provider and stored on the shipping method.
   data?: Record<string, unknown>
 ) {
-  const { cart } = await sdk.store.cart.addShippingMethod(cartId, {
-    option_id: optionId,
-    ...(data ? { data } : {}),
-  });
+  const { cart } = await sdk.store.cart.addShippingMethod(
+    cartId,
+    { option_id: optionId, ...(data ? { data } : {}) },
+    { fields: CART_FIELDS }
+  );
   return cart;
 }
 
@@ -212,6 +264,21 @@ export async function completeCart(cartId: string) {
   return sdk.store.cart.complete(cartId);
 }
 
+// Mixed cart (own + supplier dropship goods): the backend moves the dropship
+// items into a new cart (copying email/address/locale) and attaches the
+// dropship NP shipping option with the branch the buyer picked. The checkout
+// then completes the dropship cart with cod and pays the own cart normally.
+// See docs/DROPSHIP-KOSMOTECH.md and src/api/store/carts/[id]/split-dropship.
+export async function splitDropshipCart(
+  cartId: string,
+  np: Record<string, unknown>
+) {
+  return sdk.client.fetch<{ own_cart_id: string; dropship_cart_id: string }>(
+    `/store/carts/${cartId}/split-dropship`,
+    { method: "POST", body: { np } }
+  );
+}
+
 export interface ShippingAddressInput {
   first_name: string;
   last_name: string;
@@ -236,13 +303,17 @@ export async function updateCartDetails(
   cartId: string,
   data: { email: string; shipping_address: ShippingAddressInput; locale?: string }
 ) {
-  const { cart } = await sdk.store.cart.update(cartId, {
-    email: data.email,
-    shipping_address: {
-      ...data.shipping_address,
-      country_code: data.shipping_address.country_code ?? DEFAULT_COUNTRY,
+  const { cart } = await sdk.store.cart.update(
+    cartId,
+    {
+      email: data.email,
+      shipping_address: {
+        ...data.shipping_address,
+        country_code: data.shipping_address.country_code ?? DEFAULT_COUNTRY,
+      },
+      metadata: data.locale ? { locale: data.locale } : undefined,
     },
-    metadata: data.locale ? { locale: data.locale } : undefined,
-  });
+    { fields: CART_FIELDS }
+  );
   return cart;
 }
