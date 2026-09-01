@@ -49,7 +49,7 @@ export function Footer() {
           whileInView="visible"
           viewport={{ once: true }}
           variants={staggerContainer}
-          className="grid grid-cols-2 md:grid-cols-4 gap-12 py-20 md:py-28"
+          className="grid grid-cols-2 md:grid-cols-5 gap-12 py-20 md:py-28"
         >
           <motion.div variants={fadeUp} className="col-span-2 md:col-span-1">
             <Link
@@ -82,7 +82,48 @@ export function Footer() {
               </ul>
             </motion.div>
           ))}
+
+          {/* Трастовий шар: живі контакти магазину (телефон, email, Viber). */}
+          <motion.div variants={fadeUp}>
+            <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-text-muted mb-6">
+              {d.footer.contacts}
+            </h3>
+            <ul className="space-y-3.5">
+              <li>
+                <a
+                  href={d.footer.phoneHref}
+                  className="text-sm text-text-secondary hover:text-text-primary transition-colors duration-300"
+                >
+                  {d.footer.phone}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={`mailto:${d.footer.email}`}
+                  className="text-sm text-text-secondary hover:text-text-primary transition-colors duration-300 break-all"
+                >
+                  {d.footer.email}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={d.footer.viberHref}
+                  className="text-sm text-text-secondary hover:text-text-primary transition-colors duration-300"
+                >
+                  {d.footer.viber}
+                </a>
+              </li>
+            </ul>
+          </motion.div>
         </motion.div>
+
+        {/* Оплата, доставка та юридичні реквізити — обов'язковий шар довіри
+            для українського e-commerce (і вимога прозорості для ФОП). */}
+        <div className="border-t border-border py-6 flex flex-col gap-2">
+          <p className="text-xs text-text-muted">{d.footer.paymentsLine}</p>
+          <p className="text-xs text-text-muted">{d.footer.deliveryLine}</p>
+          <p className="text-xs text-text-muted">{d.footer.requisites}</p>
+        </div>
 
         <div className="border-t border-border py-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-text-muted">

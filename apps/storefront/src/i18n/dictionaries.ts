@@ -50,6 +50,16 @@ const uk = {
       cookies: "Cookies",
     },
     rights: "Всі права захищені.",
+    contacts: "Контакти",
+    phone: "+380 68 990-06-74",
+    phoneHref: "tel:+380689900674",
+    email: "business@novastore.com.ua",
+    viber: "Viber",
+    viberHref: "viber://chat?number=%2B380689900674",
+    requisites: "ФОП Кобзар Роман Юрійович · РНОКПП 3381411016",
+    paymentsLine:
+      "Оплата: Monobank · Visa · Mastercard · Apple Pay · Google Pay · накладений платіж",
+    deliveryLine: "Доставка Новою Поштою по всій Україні",
   },
   hero: {
     badge: "Твій SSD апгрейд у ретро-стилі",
@@ -158,8 +168,8 @@ const uk = {
       { label: "Сумісність", nova: "Універсальна", competitor: "Обмежена" },
       { label: "Розсіювання тепла", nova: true, competitor: false },
       { label: "Захист E-marker", nova: true, competitor: false },
-      { label: "Гарантія 2 роки", nova: true, competitor: false },
-      { label: "Підтримка 24/7", nova: true, competitor: false },
+      { label: "Гарантія 1 рік", nova: true, competitor: false },
+      { label: "Підтримка у месенджерах", nova: true, competitor: false },
     ] as { label: string; nova: string | boolean; competitor: string | boolean }[],
   },
   social: {
@@ -211,6 +221,13 @@ const uk = {
     subtitle:
       "Техніка, що встигає за вашими амбіціями. Швидка доставка Новою Поштою по всій Україні.",
     bullets: "Доставка Новою Поштою · Повернення 14 днів · Гарантія 1 рік",
+  },
+  bestsellers: {
+    label: "Бестселери",
+    title: "Обирають найчастіше",
+    description:
+      "Товари, з яких найкраще починати знайомство з NOVA — з реальними цінами та наявністю.",
+    viewAll: "Дивитися весь каталог",
   },
   productsPage: {
     label: "Повний каталог",
@@ -571,6 +588,16 @@ const en: Dictionary = {
       cookies: "Cookies",
     },
     rights: "All rights reserved.",
+    contacts: "Contacts",
+    phone: "+380 68 990-06-74",
+    phoneHref: "tel:+380689900674",
+    email: "business@novastore.com.ua",
+    viber: "Viber",
+    viberHref: "viber://chat?number=%2B380689900674",
+    requisites: "Sole proprietor Roman Kobzar · Tax ID 3381411016",
+    paymentsLine:
+      "Payments: Monobank · Visa · Mastercard · Apple Pay · Google Pay · cash on delivery",
+    deliveryLine: "Nova Poshta delivery across Ukraine",
   },
   hero: {
     badge: "Your retro-style SSD upgrade",
@@ -679,8 +706,8 @@ const en: Dictionary = {
       { label: "Compatibility", nova: "Universal", competitor: "Limited" },
       { label: "Heat Dissipation", nova: true, competitor: false },
       { label: "E-marker Safety", nova: true, competitor: false },
-      { label: "2-Year Warranty", nova: true, competitor: false },
-      { label: "24/7 Support", nova: true, competitor: false },
+      { label: "1-Year Warranty", nova: true, competitor: false },
+      { label: "Messenger Support", nova: true, competitor: false },
     ],
   },
   social: {
@@ -732,6 +759,13 @@ const en: Dictionary = {
     subtitle:
       "Experience technology that anticipates your ambition. Fast Nova Poshta delivery across Ukraine.",
     bullets: "Nova Poshta delivery · 14-day returns · 1-year warranty",
+  },
+  bestsellers: {
+    label: "Bestsellers",
+    title: "Most Loved Picks",
+    description:
+      "The best products to start your NOVA journey — with real prices and availability.",
+    viewAll: "View full catalog",
   },
   productsPage: {
     label: "Full Catalog",
