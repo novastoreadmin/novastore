@@ -29,15 +29,14 @@ type InjectedDependencies = {
 
 /**
  * Cash-on-delivery / Nova Poshta postplata provider. No external API calls —
- * the money is collected by Nova Poshta (own goods) or ITsellOPT (dropship
- * goods) at the branch, not through us, so there's nothing to call out to.
+ * the money is collected by Nova Poshta at the branch (and transferred to
+ * NOVA's account), not through us, so there's nothing to call out to.
  *
  * Lifecycle: initiate → pending (nothing paid yet); authorize → authorized
  * as soon as the order is placed (the order is confirmed, payment isn't);
  * capture is a MANUAL admin action (Order → Payments → Capture) once the
- * money is actually confirmed in hand — either NP's transfer for our own
- * goods, or ITsellOPT's biweekly dropship reconciliation. This provider never
- * captures on its own.
+ * money is actually confirmed in hand — NP's transfer to NOVA's account.
+ * This provider never captures on its own.
  */
 export class CodPaymentProvider extends AbstractPaymentProvider {
   static identifier = "cod"
@@ -71,8 +70,8 @@ export class CodPaymentProvider extends AbstractPaymentProvider {
 
   /**
    * Deliberately manual-only: called from the admin Capture button once ops
-   * has confirmed the money actually arrived (NP transfer for our own goods,
-   * or ITsellOPT's reconciliation payout for dropship). Never called
+   * has confirmed the money actually arrived (NP's transfer to NOVA's
+   * account). Never called
    * automatically — there is no webhook/event that tells us COD money landed.
    */
   async capturePayment(input: CapturePaymentInput): Promise<CapturePaymentOutput> {

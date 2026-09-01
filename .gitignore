@@ -21,6 +21,7 @@ playwright/.cache/
 # Generated product-import CSVs (per-DB ids/urls — regenerate with prepare-import.ts)
 apps/backend/data/import/
 
-# ITsellOPT wholesale/dropship price exports (real cost tiers - never commit)
-Прайс_ITsell_*.xls
-apps/backend/data/itsellopt/
+# Kosmotech wholesale/dropship price exports (real cost tiers - never commit)
+apps/backend/data/kosmotech/
+node_modules/
+dump.rdb

@@ -113,7 +113,7 @@ describe("resolvePaymentProviders", () => {
   it("falls back to cod alone in production with no Monobank token and test payments disabled", () => {
     // Previously this was the empty-array case medusa-config.ts guards against
     // by throwing at boot - cod needs no secrets and is always registered
-    // (see docs/DROPSHIP-ITSELLOPT.md), so the provider list can no longer be
+    // (see docs/DROPSHIP-KOSMOTECH.md), so the provider list can no longer be
     // empty and that boot-time throw is now unreachable dead code, left as-is.
     const providers = resolvePaymentProviders({}, true)
     expect(providers).toEqual([{ resolve: "./src/modules/payment-cod", id: "cod", options: {} }])

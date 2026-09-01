@@ -16,7 +16,7 @@ if (isProduction && !redisUrl) {
 
 // cod (Nova Poshta postplata) needs no secrets and is always included by
 // resolvePaymentProviders, so this list is never empty - no boot-time guard
-// needed here anymore (see docs/DROPSHIP-ITSELLOPT.md).
+// needed here anymore (see docs/DROPSHIP-KOSMOTECH.md).
 const paymentProviders = resolvePaymentProviders(process.env, isProduction)
 
 export default defineConfig({
@@ -133,13 +133,6 @@ export default defineConfig({
             // Stripe provider in src/config/runtime-config.ts for why.
             resolve: require.resolve("@medusajs/medusa/fulfillment-manual"),
             id: "manual",
-          },
-          {
-            // ITsellOPT dropship: manual-like pass-through provider with its
-            // own identity, so the dropship shipping option lives on
-            // "Itsellopt", not "Manual" (docs/DROPSHIP-ITSELLOPT.md §4).
-            resolve: "./src/modules/fulfillment-itsellopt",
-            id: "itsellopt",
           },
           {
             resolve: "./src/modules/fulfillment-novaposhta",

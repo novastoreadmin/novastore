@@ -2,16 +2,16 @@ import type { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/frame
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { updateOrderWorkflow } from "@medusajs/medusa/core-flows"
 
-const VALID_STATUSES = ["new", "placed", "paid_out"] as const
+const VALID_STATUSES = ["new", "placed", "shipped"] as const
 type QueueStatus = (typeof VALID_STATUSES)[number]
 
 /**
- * POST /admin/itsellopt/queue/:id — advance a dropship order's queue status
- * (docs/DROPSHIP-ITSELLOPT.md §5). `:id` is the ORDER id. Shipping/tracking
- * stays in Medusa's native Order → Fulfillment flow (unchanged by this route)
- * - this only tracks the ITsellOPT-specific stages: has the ops person placed
- * the matching order on ITsellOPT yet, and has the biweekly margin payout
- * for it landed.
+ * POST /admin/kosmotech/queue/:id — advance a dropship order's queue status
+ * (docs/DROPSHIP-KOSMOTECH.md §5). `:id` is the ORDER id. Money flows through
+ * NOVA's own channels (Monobank / NP postplata to NOVA's account), so there's
+ * no payout stage here - just: has the matching order been placed in the
+ * Kosmotech cabinet (`placed`), and has Kosmotech marked it shipped
+ * (`shipped`, mirrors their «Відвантажене»).
  */
 export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse): Promise<void> {
   const body = req.body as { status?: string } | undefined
@@ -28,11 +28,11 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
     filters: { id: req.params.id },
   })
   const order = orders[0]
-  const existing = (order?.metadata as Record<string, unknown> | null)?.itsellopt_queue as
+  const existing = (order?.metadata as Record<string, unknown> | null)?.kosmotech_queue as
     | Record<string, unknown>
     | undefined
   if (!order || !existing) {
-    res.status(404).json({ message: "This order has no ITsellOPT dropship queue entry" })
+    res.status(404).json({ message: "This order has no Kosmotech dropship queue entry" })
     return
   }
 
@@ -40,7 +40,7 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
     input: {
       id: order.id,
       user_id: req.auth_context?.actor_id ?? "unknown-admin",
-      metadata: { itsellopt_queue: { ...existing, status } },
+      metadata: { kosmotech_queue: { ...existing, status } },
     },
   })
 

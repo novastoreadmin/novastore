@@ -1,7 +1,7 @@
 /**
  * Additively links every product of one sales channel to another — used for
  * the one-time storefront migration "Prom.ua" → "NOVA Online Store"
- * (docs/DROPSHIP-ITSELLOPT.md §10.4): the site's publishable key historically
+ * (docs/DROPSHIP-KOSMOTECH.md §10.4): the site's publishable key historically
  * pointed at "Prom.ua", but that channel is reserved for the future Prom.ua
  * marketplace integration. Never unlinks anything, so carts/orders created
  * under the old channel keep working; idempotent (re-run = "0 to link").

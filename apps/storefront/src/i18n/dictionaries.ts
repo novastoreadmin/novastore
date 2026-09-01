@@ -283,7 +283,7 @@ const uk = {
     codTitle: "Післяплата на Новій Пошті",
     codHint: "Оплата готівкою або карткою при отриманні",
     dropshipCodDescription:
-      "Цей товар відправляється зі складу партнера. Оплата — при отриманні на Новій Пошті.",
+      "Це замовлення відправляється зі складу партнера на відділення Нової Пошти. Оплата — карткою онлайн або при отриманні, на твій вибір.",
     dropshipShippingNote:
       "Цей товар відправляється зі складу партнера й доїде окремою посилкою на відділення Нової Пошти.",
     dropshipBadge: "Зі складу партнера",
@@ -803,7 +803,7 @@ const en: Dictionary = {
     codTitle: "Cash on delivery (Nova Poshta)",
     codHint: "Pay by cash or card on pickup",
     dropshipCodDescription:
-      "This item ships from a partner's warehouse. Payment is collected on delivery at the Nova Poshta branch.",
+      "This order ships from a partner's warehouse to a Nova Poshta branch. Pay online by card or on delivery — your choice.",
     dropshipShippingNote:
       "This item ships from a partner's warehouse and arrives as a separate parcel at a Nova Poshta branch.",
     dropshipBadge: "From partner warehouse",

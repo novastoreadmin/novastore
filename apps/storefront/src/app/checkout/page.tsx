@@ -37,7 +37,7 @@ import {
   classifyCartItems,
   COD_PROVIDER_ID,
   DROPSHIP_SHIPPING_OPTION_NAME,
-  isItselloptProduct,
+  isKosmotechProduct,
   MONO_PROVIDER_ID,
 } from "@/lib/cart-kind";
 
@@ -97,11 +97,11 @@ function isDropshipOption(option: ShippingOption): boolean {
   return option.name === DROPSHIP_SHIPPING_OPTION_NAME;
 }
 
-// Which Nova Poshta flow a shipping option represents, if any. The ITsellOPT
-// dropship option always uses the warehouse (відділення) picker too — that's
-// where the customer picks up and pays COD (see docs/DROPSHIP-ITSELLOPT.md §4)
-// — but it lives on the `manual` provider, not `novaposhta`, so it's matched
-// by name rather than `data.id`.
+// Which Nova Poshta flow a shipping option represents, if any. The Kosmotech
+// dropship option is a REAL NP warehouse option (data.id
+// "novaposhta-warehouse" — see docs/DROPSHIP-KOSMOTECH.md §4), so it takes
+// the warehouse branch below via data.id like every other NP option; the
+// name-based fallback covers older DBs where the option predates that data.
 function npKindOf(option: ShippingOption): "warehouse" | "courier" | null {
   const dataId = option.data?.id;
   if (dataId === "novaposhta-warehouse") return "warehouse";
@@ -209,8 +209,9 @@ export default function CheckoutPage() {
   const [saveCard, setSaveCard] = useState(false);
   const [deletingCard, setDeletingCard] = useState<string | null>(null);
 
-  // "own" carts choose between paying now (card) or on delivery (cod);
-  // "dropship" carts (ITsellOPT) have no choice — always cod, forced below.
+  // Every cart (own and Kosmotech dropship alike) chooses between paying now
+  // (card) or on delivery (cod) — NOVA collects the money either way, see
+  // docs/DROPSHIP-KOSMOTECH.md §0.
   const [paymentMethod, setPaymentMethod] = useState<"card" | "cod">("card");
 
   // monoPay widget: the payment session must exist before the widget can get
@@ -238,13 +239,7 @@ export default function CheckoutPage() {
       setMonoSessionReady(false);
       return;
     }
-    // Dropship carts are COD-only - never stand up a Monobank session for
-    // them. Without this guard the payment step always renders the monoPay
-    // button (it's gated on monoSessionReady/widgetUnavailable, not on cart
-    // kind - see the button render below), so a customer could try to pay a
-    // dropship order by card even though placeOrder() only ever looks for
-    // the cod provider for these carts.
-    if (!cartId || !cart || widgetUnavailable || classifyCartItems(cart.items ?? []) === "dropship") {
+    if (!cartId || !cart || widgetUnavailable) {
       return;
     }
     let active = true;
@@ -272,16 +267,12 @@ export default function CheckoutPage() {
   const cartKind = classifyCartItems(items);
   const isDropshipCart = cartKind === "dropship";
 
-  // Dropship carts only ever offer the ITsellOPT NP option; own carts get
-  // everything else (Standard/Express). Never both — see docs/DROPSHIP-ITSELLOPT.md §0.
+  // Dropship carts only ever offer the Kosmotech NP option; own carts get
+  // everything else (Standard/Express/NP). Never both — different warehouses,
+  // different waybills, see docs/DROPSHIP-KOSMOTECH.md §0.
   const visibleShippingOptions = shippingOptions.filter((o) =>
     isDropshipCart ? isDropshipOption(o) : !isDropshipOption(o)
   );
-
-  // Dropship carts can only pay COD - force it and never let "card" render.
-  useEffect(() => {
-    if (isDropshipCart && paymentMethod !== "cod") setPaymentMethod("cod");
-  }, [isDropshipCart, paymentMethod]);
 
   useEffect(() => {
     let active = true;
@@ -406,26 +397,18 @@ export default function CheckoutPage() {
     setSavingShipping(true);
     setShippingError(null);
     try {
-      const dropship = selectedOption ? isDropshipOption(selectedOption) : false;
+      // The Kosmotech dropship option is a regular NP warehouse option — it
+      // saves the same np_* payload, so the auto-TTN subscriber creates
+      // NOVA's waybill for it too (docs/DROPSHIP-KOSMOTECH.md §4).
       const data =
         selectedNpKind === "warehouse"
-          ? dropship
-            ? {
-                // Deliberately NOT np_kind — order-placed-novaposhta.ts's
-                // auto-TTN guard must never fire for these (ITsellOPT ships
-                // on their own waybill). See docs/DROPSHIP-ITSELLOPT.md §4.
-                dropship_np_city_ref: npCity!.ref,
-                dropship_np_city_name: npCity!.name,
-                dropship_np_warehouse_ref: npWarehouse!.ref,
-                dropship_np_warehouse_description: npWarehouse!.description,
-              }
-            : {
-                np_kind: "warehouse",
-                np_city_ref: npCity!.ref,
-                np_city_name: npCity!.name,
-                np_warehouse_ref: npWarehouse!.ref,
-                np_warehouse_description: npWarehouse!.description,
-              }
+          ? {
+              np_kind: "warehouse",
+              np_city_ref: npCity!.ref,
+              np_city_name: npCity!.name,
+              np_warehouse_ref: npWarehouse!.ref,
+              np_warehouse_description: npWarehouse!.description,
+            }
           : selectedNpKind === "courier"
             ? {
                 np_kind: "courier",
@@ -501,11 +484,11 @@ export default function CheckoutPage() {
       // Find a usable payment provider for this cart's region.
       const regionId = cart.region_id;
       const providers = regionId ? await getPaymentProviders(regionId) : [];
-      // Dropship carts (or "pay on delivery" chosen on an own cart) always use
-      // cod — never Monobank, even if it's configured. The backend enforces
-      // this independently (src/api/middlewares.ts); this is just routing.
+      // "Pay on delivery" uses cod — never Monobank, even if it's configured.
+      // The backend enforces this independently (src/api/middlewares.ts);
+      // this is just routing.
       const providerId =
-        isDropshipCart || paymentMethod === "cod"
+        paymentMethod === "cod"
           ? providers.find((p) => p.id === COD_PROVIDER_ID)?.id
           : (providers.find((p) => p.id === MONO_PROVIDER_ID)?.id ??
             providers.find((p) => p.id === "pp_system_system")?.id ??
@@ -863,18 +846,12 @@ export default function CheckoutPage() {
                   {d.checkout.paymentTitle}
                 </h2>
 
-                {isDropshipCart ? (
-                  <div className="p-6 rounded-xl border border-border bg-bg-card">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Truck className="w-4 h-4 text-text-secondary" />
-                      <span className="text-sm font-medium">{d.checkout.codTitle}</span>
-                    </div>
-                    <p className="text-sm text-text-secondary leading-relaxed">
-                      {d.checkout.dropshipCodDescription}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3 mb-6">
+                {isDropshipCart && (
+                  <p className="text-sm text-text-secondary mb-5 p-4 rounded-xl border border-border bg-bg-card">
+                    {d.checkout.dropshipCodDescription}
+                  </p>
+                )}
+                <div className="space-y-3 mb-6">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("card")}
@@ -918,10 +895,9 @@ export default function CheckoutPage() {
                       </div>
                     </button>
                   </div>
-                )}
 
                 {/* Saved cards (one-click) for logged-in customers */}
-                {!isDropshipCart && paymentMethod === "card" && authStatus === "authenticated" && savedCards.length > 0 && (
+                {paymentMethod === "card" && authStatus === "authenticated" && savedCards.length > 0 && (
                   <div className="space-y-3 mb-6">
                     {savedCards.map((card) => {
                       const isSelected = selectedCard === card.cardToken;
@@ -986,7 +962,7 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {!isDropshipCart && paymentMethod === "card" && (
+                {paymentMethod === "card" && (
                   <>
                     <div className="p-6 rounded-xl border border-border bg-bg-card">
                       <div className="flex items-center gap-2 mb-4">
@@ -1050,15 +1026,15 @@ export default function CheckoutPage() {
                   {orderError && (
                     <p className="text-xs text-red-400 max-w-xs text-right">{orderError}</p>
                   )}
-                  {/* COD (dropship, or "pay on delivery" chosen on an own
-                      cart) never touches Monobank - always the plain confirm
-                      button, regardless of widget/session state (those only
+                  {/* COD ("pay on delivery") never touches Monobank - always
+                      the plain confirm button, regardless of widget/session
+                      state (those only
                       ever apply to the card flow below). Card payments keep
                       the official monoPay widget button (QR / app deep-link),
                       falling back to the hosted-page button when the widget
                       keys aren't configured or a saved card is selected (the
                       widget only handles new-card payments). */}
-                  {isDropshipCart || paymentMethod === "cod" ? (
+                  {paymentMethod === "cod" ? (
                     <button
                       type="button"
                       onClick={placeOrder}
@@ -1163,7 +1139,7 @@ export default function CheckoutPage() {
                             .filter(Boolean)
                             .join(" · ")}
                         </p>
-                        {isItselloptProduct(item.variant?.product?.metadata) && (
+                        {isKosmotechProduct(item.variant?.product?.metadata) && (
                           <span className="inline-block mt-1 text-[10px] font-medium uppercase tracking-wide text-text-muted border border-border rounded-full px-2 py-0.5">
                             {d.checkout.dropshipBadge}
                           </span>

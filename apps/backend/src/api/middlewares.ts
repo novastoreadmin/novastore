@@ -7,8 +7,8 @@ import {
   type MedusaResponse,
 } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
-import { allowedProviders, classifyCart, type CartClassifyItem } from "../lib/itsellopt-dropship"
-import { DROPSHIP_SHIPPING_OPTION_NAME } from "../lib/itsellopt-dropship-constants"
+import { allowedProviders, classifyCart, type CartClassifyItem } from "../lib/kosmotech-dropship"
+import { DROPSHIP_SHIPPING_OPTION_NAME } from "../lib/kosmotech-dropship-constants"
 
 /**
  * Medusa's stock GET /store/orders/:id treats the order id as a bearer
@@ -43,9 +43,9 @@ function rejectDropship(res: MedusaResponse, message: string) {
 }
 
 /**
- * Own goods and ITsellOPT dropship goods ship on different waybills to
- * different money recipients (docs/DROPSHIP-ITSELLOPT.md §0) - a cart may
- * never contain both. Blocks the add BEFORE it happens, not after.
+ * Own goods and Kosmotech dropship goods ship from different warehouses on
+ * different waybills (docs/DROPSHIP-KOSMOTECH.md §0) - a cart may never
+ * contain both. Blocks the add BEFORE it happens, not after.
  */
 async function enforceNoMixedCart(req: MedusaRequest, res: MedusaResponse, next: MedusaNextFunction) {
   const cartId = req.params.id
@@ -227,7 +227,7 @@ export default defineMiddlewares({
         authenticate("customer", ["bearer", "session"], { allowUnauthenticated: true }),
       ],
     },
-    // ITsellOPT dropship cart rules (docs/DROPSHIP-ITSELLOPT.md §3) — the
+    // Kosmotech dropship cart rules (docs/DROPSHIP-KOSMOTECH.md §3) — the
     // storefront already respects these, but the server never trusts it.
     {
       matcher: "/store/carts/:id/line-items",

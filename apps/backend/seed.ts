@@ -20,7 +20,7 @@ import {
   linkProductsToSalesChannelWorkflow,
 } from "@medusajs/medusa/core-flows"
 import { CATEGORIES, PRODUCTS, resolveImages, STORE_CURRENCY, toStoreMinor } from "./src/data/catalog"
-import { DROPSHIP_SHIPPING_OPTION_NAME } from "./src/lib/itsellopt-dropship-constants"
+import { DROPSHIP_SHIPPING_OPTION_NAME } from "./src/lib/kosmotech-dropship-constants"
 
 export default async function seed({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
@@ -77,11 +77,11 @@ export default async function seed({ container }: ExecArgs) {
   const fulfillmentProviders = await fulfillmentModule.listFulfillmentProviders()
   const manualProvider =
     fulfillmentProviders.find((p) => p.id === "manual_manual") || fulfillmentProviders[0]
-  // Dropship provider (fulfillment-itsellopt module) - falls back to manual on
-  // DBs seeded before the module existed; both are pass-through, the split is
-  // for naming/auditability in the admin (docs/DROPSHIP-ITSELLOPT.md §4).
-  const itselloptProvider =
-    fulfillmentProviders.find((p) => p.id === "itsellopt_itsellopt") || manualProvider
+  // Kosmotech dropship options ride the REAL Nova Poshta provider (NOVA
+  // creates the waybill itself - docs/DROPSHIP-KOSMOTECH.md §4); falls back
+  // to manual on DBs where the NP module isn't registered.
+  const novaposhtaProvider =
+    fulfillmentProviders.find((p) => p.id === "novaposhta_novaposhta") || manualProvider
 
   const fulfillmentSet = await fulfillmentModule.createFulfillmentSets({
     name: "NOVA Shipping",
@@ -109,11 +109,11 @@ export default async function seed({ container }: ExecArgs) {
       },
     ])
   }
-  if (itselloptProvider && itselloptProvider.id !== manualProvider?.id) {
+  if (novaposhtaProvider && novaposhtaProvider.id !== manualProvider?.id) {
     await remoteLink.create([
       {
         [Modules.STOCK_LOCATION]: { stock_location_id: stockLocation.id },
-        [Modules.FULFILLMENT]: { fulfillment_provider_id: itselloptProvider.id },
+        [Modules.FULFILLMENT]: { fulfillment_provider_id: novaposhtaProvider.id },
       },
     ])
   }
@@ -152,17 +152,17 @@ export default async function seed({ container }: ExecArgs) {
   // ─────────────────────────────────────────────────
   const shippingProfileId = (await fulfillmentModule.listShippingProfiles())[0]?.id
 
-  // Dedicated profile for ITsellOPT dropship products: a dropship-only cart
+  // Dedicated profile for Kosmotech dropship products: a dropship-only cart
   // then resolves to exactly the dropship shipping option and nothing else
-  // (options are matched to carts per item shipping profile). Prod has the
-  // same profile, created by hand in the admin (docs/DROPSHIP-ITSELLOPT.md §10.2).
-  const existingProfiles = await fulfillmentModule.listShippingProfiles({ type: "itsellopt" })
-  const itselloptProfile =
+  // (options are matched to carts per item shipping profile). Prod gets the
+  // same profile, created by hand in the admin (docs/DROPSHIP-KOSMOTECH.md §10.2).
+  const existingProfiles = await fulfillmentModule.listShippingProfiles({ type: "kosmotech" })
+  const kosmotechProfile =
     existingProfiles[0] ??
-    (await fulfillmentModule.createShippingProfiles({ name: "ItSellOpt", type: "itsellopt" }))
-  const itselloptProfileId = Array.isArray(itselloptProfile)
-    ? itselloptProfile[0].id
-    : itselloptProfile.id
+    (await fulfillmentModule.createShippingProfiles({ name: "Kosmotech", type: "kosmotech" }))
+  const kosmotechProfileId = Array.isArray(kosmotechProfile)
+    ? kosmotechProfile[0].id
+    : kosmotechProfile.id
 
   if (manualProvider) {
     await createShippingOptionsWorkflow(container).run({
@@ -186,22 +186,25 @@ export default async function seed({ container }: ExecArgs) {
           prices: [{ region_id: region.id, currency_code: STORE_CURRENCY, amount: 120 }],
         },
         {
-          // ITsellOPT dropship orders only — matched by exact NAME in the
+          // Kosmotech dropship orders only — matched by exact NAME in the
           // storefront (DROPSHIP_SHIPPING_OPTION_NAME in cart-kind.ts) and
-          // server-enforced in src/api/middlewares.ts. On the pass-through
-          // `itsellopt` provider (never novaposhta), so validateFulfillmentData
-          // never injects `np_kind` — see docs/DROPSHIP-ITSELLOPT.md §4. Lives
-          // on the dedicated ItSellOpt profile so it's only ever offered to
-          // carts of dropship products.
+          // server-enforced in src/api/middlewares.ts. On the REAL novaposhta
+          // provider with the warehouse fulfillment option, so
+          // validateFulfillmentData injects `np_kind` and the auto-TTN
+          // subscriber creates NOVA's waybill as usual — Kosmotech ships
+          // against that number (docs/DROPSHIP-KOSMOTECH.md §4). Lives on the
+          // dedicated Kosmotech profile so it's only ever offered to carts of
+          // dropship products.
           name: DROPSHIP_SHIPPING_OPTION_NAME,
           price_type: "flat",
           service_zone_id: serviceZone.id,
-          shipping_profile_id: itselloptProfileId,
-          provider_id: itselloptProvider.id,
+          shipping_profile_id: kosmotechProfileId,
+          provider_id: novaposhtaProvider.id,
+          data: { id: "novaposhta-warehouse" },
           type: {
-            label: "ItSellOpt",
-            description: "Відправлення зі складу партнера, оплата при отриманні",
-            code: "itsellopt",
+            label: "Kosmotech",
+            description: "Відправлення зі складу партнера на відділення Нової Пошти",
+            code: "kosmotech",
           },
           prices: [{ region_id: region.id, currency_code: STORE_CURRENCY, amount: 0 }],
         },

@@ -6,13 +6,13 @@ import { useState } from "react"
 import { sdk } from "../../lib/sdk"
 
 /**
- * ITsellOPT dropship queue (docs/DROPSHIP-ITSELLOPT.md §5) — orders whose
- * cart was classified "dropship" (see itsellopt-dropship.ts). For each,
- * copy the cart-import block into ITsellOPT's own "Кошик → Імпорт товарів у
- * кошик", complete their checkout with the customer's delivery details and
- * the COD amount, then advance the status here. Shipping/tracking (ТТН) is
- * entered as usual in Medusa's Order → Fulfillment — this page doesn't
- * duplicate that.
+ * Kosmotech dropship queue (docs/DROPSHIP-KOSMOTECH.md §5) — orders whose
+ * cart was classified "dropship" (see kosmotech-dropship.ts). For each:
+ * download the ready Excel (or copy the article/count lines), open the
+ * Kosmotech cabinet checkout, import the file, pick «Відправка по ТТН»,
+ * paste the waybill number shown here (auto-created by NOVA's NP flow), and
+ * submit. The cabinet fills the recipient's name/phone/branch from the
+ * waybill on its own. Then advance the status here.
  */
 
 type QueueRow = {
@@ -23,20 +23,24 @@ type QueueRow = {
   currency_code: string
   order_created_at: string
   text: string
-  status: "new" | "placed" | "paid_out"
+  status: "new" | "placed" | "shipped"
   queued_at: string
+  ttn: string | null
+  import_lines: string
 }
+
+const KOSMOTECH_CHECKOUT_URL = "https://newb2b.kosmotech.com.ua/ua/checkout/"
 
 const STATUS_LABEL: Record<QueueRow["status"], string> = {
   new: "Нове",
-  placed: "Оформлено в ITsellOPT",
-  paid_out: "Маржа виплачена",
+  placed: "Оформлено в Kosmotech",
+  shipped: "Відвантажене",
 }
 
 const STATUS_COLOR: Record<QueueRow["status"], "orange" | "blue" | "green"> = {
   new: "orange",
   placed: "blue",
-  paid_out: "green",
+  shipped: "green",
 }
 
 const fmtDate = (d?: string | null) =>
@@ -45,35 +49,58 @@ const fmtDate = (d?: string | null) =>
 const fmtAmount = (amount: number, currency: string) =>
   `${amount.toLocaleString("uk-UA")} ${currency.toUpperCase()}`
 
-const ItselloptPageInner = () => {
+const KosmotechPageInner = () => {
   const qc = useQueryClient()
   const [statusFilter, setStatusFilter] = useState<"all" | QueueRow["status"]>("new")
 
   const { data, isFetching } = useQuery({
-    queryKey: ["itsellopt-queue"],
-    queryFn: () => sdk.client.fetch<{ queue: QueueRow[]; count: number }>("/admin/itsellopt/queue"),
+    queryKey: ["kosmotech-queue"],
+    queryFn: () => sdk.client.fetch<{ queue: QueueRow[]; count: number }>("/admin/kosmotech/queue"),
   })
 
   const rows = (data?.queue ?? []).filter((r) => statusFilter === "all" || r.status === statusFilter)
 
   const statusMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: string; status: QueueRow["status"] }) =>
-      sdk.client.fetch(`/admin/itsellopt/queue/${orderId}`, { method: "POST", body: { status } }),
+      sdk.client.fetch(`/admin/kosmotech/queue/${orderId}`, { method: "POST", body: { status } }),
     onSuccess: () => {
       toast.success("Статус оновлено")
-      qc.invalidateQueries({ queryKey: ["itsellopt-queue"] })
+      qc.invalidateQueries({ queryKey: ["kosmotech-queue"] })
     },
     onError: (e: Error) => toast.error(e.message || "Не вдалося оновити статус"),
   })
 
-  const copyText = async (text: string) => {
+  const copyText = async (text: string, doneMessage: string) => {
     try {
       const clipboard = (navigator as { clipboard?: { writeText(text: string): Promise<void> } }).clipboard
       if (!clipboard) throw new Error("Clipboard API unavailable")
       await clipboard.writeText(text)
-      toast.success("Скопійовано — встав у ITsellOPT: Кошик → Імпорт товарів у кошик")
+      toast.success(doneMessage)
     } catch {
       toast.error("Не вдалося скопіювати — виділи текст вручну")
+    }
+  }
+
+  // The admin session is cookie-based, so a plain authenticated fetch works;
+  // sdk.client.fetch is JSON-oriented and mangles binary responses.
+  const downloadImportFile = async (row: QueueRow) => {
+    try {
+      const res = await fetch(`/admin/kosmotech/queue/${row.order_id}/import-file`, {
+        credentials: "include",
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `kosmotech-order-${row.display_id}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      toast.success("Excel збережено — завантаж його в кабінеті: Імпорт замовлення з Excel")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не вдалося завантажити файл")
     }
   }
 
@@ -82,21 +109,28 @@ const ItselloptPageInner = () => {
       <Toaster />
       <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
         <div className="flex items-center gap-x-3">
-          <Heading level="h2">ITsellOPT — дропшип-заявки</Heading>
+          <Heading level="h2">Kosmotech — дропшип-заявки</Heading>
           <Badge size="2xsmall">{rows.length}</Badge>
         </div>
-        <div className="w-56">
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-            <Select.Trigger>
-              <Select.Value />
-            </Select.Trigger>
-            <Select.Content>
-              <Select.Item value="all">Усі статуси</Select.Item>
-              <Select.Item value="new">Нові</Select.Item>
-              <Select.Item value="placed">Оформлено в ITsellOPT</Select.Item>
-              <Select.Item value="paid_out">Маржа виплачена</Select.Item>
-            </Select.Content>
-          </Select>
+        <div className="flex items-center gap-x-3">
+          <Button size="small" variant="secondary" asChild>
+            <a href={KOSMOTECH_CHECKOUT_URL} target="_blank" rel="noreferrer">
+              Відкрити кабінет Kosmotech
+            </a>
+          </Button>
+          <div className="w-56">
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+              <Select.Trigger>
+                <Select.Value />
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="all">Усі статуси</Select.Item>
+                <Select.Item value="new">Нові</Select.Item>
+                <Select.Item value="placed">Оформлено в Kosmotech</Select.Item>
+                <Select.Item value="shipped">Відвантажені</Select.Item>
+              </Select.Content>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -113,7 +147,8 @@ const ItselloptPageInner = () => {
           <Table.Header>
             <Table.Row>
               <Table.HeaderCell>Замовлення</Table.HeaderCell>
-              <Table.HeaderCell>Сума (COD)</Table.HeaderCell>
+              <Table.HeaderCell>Сума</Table.HeaderCell>
+              <Table.HeaderCell>ТТН</Table.HeaderCell>
               <Table.HeaderCell>Статус</Table.HeaderCell>
               <Table.HeaderCell>Заявка</Table.HeaderCell>
               <Table.HeaderCell>Дії</Table.HeaderCell>
@@ -130,6 +165,22 @@ const ItselloptPageInner = () => {
                 </Table.Cell>
                 <Table.Cell>{fmtAmount(r.total, r.currency_code)}</Table.Cell>
                 <Table.Cell>
+                  {r.ttn ? (
+                    <button
+                      type="button"
+                      className="font-mono text-xs underline decoration-dotted cursor-pointer"
+                      title="Скопіювати ТТН"
+                      onClick={() => copyText(r.ttn!, "ТТН скопійовано — встав у «Відправка по ТТН»")}
+                    >
+                      {r.ttn}
+                    </button>
+                  ) : (
+                    <Text size="small" className="text-ui-fg-subtle">
+                      створюється…
+                    </Text>
+                  )}
+                </Table.Cell>
+                <Table.Cell>
                   <Badge color={STATUS_COLOR[r.status]} size="2xsmall">
                     {STATUS_LABEL[r.status]}
                   </Badge>
@@ -139,8 +190,17 @@ const ItselloptPageInner = () => {
                 </Table.Cell>
                 <Table.Cell>
                   <div className="flex flex-col gap-2">
-                    <Button size="small" variant="secondary" onClick={() => copyText(r.text)}>
-                      Скопіювати для ITsellOPT
+                    <Button size="small" variant="secondary" onClick={() => downloadImportFile(r)}>
+                      Excel для імпорту
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="secondary"
+                      onClick={() =>
+                        copyText(r.import_lines, "Скопійовано артикули (article count)")
+                      }
+                    >
+                      Копіювати артикули
                     </Button>
                     {r.status === "new" && (
                       <Button
@@ -155,9 +215,9 @@ const ItselloptPageInner = () => {
                       <Button
                         size="small"
                         isLoading={statusMutation.isPending}
-                        onClick={() => statusMutation.mutate({ orderId: r.order_id, status: "paid_out" })}
+                        onClick={() => statusMutation.mutate({ orderId: r.order_id, status: "shipped" })}
                       >
-                        Позначити «Маржу виплачено»
+                        Позначити «Відвантажене»
                       </Button>
                     )}
                   </div>
@@ -175,15 +235,15 @@ const ItselloptPageInner = () => {
 // react-query than the one this extension imports (same as the mail/novaposhta pages).
 const queryClient = new QueryClient()
 
-const ItselloptPage = () => (
+const KosmotechPage = () => (
   <QueryClientProvider client={queryClient}>
-    <ItselloptPageInner />
+    <KosmotechPageInner />
   </QueryClientProvider>
 )
 
 export const config = defineRouteConfig({
-  label: "ITsellOPT",
+  label: "Kosmotech",
   icon: HandTruck,
 })
 
-export default ItselloptPage
+export default KosmotechPage

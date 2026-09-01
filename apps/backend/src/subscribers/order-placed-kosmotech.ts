@@ -1,20 +1,25 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { updateOrderWorkflow } from "@medusajs/medusa/core-flows"
-import { classifyCart, buildDropshipOrderText, type CartClassifyItem } from "../lib/itsellopt-dropship"
+import { classifyCart, buildDropshipOrderText, type CartClassifyItem } from "../lib/kosmotech-dropship"
 import { MAIL_ACCOUNTS, getAccount } from "../lib/mail-accounts"
 import { sendMail } from "../lib/mail-client"
 
 /**
- * Queues an ITsellOPT dropship order for manual placement (docs/DROPSHIP-ITSELLOPT.md
- * §5): writes the cart-import block + customer/delivery details to
- * order.metadata.itsellopt_queue and emails the ops mailbox, so someone can
- * paste it into ITsellOPT's "Кошик → Імпорт товарів у кошик" and complete the
- * matching order on their site. Never fails the order - a missed email means
- * the admin queue page (src/admin/routes/itsellopt) is still the source of
- * truth and can be checked manually.
+ * Queues a Kosmotech dropship order for placement in their B2B cabinet
+ * (docs/DROPSHIP-KOSMOTECH.md §5): writes queue metadata to
+ * order.metadata.kosmotech_queue and emails the ops mailbox, so someone (or a
+ * future bot) can reproduce the order at newb2b.kosmotech.com.ua/ua/checkout/
+ * via "Імпорт замовлення з Excel" + "Відправка по ТТН". Never fails the
+ * order - a missed email means the admin queue page
+ * (src/admin/routes/kosmotech) is still the source of truth.
+ *
+ * The waybill itself is created by order-placed-novaposhta.ts exactly as for
+ * own orders (the Kosmotech shipping option is a regular NP warehouse option)
+ * - this subscriber does not wait for it. The queue admin page/API join the
+ * TTN from the order's fulfillments live at read time.
  */
-export default async function orderPlacedItselloptHandler({
+export default async function orderPlacedKosmotechHandler({
   event: { data },
   container,
 }: SubscriberArgs<{ id: string }>) {
@@ -54,49 +59,52 @@ export default async function orderPlacedItselloptHandler({
       .map((i) => ({ product: i.variant?.product }))
     if (classifyCart(classifyItems) !== "dropship") return
 
-    const text = buildDropshipOrderText(order as any)
+    // TTN is being created concurrently by order-placed-novaposhta.ts - at
+    // this moment it usually doesn't exist yet, so the text says so and the
+    // admin page shows the live value instead.
+    const text = buildDropshipOrderText(order as any, null)
 
     await updateOrderWorkflow(container).run({
       input: {
         id: order.id,
         user_id: "system",
         metadata: {
-          itsellopt_queue: { text, status: "new", created_at: new Date().toISOString() },
+          kosmotech_queue: { text, status: "new", created_at: new Date().toISOString() },
         },
       },
     })
-    logger.info(`[ITsellOPT] Order #${order.display_id} queued for dropship placement`)
+    logger.info(`[Kosmotech] Order #${order.display_id} queued for dropship placement`)
 
     // Unlike every other subscriber here, this isn't a customer-facing email -
-    // it's an internal note to whoever places the matching order on ITsellOPT's
-    // own site, so it deliberately does NOT reuse ORDER_EMAIL_FROM (the
-    // customer-facing "NOVA Store" identity). Falls back to it only if
-    // ITSELLOPT_QUEUE_FROM isn't set (e.g. local dev).
-    const fromAddress = process.env.ITSELLOPT_QUEUE_FROM || process.env.ORDER_EMAIL_FROM || "admin@nova.local"
-    const toAddress = process.env.ITSELLOPT_QUEUE_EMAIL || fromAddress
+    // it's an internal note to whoever places the matching order in the
+    // Kosmotech B2B cabinet, so it deliberately does NOT reuse
+    // ORDER_EMAIL_FROM (the customer-facing "NOVA Store" identity). Falls
+    // back to it only if KOSMOTECH_QUEUE_FROM isn't set (e.g. local dev).
+    const fromAddress = process.env.KOSMOTECH_QUEUE_FROM || process.env.ORDER_EMAIL_FROM || "admin@nova.local"
+    const toAddress = process.env.KOSMOTECH_QUEUE_EMAIL || fromAddress
     const account = getAccount(fromAddress) ?? MAIL_ACCOUNTS[0]
     if (!account) {
-      logger.warn(`[ITsellOPT] No mail account available to notify queue for order #${order.display_id}`)
+      logger.warn(`[Kosmotech] No mail account available to notify queue for order #${order.display_id}`)
       return
     }
 
     try {
       const { messageId } = await sendMail(account, {
         to: toAddress,
-        subject: `[ITsellOPT] Нове дропшип-замовлення NOVA #${order.display_id}`,
+        subject: `[Kosmotech] Нове дропшип-замовлення NOVA #${order.display_id}`,
         text,
       })
-      logger.info(`[ITsellOPT] Queue notification sent to ${toAddress} for order #${order.display_id} (${messageId})`)
+      logger.info(`[Kosmotech] Queue notification sent to ${toAddress} for order #${order.display_id} (${messageId})`)
     } catch (mailError) {
       logger.warn(
-        `[ITsellOPT] Failed to send queue notification for order #${order.display_id}: ${
+        `[Kosmotech] Failed to send queue notification for order #${order.display_id}: ${
           mailError instanceof Error ? mailError.message : "Unknown error"
         }`
       )
     }
   } catch (error) {
     logger.error(
-      `[ITsellOPT] Error processing order.placed for ${data.id}: ${
+      `[Kosmotech] Error processing order.placed for ${data.id}: ${
         error instanceof Error ? error.message : "Unknown error"
       }`
     )

@@ -49,12 +49,6 @@ const transporter = nodemailer.createTransport({
 
 const EMAILS = [
   {
-    to: "partner@itsellopt.com.ua", // Іван +380 93 758 3340 (Київська, Сумська, Полтавська обл.)
-    subject:
-      "Співпраця з NOVA Store — опт/дропшипінг: кабелі, аксесуари, зарядні",
-    file: "1-itsellopt.html",
-  },
-  {
     to: "midnightmaiter@duck.com", // gadgetplanet.com.ua@gmail.com
     subject: "Питання щодо оптової співпраці з NOVA Store",
     file: "2-gadgetplanet.html",

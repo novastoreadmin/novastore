@@ -119,8 +119,8 @@ export async function getCollections() {
 // computes line totals from unit_price * quantity, which are always present.
 
 // Shared across every cart read/mutation below. `+items.variant.product.metadata`
-// is what classifyCartItems() reads to tell an ITsellOPT dropship item from
-// NOVA's own catalog (docs/DROPSHIP-ITSELLOPT.md §0) - every one of these calls
+// is what classifyCartItems() reads to tell a Kosmotech dropship item from
+// NOVA's own catalog (docs/DROPSHIP-KOSMOTECH.md §0) - every one of these calls
 // feeds its returned `cart` straight into checkout's setCart(), so any call
 // that omits it silently downgrades a dropship cart to "own" the moment it
 // runs (wrong shipping options offered, no partner badge, guardrail only
