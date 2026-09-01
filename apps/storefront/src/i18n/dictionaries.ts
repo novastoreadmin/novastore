@@ -244,6 +244,8 @@ const uk = {
     emptyTitle: "Жоден товар не підходить під фільтри.",
     emptyHint: "Спробуйте розширити діапазон цін або скинути фільтр категорії.",
     startingAt: "Від",
+    searchPlaceholder: "Пошук: кабель, зарядка, SSD…",
+    showMore: (n: number) => `Показати ще (${n})`,
   },
   bottomNav: {
     home: "Головна",
@@ -322,10 +324,20 @@ const uk = {
     codTitle: "Післяплата на Новій Пошті",
     codHint: "Оплата готівкою або карткою при отриманні",
     dropshipCodDescription:
-      "Це замовлення відправляється зі складу партнера на відділення Нової Пошти. Оплата — карткою онлайн або при отриманні, на твій вибір.",
+      "Це замовлення відправляється зі складу партнера, тому оплата — тільки при отриманні на Новій Пошті (готівкою або карткою у відділенні).",
     dropshipShippingNote:
       "Цей товар відправляється зі складу партнера й доїде окремою посилкою на відділення Нової Пошти.",
     dropshipBadge: "Зі складу партнера",
+    mixedShippingNote:
+      "У кошику товари з нашого складу та зі складу партнера — вони приїдуть двома посилками на обране відділення Нової Пошти.",
+    mixedPaymentNote:
+      "Замовлення буде оформлено як два: товари зі складу партнера — тільки оплата при отриманні; ваші інші товари — обраним нижче способом.",
+    ownShipmentLabel: "Відправлення 1 — з нашого складу",
+    partnerShipmentLabel: "Відправлення 2 — зі складу партнера",
+    partnerShipmentCod: "Оплата при отриманні",
+    mixedOrdersPlacedText:
+      "Оформлено два замовлення: посилка з нашого складу та посилка зі складу партнера. Листи з деталями вже в дорозі.",
+    errSplit: "Не вдалося розділити замовлення. Спробуйте ще раз.",
     payWithMono: "Оплата через Monobank",
     payWithSavedCard: "Оплата збереженою карткою",
     monoDescription:
@@ -803,6 +815,8 @@ const en: Dictionary = {
     emptyTitle: "No products match your filters.",
     emptyHint: "Try widening your price range or clearing the category filter.",
     startingAt: "Starting at",
+    searchPlaceholder: "Search: cable, charger, SSD…",
+    showMore: (n: number) => `Show more (${n})`,
   },
   bottomNav: {
     home: "Home",
@@ -881,10 +895,20 @@ const en: Dictionary = {
     codTitle: "Cash on delivery (Nova Poshta)",
     codHint: "Pay by cash or card on pickup",
     dropshipCodDescription:
-      "This order ships from a partner's warehouse to a Nova Poshta branch. Pay online by card or on delivery — your choice.",
+      "This order ships from a partner's warehouse, so it can only be paid on delivery at Nova Poshta (cash or card at the branch).",
     dropshipShippingNote:
       "This item ships from a partner's warehouse and arrives as a separate parcel at a Nova Poshta branch.",
     dropshipBadge: "From partner warehouse",
+    mixedShippingNote:
+      "Your cart has items from our warehouse and from a partner's — they will arrive as two parcels at the Nova Poshta branch you pick.",
+    mixedPaymentNote:
+      "Your order will be placed as two: partner-warehouse items are paid on delivery only; your other items — with the method chosen below.",
+    ownShipmentLabel: "Shipment 1 — from our warehouse",
+    partnerShipmentLabel: "Shipment 2 — from partner warehouse",
+    partnerShipmentCod: "Pay on delivery",
+    mixedOrdersPlacedText:
+      "Two orders have been placed: a parcel from our warehouse and a parcel from the partner's. Confirmation emails are on the way.",
+    errSplit: "Couldn't split the order. Please try again.",
     payWithMono: "Pay with Monobank",
     payWithSavedCard: "Pay with a saved card",
     monoDescription:

@@ -42,47 +42,10 @@ function rejectDropship(res: MedusaResponse, message: string) {
   res.status(400).json({ message, type: "dropship_cart_error" })
 }
 
-/**
- * Own goods and Kosmotech dropship goods ship from different warehouses on
- * different waybills (docs/DROPSHIP-KOSMOTECH.md §0) - a cart may never
- * contain both. Blocks the add BEFORE it happens, not after.
- */
-async function enforceNoMixedCart(req: MedusaRequest, res: MedusaResponse, next: MedusaNextFunction) {
-  const cartId = req.params.id
-  const body = req.body as { variant_id?: string } | undefined
-  const variantId = body?.variant_id
-  if (!variantId) return next() // malformed request - let the real route handler reject it
-
-  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
-  const [{ data: carts }, { data: variants }] = await Promise.all([
-    query.graph({
-      entity: "cart",
-      fields: ["id", "items.variant.product.metadata"],
-      filters: { id: cartId },
-    }),
-    query.graph({
-      entity: "variant",
-      fields: ["id", "product.metadata"],
-      filters: { id: variantId },
-    }),
-  ])
-  const existingItems: CartClassifyItem[] = (carts[0]?.items ?? []).map((i: any) => ({
-    product: i.variant?.product,
-  }))
-  const newItem: CartClassifyItem = { product: variants[0]?.product }
-
-  const resultingKind = classifyCart([...existingItems, newItem])
-  if (resultingKind === "mixed") {
-    rejectDropship(
-      res,
-      "Цей товар відправляється з іншого складу, ніж товари вже в кошику. Заверши поточне замовлення або очисти кошик."
-    )
-    return
-  }
-  next()
-}
-
-/** POST /store/carts/:id/shipping-methods - the chosen option must match what the cart is allowed to ship with. */
+/** POST /store/carts/:id/shipping-methods - the chosen option must match what
+ *  the cart is allowed to ship with. Mixed carts behave like "own" here: the
+ *  method saved before the split belongs to the own part (the dropship part
+ *  gets its own method inside the split-dropship route). */
 async function enforceShippingOptionMatchesCart(
   req: MedusaRequest,
   res: MedusaResponse,
@@ -116,6 +79,8 @@ async function enforceShippingOptionMatchesCart(
     rejectDropship(res, "Цей кошик містить товари постачальника — доступна лише доставка постачальника.")
     return
   }
+  // "own" AND "mixed" carts save the own-part method here; the dropship
+  // option is reserved for pure dropship carts (and the split route).
   if (kind !== "dropship" && isDropshipOption) {
     rejectDropship(res, "Ця доставка доступна лише для товарів постачальника.")
     return
@@ -180,7 +145,10 @@ async function enforceCartCompletionRules(
   const items: CartClassifyItem[] = (cart.items ?? []).map((i: any) => ({ product: i.variant?.product }))
   const kind = classifyCart(items)
   if (kind === "mixed") {
-    rejectDropship(res, "Кошик містить товари з різних складів і не може бути оформлений.")
+    rejectDropship(
+      res,
+      "Кошик містить товари з різних складів — оформлення розділяє його на два замовлення (split-dropship)."
+    )
     return
   }
 
@@ -227,13 +195,11 @@ export default defineMiddlewares({
         authenticate("customer", ["bearer", "session"], { allowUnauthenticated: true }),
       ],
     },
-    // Kosmotech dropship cart rules (docs/DROPSHIP-KOSMOTECH.md §3) — the
-    // storefront already respects these, but the server never trusts it.
-    {
-      matcher: "/store/carts/:id/line-items",
-      methods: ["POST"],
-      middlewares: [enforceNoMixedCart],
-    },
+    // Dropship cart rules (docs/DROPSHIP-KOSMOTECH.md §3) — the storefront
+    // already respects these, but the server never trusts it. Mixed carts are
+    // ALLOWED to build (checkout splits them into two orders); they just
+    // can't pick the dropship shipping option, start a payment session, or
+    // complete without splitting first.
     {
       matcher: "/store/carts/:id/shipping-methods",
       methods: ["POST"],

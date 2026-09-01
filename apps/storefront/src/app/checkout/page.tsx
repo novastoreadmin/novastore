@@ -24,6 +24,7 @@ import {
   initiatePaymentSession,
   completeCart,
   updateCartDetails,
+  splitDropshipCart,
 } from "@/lib/medusa";
 import { transferCartToCustomer } from "@/lib/auth";
 import { useCustomer } from "@/hooks/use-customer";
@@ -37,8 +38,9 @@ import {
   classifyCartItems,
   COD_PROVIDER_ID,
   DROPSHIP_SHIPPING_OPTION_NAME,
-  isKosmotechProduct,
+  isDropshipMetadata,
   MONO_PROVIDER_ID,
+  partitionCartItems,
 } from "@/lib/cart-kind";
 
 type Step = "information" | "shipping" | "payment";
@@ -197,6 +199,11 @@ export default function CheckoutPage() {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  // Mixed carts split into two orders: the supplier (dropship) part completes
+  // with cod first, then the own part pays normally. These survive a failed
+  // retry so the dropship part is never completed twice.
+  const [dropshipOrderId, setDropshipOrderId] = useState<string | null>(null);
+  const [pendingDropshipCartId, setPendingDropshipCartId] = useState<string | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
 
   const [contactInfo, setContactInfo] = useState<ContactInfo>(EMPTY_CONTACT);
@@ -209,9 +216,10 @@ export default function CheckoutPage() {
   const [saveCard, setSaveCard] = useState(false);
   const [deletingCard, setDeletingCard] = useState<string | null>(null);
 
-  // Every cart (own and Kosmotech dropship alike) chooses between paying now
-  // (card) or on delivery (cod) — NOVA collects the money either way, see
-  // docs/DROPSHIP-KOSMOTECH.md §0.
+  // Own carts choose between paying now (card) or on delivery (cod). Supplier
+  // dropship carts are cod-ONLY (the wholesalers work by postplata — see
+  // docs/DROPSHIP-KOSMOTECH.md §0); for mixed carts this choice applies to
+  // the own part only (the dropship part always completes with cod).
   const [paymentMethod, setPaymentMethod] = useState<"card" | "cod">("card");
 
   // monoPay widget: the payment session must exist before the widget can get
@@ -242,6 +250,14 @@ export default function CheckoutPage() {
     if (!cartId || !cart || widgetUnavailable) {
       return;
     }
+    // Dropship carts never pay by card; mixed carts pay the own part AFTER
+    // the split (placeOrder initiates the session on the new own-only cart) —
+    // pre-creating a session on this cart would either be rejected by the
+    // backend guard or attach to the wrong cart.
+    const kind = classifyCartItems(cart.items ?? []);
+    if (kind === "dropship" || kind === "mixed") {
+      return;
+    }
     let active = true;
     (async () => {
       try {
@@ -266,13 +282,26 @@ export default function CheckoutPage() {
   const items = cart?.items ?? [];
   const cartKind = classifyCartItems(items);
   const isDropshipCart = cartKind === "dropship";
+  const isMixedCart = cartKind === "mixed";
+  const { own: ownItems, dropship: dropshipItems } = partitionCartItems(items);
 
-  // Dropship carts only ever offer the Kosmotech NP option; own carts get
-  // everything else (Standard/Express/NP). Never both — different warehouses,
-  // different waybills, see docs/DROPSHIP-KOSMOTECH.md §0.
+  // Dropship carts only ever offer the supplier NP option; own carts get
+  // everything else (Standard/Express/NP). Mixed carts pick the OWN part's
+  // delivery here, restricted to NP-warehouse options: the dropship parcel
+  // ships to the same branch (the split route reuses this np payload), so a
+  // branch pick is required. See docs/DROPSHIP-KOSMOTECH.md §0.
   const visibleShippingOptions = shippingOptions.filter((o) =>
-    isDropshipCart ? isDropshipOption(o) : !isDropshipOption(o)
+    isDropshipCart
+      ? isDropshipOption(o)
+      : isMixedCart
+        ? !isDropshipOption(o) && npKindOf(o) === "warehouse"
+        : !isDropshipOption(o)
   );
+
+  // Supplier carts are cod-only — never leave "card" selected for them.
+  useEffect(() => {
+    if (isDropshipCart) setPaymentMethod("cod");
+  }, [isDropshipCart]);
 
   useEffect(() => {
     let active = true;
@@ -481,6 +510,45 @@ export default function CheckoutPage() {
     setPlacingOrder(true);
     setOrderError(null);
     try {
+      // The cart that pays with the buyer's chosen method. For mixed carts
+      // this becomes the own-only cart the split leaves behind.
+      let payCartId = cartId;
+
+      // Mixed cart → two orders: split first, then complete the supplier
+      // part with cod, then pay the own part normally. pendingDropshipCartId
+      // survives a failed attempt so a retry never splits or completes the
+      // supplier part twice.
+      if (isMixedCart || pendingDropshipCartId) {
+        let dropshipCartId = pendingDropshipCartId;
+        if (isMixedCart) {
+          if (!npCity || !npWarehouse) throw new Error(d.checkout.errNpWarehouse);
+          const split = await splitDropshipCart(cartId, {
+            np_kind: "warehouse",
+            np_city_ref: npCity.ref,
+            np_city_name: npCity.name,
+            np_warehouse_ref: npWarehouse.ref,
+            np_warehouse_description: npWarehouse.description,
+          });
+          payCartId = split.own_cart_id;
+          dropshipCartId = split.dropship_cart_id;
+          setPendingDropshipCartId(split.dropship_cart_id);
+          setCartId(split.own_cart_id);
+          // Refresh the local cart to the own-only remainder (summary,
+          // retry paths and the cart drawer all see the real state).
+          try {
+            setCart((await getCart(split.own_cart_id)) as Cart);
+          } catch {
+            // non-fatal: the order flow below doesn't depend on this refresh
+          }
+        }
+        if (dropshipCartId && !dropshipOrderId) {
+          await initiatePaymentSession(dropshipCartId, COD_PROVIDER_ID);
+          const dsResult = await completeCart(dropshipCartId);
+          if (dsResult.type !== "order") throw new Error(d.checkout.errComplete);
+          setDropshipOrderId(dsResult.order.id);
+        }
+      }
+
       // Find a usable payment provider for this cart's region.
       const regionId = cart.region_id;
       const providers = regionId ? await getPaymentProviders(regionId) : [];
@@ -495,7 +563,7 @@ export default function CheckoutPage() {
             providers[0]?.id);
       if (!providerId) throw new Error(d.checkout.errNoProvider);
 
-      const session = await initiatePaymentSession(cartId, providerId, {
+      const session = await initiatePaymentSession(payCartId, providerId, {
         // New card + "save my card" ticked → tokenize it in the Monobank wallet.
         save_card: !selectedCard && saveCard,
         // A saved card selected → one-click wallet payment on the backend.
@@ -530,14 +598,14 @@ export default function CheckoutPage() {
         // Saved-card payment without 3DS — charged synchronously; the
         // payment-return page polls the status and completes the cart.
         if (monoData?.used_card_token) {
-          window.location.assign(`/checkout/payment-return?cartId=${encodeURIComponent(cartId)}`);
+          window.location.assign(`/checkout/payment-return?cartId=${encodeURIComponent(payCartId)}`);
           return;
         }
         throw new Error(d.checkout.errMonoNoPage);
       }
 
       // System/test provider authorizes immediately — complete the cart inline.
-      const result = await completeCart(cartId);
+      const result = await completeCart(payCartId);
       if (result.type === "order") {
         setOrderId(result.order.id);
         setOrderPlaced(true);
@@ -558,6 +626,39 @@ export default function CheckoutPage() {
     shippingOptions.find((o) => o.id === selectedShipping)?.amount ?? 0;
   const total = subtotal + shippingTotal;
 
+  // One summary row — shared by the flat list and the mixed two-shipment
+  // grouping (the badge is redundant inside the labeled partner group).
+  const renderSummaryItem = (item: CartLineItem) => (
+    <div key={item.id} className="flex items-center gap-4">
+      <div className="w-16 h-16 rounded-xl bg-bg-elevated border border-border flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-graphite to-charcoal" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">
+          {item.product_title ?? item.title}
+        </p>
+        <p className="text-xs text-text-muted">
+          {[
+            item.variant_title
+              ? d.catalog.optionValues[item.variant_title] ?? item.variant_title
+              : undefined,
+            `${d.checkout.qty} ${item.quantity}`,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+        {!isMixedCart && isDropshipMetadata(item.variant?.product?.metadata) && (
+          <span className="inline-block mt-1 text-[10px] font-medium uppercase tracking-wide text-text-muted border border-border rounded-full px-2 py-0.5">
+            {d.checkout.dropshipBadge}
+          </span>
+        )}
+      </div>
+      <span className="text-sm font-medium">
+        {formatPrice(lineTotal(item), currency)}
+      </span>
+    </div>
+  );
+
   /* ---- Order confirmed ---- */
   if (orderPlaced) {
     return (
@@ -573,11 +674,16 @@ export default function CheckoutPage() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight mb-3">{d.checkout.orderPlacedTitle}</h1>
           <p className="text-sm text-text-muted mb-2">
-            {d.checkout.orderPlacedText}
+            {dropshipOrderId ? d.checkout.mixedOrdersPlacedText : d.checkout.orderPlacedText}
           </p>
           {orderId && (
             <p className="text-xs text-text-muted font-mono mt-1">
               {d.checkout.orderIdLabel}: {orderId.slice(6, 18)}…
+            </p>
+          )}
+          {dropshipOrderId && (
+            <p className="text-xs text-text-muted font-mono mt-1">
+              {d.checkout.orderIdLabel}: {dropshipOrderId.slice(6, 18)}…
             </p>
           )}
           {authStatus === "authenticated" && orderId && (
@@ -764,6 +870,11 @@ export default function CheckoutPage() {
                     {d.checkout.dropshipShippingNote}
                   </p>
                 )}
+                {isMixedCart && (
+                  <p className="text-sm text-text-secondary mb-5 p-4 rounded-xl border border-border bg-bg-card">
+                    {d.checkout.mixedShippingNote}
+                  </p>
+                )}
                 {visibleShippingOptions.length === 0 ? (
                   <p className="text-sm text-text-muted">
                     {d.checkout.noShippingOptions}
@@ -851,7 +962,15 @@ export default function CheckoutPage() {
                     {d.checkout.dropshipCodDescription}
                   </p>
                 )}
+                {isMixedCart && (
+                  <p className="text-sm text-text-secondary mb-5 p-4 rounded-xl border border-border bg-bg-card">
+                    {d.checkout.mixedPaymentNote}
+                  </p>
+                )}
                 <div className="space-y-3 mb-6">
+                    {/* Supplier (dropship) carts are cod-only — the card tile
+                        would be rejected by the backend guard anyway. */}
+                    {!isDropshipCart && (
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("card")}
@@ -873,6 +992,7 @@ export default function CheckoutPage() {
                         <p className="text-xs text-text-muted mt-0.5">{d.checkout.payNowHint}</p>
                       </div>
                     </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("cod")}
@@ -1048,17 +1168,24 @@ export default function CheckoutPage() {
                       )}
                       <span className="text-sm font-medium">{d.checkout.confirmOrder}</span>
                     </button>
-                  ) : selectedCard === null && !widgetUnavailable && cartId && monoSessionReady ? (
+                  ) : selectedCard === null && !widgetUnavailable && !isMixedCart && cartId && monoSessionReady ? (
                     <MonoPayWidgetButton
                       cartId={cartId}
                       saveCard={saveCard}
                       onUnavailable={() => setWidgetUnavailable(true)}
                     />
                   ) : (
+                    // Mixed carts always take this hosted-page path: the card
+                    // session can only be created on the own-only cart AFTER
+                    // the split inside placeOrder, so the widget (which needs
+                    // a pre-created session) can't be used.
                     <button
                       type="button"
                       onClick={placeOrder}
-                      disabled={placingOrder || (selectedCard === null && !widgetUnavailable && !monoSessionReady)}
+                      disabled={
+                        placingOrder ||
+                        (selectedCard === null && !widgetUnavailable && !isMixedCart && !monoSessionReady)
+                      }
                       className="h-12 min-w-[220px] px-8 rounded-xl bg-black text-white border border-white/20 hover:border-white/40 hover:bg-[#111] transition-all duration-300 flex items-center justify-center gap-2.5 disabled:opacity-60 cursor-pointer"
                     >
                       {placingOrder ? (
@@ -1119,37 +1246,25 @@ export default function CheckoutPage() {
                   <div className="flex items-center justify-center h-20">
                     <div className="w-5 h-5 border-2 border-border border-t-white rounded-full animate-spin" />
                   </div>
-                ) : (
-                  items.map((item) => (
-                    <div key={item.id} className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-xl bg-bg-elevated border border-border flex items-center justify-center flex-shrink-0">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-graphite to-charcoal" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {item.product_title ?? item.title}
-                        </p>
-                        <p className="text-xs text-text-muted">
-                          {[
-                            item.variant_title
-                              ? d.catalog.optionValues[item.variant_title] ?? item.variant_title
-                              : undefined,
-                            `${d.checkout.qty} ${item.quantity}`,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </p>
-                        {isKosmotechProduct(item.variant?.product?.metadata) && (
-                          <span className="inline-block mt-1 text-[10px] font-medium uppercase tracking-wide text-text-muted border border-border rounded-full px-2 py-0.5">
-                            {d.checkout.dropshipBadge}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-sm font-medium">
-                        {formatPrice(lineTotal(item), currency)}
+                ) : isMixedCart ? (
+                  // Two shipments (two orders after the split) — group the
+                  // summary so the buyer sees what ships from where and that
+                  // the partner parcel is paid on delivery.
+                  <>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                      {d.checkout.ownShipmentLabel}
+                    </p>
+                    {ownItems.map((item) => renderSummaryItem(item))}
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted pt-2 flex items-center gap-2 flex-wrap">
+                      <span>{d.checkout.partnerShipmentLabel}</span>
+                      <span className="normal-case font-normal tracking-normal border border-border rounded-full px-2 py-0.5 text-[10px]">
+                        {d.checkout.partnerShipmentCod}
                       </span>
-                    </div>
-                  ))
+                    </p>
+                    {dropshipItems.map((item) => renderSummaryItem(item))}
+                  </>
+                ) : (
+                  items.map((item) => renderSummaryItem(item))
                 )}
               </div>
 

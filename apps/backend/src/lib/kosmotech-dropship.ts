@@ -2,16 +2,19 @@
 // No Medusa imports, same pattern as order-email.ts / runtime-config.ts, so
 // this is unit-testable without spinning up the framework.
 //
-// The dropship marker is `product.metadata.kosmotech` - present ONLY on
-// Kosmotech-sourced products, never on NOVA's own catalog.
+// The dropship marker is `product.metadata.kosmotech` (Kosmotech) or, for
+// future wholesalers, `product.metadata.dropship = { supplier: "<id>" }` -
+// present ONLY on supplier-sourced products, never on NOVA's own catalog.
 //
-// Money model: NOVA collects the customer's money itself (Monobank card or
-// NP cash-on-delivery to NOVA's account) and creates the waybill from its
-// own NP business account; Kosmotech
-// ships the parcel against that waybill number ("Відправка по ТТН" in their
-// B2B cabinet) and invoices NOVA the wholesale price separately. So a
-// Kosmotech cart pays with the SAME providers as an own cart - the only hard
-// rule left is no mixed carts (two warehouses = two parcels = two waybills).
+// Money model (owner's rules, 2026-09): suppliers work ONLY by cash-on-
+// delivery and ship the parcels themselves against a waybill number NOVA
+// creates ("Відправка по ТТН" in the Kosmotech B2B cabinet) - so dropship
+// carts pay by NP postplata only. NOVA's own goods are prepaid to NOVA's
+// account (Monobank card) or NP postplata, and NOVA ships them itself.
+// A mixed cart can't be paid in one transaction (different provider sets),
+// so checkout SPLITS it into two orders - see partitionCartItems() and
+// POST /store/carts/:id/split-dropship. A mixed cart itself must still
+// never COMPLETE directly.
 
 export type CartClassifyItem = {
   product?: { metadata?: Record<string, unknown> | null } | null
@@ -23,33 +26,66 @@ export function isKosmotechProduct(item: CartClassifyItem): boolean {
   return !!item.product?.metadata && "kosmotech" in item.product.metadata
 }
 
+/** Any supplier-sourced product: Kosmotech today, `metadata.dropship.supplier`
+ *  for wholesalers added later - the checkout rules are identical for all. */
+export function isDropshipProduct(item: CartClassifyItem): boolean {
+  const md = item.product?.metadata
+  return !!md && ("kosmotech" in md || "dropship" in md)
+}
+
+/** Which supplier a product ships from, or null for NOVA's own goods. */
+export function supplierOf(item: CartClassifyItem): string | null {
+  const md = item.product?.metadata
+  if (!md) return null
+  if ("kosmotech" in md) return "kosmotech"
+  const dropship = md.dropship as { supplier?: string } | undefined
+  return typeof dropship?.supplier === "string" ? dropship.supplier : null
+}
+
 /**
- * Classifies a cart/order by what it contains. "mixed" carts are invalid in
- * v1 (own goods ship from NOVA's warehouse, Kosmotech goods from the
- * supplier's - different parcels, different waybills) and must be rejected
- * before checkout, not silently accepted.
+ * Classifies a cart/order by what it contains. "mixed" carts can't complete
+ * as-is (own goods ship prepaid from NOVA's warehouse, supplier goods ship
+ * COD from the supplier's - different parcels, waybills AND payment rules);
+ * checkout splits them into two orders before completion.
  */
 export function classifyCart(items: CartClassifyItem[] | null | undefined): CartKind {
   const list = items ?? []
   if (!list.length) return "empty"
-  const hasDropship = list.some(isKosmotechProduct)
-  const hasOwn = list.some((i) => !isKosmotechProduct(i))
+  const hasDropship = list.some(isDropshipProduct)
+  const hasOwn = list.some((i) => !isDropshipProduct(i))
   if (hasDropship && hasOwn) return "mixed"
   return hasDropship ? "dropship" : "own"
 }
 
 /**
+ * Splits a mixed cart's items into the two future orders. Used by the
+ * split-dropship route (and mirrored on the storefront for the two-shipment
+ * summary UI).
+ */
+export function partitionCartItems<T extends CartClassifyItem>(
+  items: T[] | null | undefined
+): { own: T[]; dropship: T[] } {
+  const own: T[] = []
+  const dropship: T[] = []
+  for (const item of items ?? []) {
+    ;(isDropshipProduct(item) ? dropship : own).push(item)
+  }
+  return { own, dropship }
+}
+
+/**
  * Payment provider ids (Medusa's `pp_<id>_<id>` convention) a cart of this
- * kind may pay with. NOVA collects the money for dropship orders too (see
- * the money-model note above), so "own" and "dropship" allow the same set.
- * "mixed"/"empty" allow nothing - the caller must reject the request rather
- * than let checkout proceed.
+ * kind may pay with. Suppliers work only by cash-on-delivery (see the
+ * money-model note above), so dropship carts allow cod ONLY; own carts take
+ * prepayment (Monobank) or cod. "mixed"/"empty" allow nothing - a mixed cart
+ * must be split into two orders before any payment session is created.
  */
 export function allowedProviders(kind: CartKind): string[] {
   switch (kind) {
     case "own":
-    case "dropship":
       return ["pp_monobank_monobank", "pp_system_system", "pp_cod_cod"]
+    case "dropship":
+      return ["pp_cod_cod"]
     case "mixed":
     case "empty":
       return []

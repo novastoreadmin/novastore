@@ -4,7 +4,7 @@ import { useMemo, useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Search } from "lucide-react";
 import { fadeUp, staggerContainer } from "@/animations/variants";
 import { gsap } from "@/animations/gsap-config";
 import { cn, formatPrice } from "@/lib/utils";
@@ -16,6 +16,7 @@ interface Category {
   id: string;
   name: string;
   handle: string;
+  parent_category_id?: string | null;
 }
 
 interface Product {
@@ -55,6 +56,19 @@ export function ProductsView({
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [search, setSearch] = useState("");
+  // 850+ SKU: render the grid in pages so first paint (and the entrance
+  // animation) stays light; "show more" reveals the next chunk.
+  const PAGE_SIZE = 24;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Chips show top-level categories only (the dropship import adds ~60
+  // subcategories under them — products are linked to BOTH levels, so a
+  // top-level chip still matches by id).
+  const topCategories = useMemo(
+    () => categories.filter((c) => !c.parent_category_id),
+    [categories]
+  );
 
   const currency = products.find((p) => currencyOf(p))
     ? currencyOf(products.find((p) => currencyOf(p))!)
@@ -63,9 +77,13 @@ export function ProductsView({
   const filteredProducts = useMemo(() => {
     const min = minPrice.trim() === "" ? null : Number(minPrice);
     const max = maxPrice.trim() === "" ? null : Number(maxPrice);
+    const q = search.trim().toLowerCase();
 
     return products.filter((product) => {
       if (activeCategory && !product.categories?.some((c) => c.id === activeCategory)) {
+        return false;
+      }
+      if (q && !localizeTitle(product, lang).toLowerCase().includes(q)) {
         return false;
       }
       const price = priceOf(product);
@@ -73,7 +91,14 @@ export function ProductsView({
       if (max != null && !Number.isNaN(max) && price > max) return false;
       return true;
     });
-  }, [products, activeCategory, minPrice, maxPrice]);
+  }, [products, activeCategory, minPrice, maxPrice, search, lang]);
+
+  // New filter → back to the first page of results.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [activeCategory, minPrice, maxPrice, search]);
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -90,9 +115,10 @@ export function ProductsView({
     }, gridRef);
 
     return () => ctx.revert();
-  }, [filteredProducts.length]);
+  }, [visibleProducts.length]);
 
-  const hasActiveFilters = activeCategory !== null || minPrice !== "" || maxPrice !== "";
+  const hasActiveFilters =
+    activeCategory !== null || minPrice !== "" || maxPrice !== "" || search !== "";
 
   return (
     <div className="min-h-screen pt-32 pb-24">
@@ -126,12 +152,27 @@ export function ProductsView({
 
         {/* Filters */}
         <div className="mb-12 space-y-6">
-          {/* Category chips */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Search (затверджений мобільний дизайн: пошук над чіпами категорій) */}
+          <div className="relative max-w-md">
+            <Search
+              size={18}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+            />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={d.productsPage.searchPlaceholder}
+              className="w-full h-12 pl-11 pr-4 rounded-2xl bg-bg-card border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/10 transition-all"
+            />
+          </div>
+
+          {/* Category chips — top-level only; horizontally scrollable on mobile */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               onClick={() => setActiveCategory(null)}
               className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                "px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 shrink-0 whitespace-nowrap",
                 activeCategory === null
                   ? "bg-white text-black"
                   : "bg-bg-card text-text-secondary border border-border hover:border-white/20"
@@ -139,14 +180,14 @@ export function ProductsView({
             >
               {d.productsPage.all}
             </button>
-            {categories.map((category) => (
+            {topCategories.map((category) => (
               <button
                 key={category.id}
                 onClick={() =>
                   setActiveCategory((prev) => (prev === category.id ? null : category.id))
                 }
                 className={cn(
-                  "px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                  "px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 shrink-0 whitespace-nowrap",
                   activeCategory === category.id
                     ? "bg-white text-black"
                     : "bg-bg-card text-text-secondary border border-border hover:border-white/20"
@@ -193,6 +234,7 @@ export function ProductsView({
                   setActiveCategory(null);
                   setMinPrice("");
                   setMaxPrice("");
+                  setSearch("");
                 }}
                 className="h-11 px-4 text-sm text-text-secondary hover:text-text-primary transition-colors"
               >
@@ -221,7 +263,7 @@ export function ProductsView({
             ref={gridRef}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
           >
-            {filteredProducts.map((product) => {
+            {visibleProducts.map((product) => {
               const price = priceOf(product);
               const currencyCode = currencyOf(product);
 
@@ -269,6 +311,18 @@ export function ProductsView({
                 </Link>
               );
             })}
+          </div>
+        )}
+
+        {/* Show more — pagination for the 850+ SKU catalog */}
+        {visibleCount < filteredProducts.length && (
+          <div className="mt-12 flex justify-center">
+            <button
+              onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+              className="h-12 px-8 rounded-xl bg-bg-card border border-border text-sm font-medium text-text-primary hover:border-white/20 transition-all duration-300"
+            >
+              {d.productsPage.showMore(filteredProducts.length - visibleCount)}
+            </button>
           </div>
         )}
       </div>

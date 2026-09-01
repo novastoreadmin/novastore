@@ -186,6 +186,25 @@ export default async function seed({ container }: ExecArgs) {
           prices: [{ region_id: region.id, currency_code: STORE_CURRENCY, amount: 120 }],
         },
         {
+          // Власні товари на відділення НП — на проді така опція створена
+          // руками в адмінці; локально вона потрібна, щоб власні кошики мали
+          // NP-warehouse флоу, а ЗМІШАНІ кошики (own+dropship) взагалі мали
+          // що обрати: mixed-чекаут показує ЛИШЕ NP-warehouse опції, бо
+          // дропшип-посилка їде на те саме відділення (split-dropship).
+          name: "Нова Пошта (відділення)",
+          price_type: "flat",
+          service_zone_id: serviceZone.id,
+          shipping_profile_id: shippingProfileId,
+          provider_id: novaposhtaProvider.id,
+          data: { id: "novaposhta-warehouse" },
+          type: {
+            label: "Nova Poshta",
+            description: "Доставка на відділення Нової Пошти",
+            code: "np-warehouse",
+          },
+          prices: [{ region_id: region.id, currency_code: STORE_CURRENCY, amount: 70 }],
+        },
+        {
           // Kosmotech dropship orders only — matched by exact NAME in the
           // storefront (DROPSHIP_SHIPPING_OPTION_NAME in cart-kind.ts) and
           // server-enforced in src/api/middlewares.ts. On the REAL novaposhta

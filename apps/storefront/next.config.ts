@@ -45,6 +45,12 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "newb2b.kosmotech.com.ua",
       },
+      // Фото дропшип-каталогу, імпортованого з Prom-експорту
+      // (import-kosmotech-csv.ts) — хостяться на CDN Prom.
+      {
+        protocol: "https",
+        hostname: "images.prom.ua",
+      },
       ...(dynamicBackendPattern ? [dynamicBackendPattern] : []),
     ],
     formats: ["image/avif", "image/webp"],

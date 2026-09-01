@@ -96,7 +96,7 @@ export async function getCategories() {
   const { product_categories } = await sdk.client.fetch<{
     product_categories: import("@medusajs/types").HttpTypes.StoreProductCategory[];
   }>("/store/product-categories", {
-    query: { fields: "+products" },
+    query: { fields: "+products,+parent_category_id" },
     cache: "force-cache",
     next: { tags: ["categories"] },
   });
@@ -262,6 +262,21 @@ export async function initiatePaymentSession(
 
 export async function completeCart(cartId: string) {
   return sdk.store.cart.complete(cartId);
+}
+
+// Mixed cart (own + supplier dropship goods): the backend moves the dropship
+// items into a new cart (copying email/address/locale) and attaches the
+// dropship NP shipping option with the branch the buyer picked. The checkout
+// then completes the dropship cart with cod and pays the own cart normally.
+// See docs/DROPSHIP-KOSMOTECH.md and src/api/store/carts/[id]/split-dropship.
+export async function splitDropshipCart(
+  cartId: string,
+  np: Record<string, unknown>
+) {
+  return sdk.client.fetch<{ own_cart_id: string; dropship_cart_id: string }>(
+    `/store/carts/${cartId}/split-dropship`,
+    { method: "POST", body: { np } }
+  );
 }
 
 export interface ShippingAddressInput {

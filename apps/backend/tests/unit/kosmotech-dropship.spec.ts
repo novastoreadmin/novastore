@@ -4,11 +4,15 @@ import {
   buildDropshipOrderText,
   buildKosmotechImportRows,
   classifyCart,
+  isDropshipProduct,
   isKosmotechProduct,
+  partitionCartItems,
+  supplierOf,
 } from "../../src/lib/kosmotech-dropship"
 
 const ownItem = { product: { metadata: { model: "DKQ04" } } }
 const dropshipItem = { product: { metadata: { kosmotech: { article: "T79CL", bucket: "Зарядні пристрої" } } } }
+const futureSupplierItem = { product: { metadata: { dropship: { supplier: "acme-wholesale" } } } }
 
 describe("isKosmotechProduct", () => {
   it("is true only when metadata.kosmotech is present", () => {
@@ -16,6 +20,34 @@ describe("isKosmotechProduct", () => {
     expect(isKosmotechProduct(ownItem)).toBe(false)
     expect(isKosmotechProduct({ product: null })).toBe(false)
     expect(isKosmotechProduct({})).toBe(false)
+  })
+})
+
+describe("isDropshipProduct / supplierOf", () => {
+  it("treats kosmotech and future metadata.dropship suppliers alike", () => {
+    expect(isDropshipProduct(dropshipItem)).toBe(true)
+    expect(isDropshipProduct(futureSupplierItem)).toBe(true)
+    expect(isDropshipProduct(ownItem)).toBe(false)
+  })
+
+  it("names the supplier, null for own goods", () => {
+    expect(supplierOf(dropshipItem)).toBe("kosmotech")
+    expect(supplierOf(futureSupplierItem)).toBe("acme-wholesale")
+    expect(supplierOf(ownItem)).toBe(null)
+    expect(supplierOf({})).toBe(null)
+  })
+})
+
+describe("partitionCartItems", () => {
+  it("splits a mixed cart into own and dropship halves preserving order", () => {
+    const { own, dropship } = partitionCartItems([ownItem, dropshipItem, futureSupplierItem, ownItem])
+    expect(own).toEqual([ownItem, ownItem])
+    expect(dropship).toEqual([dropshipItem, futureSupplierItem])
+  })
+
+  it("handles empty/missing input", () => {
+    expect(partitionCartItems(null)).toEqual({ own: [], dropship: [] })
+    expect(partitionCartItems([])).toEqual({ own: [], dropship: [] })
   })
 })
 
@@ -44,11 +76,11 @@ describe("allowedProviders", () => {
     expect(allowedProviders("own")).toEqual(["pp_monobank_monobank", "pp_system_system", "pp_cod_cod"])
   })
 
-  it("allows the same providers for dropship carts (NOVA collects the money)", () => {
-    expect(allowedProviders("dropship")).toEqual(["pp_monobank_monobank", "pp_system_system", "pp_cod_cod"])
+  it("allows cod ONLY for dropship carts (suppliers work by postplata)", () => {
+    expect(allowedProviders("dropship")).toEqual(["pp_cod_cod"])
   })
 
-  it("allows nothing for mixed or empty carts", () => {
+  it("allows nothing for mixed or empty carts (mixed must split first)", () => {
     expect(allowedProviders("mixed")).toEqual([])
     expect(allowedProviders("empty")).toEqual([])
   })
