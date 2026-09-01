@@ -15,6 +15,7 @@ const uk = {
     continueShopping: "Продовжити покупки",
     loading: "Завантаження…",
     view: "Переглянути",
+    close: "Закрити",
   },
   header: {
     nav: {
@@ -246,6 +247,12 @@ const uk = {
     startingAt: "Від",
     searchPlaceholder: "Пошук: кабель, зарядка, SSD…",
     showMore: (n: number) => `Показати ще (${n})`,
+    filtersButton: "Фільтри",
+    filtersTitle: "Фільтри",
+    filterCategory: "Категорія",
+    filterPrice: "Ціна, ₴",
+    showResults: (n: number) =>
+      `Показати ${n} ${n === 1 ? "товар" : n >= 2 && n <= 4 ? "товари" : "товарів"}`,
   },
   bottomNav: {
     home: "Головна",
@@ -587,6 +594,7 @@ const en: Dictionary = {
     continueShopping: "Continue Shopping",
     loading: "Loading…",
     view: "View",
+    close: "Close",
   },
   header: {
     nav: {
@@ -817,6 +825,11 @@ const en: Dictionary = {
     startingAt: "Starting at",
     searchPlaceholder: "Search: cable, charger, SSD…",
     showMore: (n: number) => `Show more (${n})`,
+    filtersButton: "Filters",
+    filtersTitle: "Filters",
+    filterCategory: "Category",
+    filterPrice: "Price, ₴",
+    showResults: (n: number) => `Show ${n} product${n === 1 ? "" : "s"}`,
   },
   bottomNav: {
     home: "Home",
